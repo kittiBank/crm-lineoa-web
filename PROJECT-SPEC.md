@@ -1,535 +1,720 @@
-# LINE CRM Dashboard - Project Specification
+# LINE OA CRM - Project Specification
 
-## 1. Project Overview
-ชื่อโปรเจกต์:
+## Project Overview
 
-**LINE CRM Management Platform**
+A Full Stack CRM web application for managing a LINE Official Account (LINE OA).
 
-ประเภท:
+This project is designed as a portfolio project to demonstrate modern Full Stack architecture, including authentication, REST APIs, webhook integration, background workers, message queues, and third-party API integration.
 
-Enterprise CRM SaaS Web Application
+---
 
-เป้าหมาย:
+# Objectives
 
-สร้างระบบ CRM สำหรับบริหารจัดการ LINE Official Account (LINE OA) รองรับการจัดการ Audience, Broadcast Campaign, Message Template, Rich Menu และ Tracking Analytics
+- Demonstrate Full Stack architecture
+- Integrate with LINE Messaging API
+- Implement asynchronous processing using RabbitMQ
+- Handle LINE Webhook events
+- Build a modern dashboard
+- Follow clean architecture principles
+- Production-like project structure
 
-Tech Stack:
+---
 
-Frontend:
+# Tech Stack
 
-- Next.js
+## Frontend
+
+- Next.js (App Router)
+- React
 - TypeScript
-- Tailwind CSS
+- TailwindCSS
 - shadcn/ui
-Backend (Future):
+- TanStack Query
+- React Hook Form
+- Zod
+
+---
+
+## Backend
 
 - NestJS
-- PostgreSQL
+- TypeScript
 - Prisma ORM
-Architecture:
-
-- Frontend แยกจาก Backend
-- REST API Communication
-- Component-based Architecture
+- PostgreSQL
+- JWT Authentication
+- Swagger
 
 ---
 
-# 2. Frontend Requirement
+## Worker
 
-## Design System
-Theme:
-
-- Clean Enterprise SaaS
-- White / Light Gray as main colors
-- Blue Header Bar
-- Minimal UI
-- Professional CRM Dashboard style
-UI Framework:
-
-- Tailwind CSS
-- shadcn/ui
-Design Principles:
-
-- Reusable components
-- Responsive layout
-- Consistent spacing
-- Table-first design
-- Developer friendly Figma handoff
+- NestJS
+- RabbitMQ Consumer
+- LINE Messaging API
 
 ---
 
-# 3. Application Layout
+## Infrastructure
 
-## Main Layout
-
-```
-------------------------------------------------
-|                 Header Bar                   |
-------------------------------------------------
-| Sidebar |                                  |
-|         |                                  |
-| Menu    |          Main Content            |
-|         |                                  |
-|         |                                  |
-------------------------------------------------
-```
-
-## Sidebar
-Fixed left navigation.
-
-Menu:
-
-```
-Dashboard
-
-Audience
- ├── All Audience
- └── Tags
-
-Content Management
- └── Message Templates
-
-Marketing
- └── Broadcast Campaign
-
-LINE Management
- └── Rich Menu
-
-Analytics
- └── Tracking
-
-System
- ├── Users
- ├── Activity Logs
- └── Settings
-```
-
-## Header
-Components:
-
-- Page title
-- Breadcrumb
-- Notification
-- User avatar
-- Profile dropdown
+- Docker Compose
+- PostgreSQL
+- RabbitMQ
+- Redis (Optional)
+- Nginx (Optional)
 
 ---
 
-# 4. Pages Requirement
+# Repository Structure
 
-# Login Page
-Layout:
-
-Split screen design.
-
-Left Section:
-
-- Logo
-- Product title
-- Description
-- CRM illustration
-Right Section:
-
-Login Form
-
-Components:
-
-- Email input
-- Password input
-- Remember me
-- Login button
+```
+crm-frontend/
+crm-api/
+crm-worker/
+```
 
 ---
 
-# Dashboard Page
-Purpose:
+# High Level Architecture
 
-CRM overview dashboard.
+```
+                +----------------+
+                |   Frontend     |
+                +--------+-------+
+                         |
+                     REST API
+                         |
+                +--------v-------+
+                |   NestJS API   |
+                +--------+-------+
+                         |
+          +--------------+--------------+
+          |                             |
+     PostgreSQL                    RabbitMQ
+                                         |
+                                 Broadcast Queue
+                                         |
+                                 +-------v------+
+                                 |    Worker    |
+                                 +-------+------+
+                                         |
+                                  LINE Messaging API
+```
 
-Components:
+Webhook Flow
 
-## KPI Cards
+```
+LINE Platform
+      |
+      |
+Webhook Event
+      |
+POST /webhook
+      |
+NestJS API
+      |
+Save Event
+      |
+Publish Queue
+      |
+Worker
+      |
+Business Logic
+      |
+Database
+```
 
-- Total Audience
-- Total Campaign
-- Message Sent
-- Open Rate
-- Click Rate
+---
 
-## Charts
+# Authentication
 
-- Audience Growth Line Chart
-- Broadcast Performance Bar Chart
-- Engagement Area Chart
-- Audience Segment Pie Chart
+- Login
+- JWT Access Token
+- Refresh Token
+- Protected APIs
+- Role-based Authorization
 
-## Recent Activity Table
-Columns:
+Roles
 
+- Admin
 - User
-- Action
-- Module
-- Date
 
 ---
 
-# Audience Management
-Purpose:
+# Core Features
 
-Manage LINE customers.
+## 1. Dashboard
 
-Features:
+Purpose
+
+Provide an overview of LINE OA activity.
+
+Widgets
+
+- Total Friends
+- Total Broadcasts
+- Messages Sent
+- Failed Messages
+- New Followers
+- Recent Activities
+
+Charts
+
+- Broadcast per Day
+- New Followers
+- Message Statistics
+
+---
+
+## 2. Broadcast
+
+Purpose
+
+Create and send broadcast messages.
+
+Functions
+
+- Create Broadcast
+- Update Broadcast
+- Delete Broadcast
+- Schedule Broadcast
+- Send Immediately
+- Preview Template
+- View Logs
+
+Broadcast Flow
+
+```
+Create Broadcast
+
+↓
+
+API
+
+↓
+
+RabbitMQ
+
+↓
+
+Worker
+
+↓
+
+LINE Push API
+
+↓
+
+Save Result
+
+↓
+
+Dashboard
+```
+
+Status
+
+- Draft
+- Scheduled
+- Processing
+- Completed
+- Failed
+
+---
+
+## 3. Message Templates
+
+CRUD
+
+Fields
+
+- Name
+- Message Type
+- Content
+- Image URL (optional)
+
+Types
+
+- Text
+- Image
+- Flex (Future)
+
+---
+
+## 4. LINE Users
+
+Purpose
+
+Display users synced from LINE OA.
+
+Functions
 
 - Search
 - Filter
 - Pagination
-- CRUD
-Table:
+- Detail View
 
-Columns:
+Columns
 
 - Display Name
-- LINE User ID
-- Email
-- Phone
-- Tags
+- User ID
 - Status
-- Created Date
-- Action
+- Follow Date
+- Last Activity
 
 ---
 
-# Tag Management
-Purpose:
+## 5. Rich Menu
 
-Audience segmentation.
+Functions
 
-Features:
-
-- Create Tag
-- Edit Tag
-- Delete Tag
-Table:
-
-- Tag Name
-- Description
-- Audience Count
-- Created Date
-
----
-
-# Message Template
-Purpose:
-
-Manage reusable LINE messages.
-
-Template Types:
-
-- Text
-- Image
-- Flex Message
-Features:
-
-- Create Template
-- Edit Template
-- Preview Template
-Layout:
-
-Two column form:
-
-Left:
-Template Form
-
-Right:
-LINE Message Preview
-
----
-
-# Broadcast Campaign
-Purpose:
-
-Create marketing campaigns.
-
-Features:
-
-- Create Campaign
-- Schedule Campaign
-- Send Campaign
-- Cancel Campaign
-- View Report
-Table:
-
-- Campaign Name
-- Audience
-- Template
-- Schedule
-- Status
-- Sent Count
-- Open Rate
-- Click Rate
-Create Flow:
-
-Step 1:
-Campaign Information
-
-Step 2:
-Select Audience
-
-Step 3:
-Select Template
-
-Step 4:
-Preview
-
-Step 5:
-Confirm
-
----
-
-# Rich Menu Management
-Purpose:
-
-Manage LINE Rich Menu.
-
-Features:
-
+- Create Rich Menu
 - Upload Image
-- Create Menu
-- Assign Audience
-- Enable / Disable
-Display:
+- Assign Rich Menu
+- Unassign Rich Menu
 
-Card Gallery
-
-Information:
-
-- Image
-- Name
-- Status
-- Target Audience
+(Area editor is optional)
 
 ---
 
-# Tracking Analytics
-Purpose:
+## 6. LINE OA Settings
 
-Analyze campaign performance.
+Store
 
-KPI:
+- Channel Access Token
+- Channel Secret
 
-- Delivered
-- Read
-- Click
-- Conversion
-Charts:
+Functions
 
-- Delivery Trend
-- Engagement Rate
-- Click Performance
-Table:
-
-- Campaign
-- Audience
-- Event
-- Timestamp
+- Verify Connection
+- Update Credentials
+- Display Webhook URL
 
 ---
 
-# Activity Logs
-Purpose:
+## 7. User Settings
 
-Audit user activity.
+Functions
 
-Table:
-
-- User
-- Action
-- Module
-- Description
-- Timestamp
+- Update Profile
+- Change Password
+- Change Avatar (optional)
 
 ---
 
-# 5. Component Structure
+# Webhook
+
+Endpoint
+
+```
+POST /webhook/line
+```
+
+Supported Events
+
+- follow
+- unfollow
+- message
+- postback
+
+Follow Event
+
+```
+Receive Event
+
+↓
+
+Save User
+
+↓
+
+Update Dashboard
+```
+
+Message Event
+
+```
+Receive Event
+
+↓
+
+Save Message
+
+↓
+
+Update Last Activity
+```
+
+---
+
+# Background Workers
+
+## Broadcast Worker
+
+Responsibilities
+
+- Receive Queue
+- Send LINE Push Messages
+- Retry Failed Requests
+- Save Broadcast Logs
+
+---
+
+## Webhook Worker
+
+Responsibilities
+
+- Process Webhook Events
+- Update User Information
+- Update Analytics
+
+---
+
+# API Modules
+
+```
+Auth
+
+Dashboard
+
+Broadcast
+
+Templates
+
+LINE Users
+
+Rich Menu
+
+Settings
+
+Webhook
+
+Queue
+```
+
+---
+
+# Suggested API Endpoints
+
+Authentication
+
+```
+POST   /auth/login
+POST   /auth/refresh
+GET    /auth/profile
+```
+
+Dashboard
+
+```
+GET    /dashboard
+```
+
+Broadcast
+
+```
+GET    /broadcasts
+GET    /broadcasts/:id
+POST   /broadcasts
+PUT    /broadcasts/:id
+DELETE /broadcasts/:id
+POST   /broadcasts/:id/send
+```
+
+Templates
+
+```
+GET
+POST
+PUT
+DELETE
+```
+
+LINE Users
+
+```
+GET
+GET /:id
+```
+
+Rich Menu
+
+```
+GET
+POST
+DELETE
+```
+
+Settings
+
+```
+GET
+PUT
+```
+
+Webhook
+
+```
+POST /webhook/line
+```
+
+---
+
+# Database Tables
+
+## users
+
+```
+id
+email
+password
+role
+created_at
+```
+
+---
+
+## line_accounts
+
+```
+id
+channel_secret
+channel_access_token
+created_at
+```
+
+---
+
+## line_users
+
+```
+id
+line_user_id
+display_name
+picture_url
+status
+followed_at
+last_activity
+```
+
+---
+
+## message_templates
+
+```
+id
+name
+type
+content
+image_url
+created_at
+```
+
+---
+
+## broadcasts
+
+```
+id
+title
+template_id
+status
+scheduled_at
+created_at
+```
+
+---
+
+## broadcast_logs
+
+```
+id
+broadcast_id
+line_user_id
+status
+error_message
+sent_at
+```
+
+---
+
+## webhook_events
+
+```
+id
+event_type
+payload
+created_at
+```
+
+---
+
+# Folder Structure
+
+## Frontend
 
 ```
 src
 
-├── app
+app/
 
-│   ├── login
+components/
 
-│   ├── dashboard
+features/
 
-│   ├── audience
+hooks/
 
-│   ├── broadcast
+services/
 
-│   ├── templates
+types/
 
-│   ├── rich-menu
+utils/
+```
 
-│   └── tracking
+Feature Modules
 
-├── components
+```
+dashboard/
 
-│   ├── ui
-│   │   └── shadcn components
-│   │
-│   ├── layout
-│   │   ├── sidebar
-│   │   ├── header
-│   │   └── breadcrumb
-│   │
-│   ├── table
-│   │   └── data-table
-│   │
-│   └── charts
+broadcast/
 
-├── features
+templates/
 
-│   ├── audience
-│   ├── broadcast
-│   ├── template
-│   ├── tracking
-│   └── dashboard
+line-users/
 
-├── hooks
+rich-menu/
 
-├── lib
-
-├── types
-
-└── constants
+settings/
 ```
 
 ---
 
-# 6. Common Components
+## Backend
 
-## DataTable
-ใช้สำหรับทุกหน้า Management
+```
+src
 
-Features:
+auth/
 
-- Sorting
-- Searching
-- Filtering
+dashboard/
+
+broadcast/
+
+templates/
+
+line-users/
+
+rich-menu/
+
+settings/
+
+webhook/
+
+queue/
+
+common/
+
+prisma/
+```
+
+---
+
+## Worker
+
+```
+src
+
+broadcast/
+
+webhook/
+
+consumers/
+
+line/
+
+utils/
+```
+
+---
+
+# UI Pages
+
+```
+Login
+
+Dashboard
+
+Broadcast List
+
+Create Broadcast
+
+Message Templates
+
+LINE Users
+
+Rich Menu
+
+LINE OA Settings
+
+User Settings
+
+404
+```
+
+---
+
+# Non-Functional Requirements
+
+- RESTful API
+- Modular Architecture
+- Repository Pattern (Optional)
+- Swagger Documentation
+- Docker Ready
+- Environment Variables
+- Error Handling
+- Validation
+- Logging
 - Pagination
-- Row Action
-
-## Search Filter Section
-Reusable component:
-
-Contains:
-
-- Search Input
-- Select Filter
-- Date Range
-- Reset Button
-
-## Page Header
-Reusable component:
-
-Contains:
-
-- Breadcrumb
-- Title
-- Description
-- Action Button
-
-## Modal Form
-ใช้สำหรับ:
-
-- Create
-- Edit
-- Delete Confirmation
+- Search
+- Clean Folder Structure
 
 ---
 
-# 7. Mock Data Requirement
-ก่อน Connect API ให้ใช้ Mock Data
+# Future Enhancements
 
-Mock Modules:
-
-- Audience List
-- Broadcast Campaign
-- Templates
-- Tracking Data
-- Dashboard Statistic
-
----
-
-# 8. Coding Standard
-Use:
-
-- TypeScript strict mode
-- Functional Components
-- React Hooks
-- Server Component by default
-- Client Component only when required
-Naming:
-
-Components:
-
-PascalCase
-
-Example:
-
-```
-AudienceTable.tsx
-DashboardCard.tsx
-```
-Functions:
-
-camelCase
+- Segment Broadcast
+- Tags
+- Auto Reply
+- Chat Inbox
+- Flex Message Builder
+- Campaign Analytics
+- Scheduler
+- Multiple LINE OA
+- Notification Center
+- Audit Log
+- File Storage (S3)
+- Redis Cache
+- CI/CD
+- Kubernetes Deployment
 
 ---
 
-# 9. Future Backend Integration
-API Structure:
+# Portfolio Highlights
 
-```
-/auth
+This project should demonstrate the following skills:
 
-/audience
-
-/tags
-
-/templates
-
-/broadcast
-
-/rich-menu
-
-/tracking
-
-/dashboard
-```
-Frontend should separate:
-
-```
-components
-
-features
-
-services
-
-types
-```
-เพื่อให้ง่ายต่อการเชื่อมต่อ REST API ในอนาคต
-
----
-
-# 10. Development Goal
-สร้าง CRM Dashboard ที่มีคุณภาพระดับ Portfolio สำหรับ Full Stack Developer
-
-เน้นแสดง:
-
-- Frontend Architecture
-- Reusable Components
-- Data Table Management
-- Dashboard Analytics
-- API Ready Structure
-- Clean Code
-- Enterprise UI Pattern
+- Full Stack Development
+- Next.js
+- NestJS
+- PostgreSQL
+- Prisma ORM
+- JWT Authentication
+- REST API Design
+- RabbitMQ
+- Background Workers
+- Webhook Integration
+- LINE Messaging API
+- Docker
+- Clean Architecture
+- Third-party API Integration
+- Dashboard Development
+- Production-ready Folder Structure
