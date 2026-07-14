@@ -8,7 +8,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
  */
 export default function SettingsPage() {
   const breadcrumbItems = [
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Home", href: "/dashboard" },
     { label: "LINE OA Settings", isActive: true },
   ];
 

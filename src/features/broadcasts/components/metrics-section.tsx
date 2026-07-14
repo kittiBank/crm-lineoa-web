@@ -23,9 +23,9 @@ export function MetricCard({
   trend,
 }: MetricsCardProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
       {/* Header with icon */}
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex items-start justify-between mb-3">
         <div>
           <p className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
             {title}
@@ -85,7 +85,7 @@ export function MetricsSection({
   nextBroadcastTime,
 }: MetricsSectionProps) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
       {/* Total Sent This Month */}
       <MetricCard
         title="Total Sent This Month"

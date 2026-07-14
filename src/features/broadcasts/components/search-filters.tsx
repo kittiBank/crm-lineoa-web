@@ -46,7 +46,7 @@ export function SearchFilters({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 mb-2">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
         {/* Search Input */}
         <div className="md:col-span-4">
@@ -73,7 +73,7 @@ export function SearchFilters({
           <select
             value={filters.status}
             onChange={handleStatusChange}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            className="w-full px-4 py-2 h-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
           >
             <option>All Status</option>
             <option>Sent</option>
@@ -108,7 +108,7 @@ export function SearchFilters({
             Clear
           </button>
           <button className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium">
-            Apply Filters
+            Search
           </button>
         </div>
       </div>

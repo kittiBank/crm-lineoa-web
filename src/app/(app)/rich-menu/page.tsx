@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
  */
 export default function RichMenuPage() {
   const breadcrumbItems = [
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Home", href: "/dashboard" },
     { label: "Rich Menu", isActive: true },
   ];
 

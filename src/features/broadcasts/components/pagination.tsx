@@ -6,6 +6,7 @@ interface PaginationProps {
   totalItems: number;
   itemsPerPage: number;
   onPageChange: (page: number) => void;
+  onItemsPerPageChange?: (itemsPerPage: number) => void;
 }
 
 /**
@@ -18,6 +19,7 @@ export function Pagination({
   totalItems,
   itemsPerPage,
   onPageChange,
+  onItemsPerPageChange,
 }: PaginationProps) {
   // Calculate the range of items being displayed
   const startItem = (currentPage - 1) * itemsPerPage + 1;
@@ -58,13 +60,29 @@ export function Pagination({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className="flex items-center justify-between mt-6 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
-      {/* Info text */}
-      <p className="text-sm text-gray-600 dark:text-gray-400">
-        Showing {startItem}-{endItem} of {totalItems} broadcasts
-      </p>
+    <div className="mt-3 px-6 py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex items-center justify-between gap-4">
+      {/* Left side - Items per page selector and info */}
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Show:
+          </label>
+          <select
+            value={itemsPerPage}
+            onChange={(e) => onItemsPerPageChange?.(Number(e.target.value))}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[120px]"
+          >
+            <option value="10">10 items</option>
+            <option value="20">20 items</option>
+            <option value="50">50 items</option>
+          </select>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
+          Showing {startItem}-{endItem} of {totalItems} broadcasts
+        </p>
+      </div>
 
-      {/* Pagination controls */}
+      {/* Right side - Pagination controls */}
       <div className="flex items-center gap-2">
         {/* Previous button */}
         <button

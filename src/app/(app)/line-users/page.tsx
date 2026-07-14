@@ -8,7 +8,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
  */
 export default function LineUsersPage() {
   const breadcrumbItems = [
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Home", href: "/dashboard" },
     { label: "LINE Users", isActive: true },
   ];
 

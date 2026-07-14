@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
  */
 export default function UserSettingsPage() {
   const breadcrumbItems = [
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Home", href: "/dashboard" },
     { label: "User Settings", isActive: true },
   ];
 

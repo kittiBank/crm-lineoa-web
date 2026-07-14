@@ -17,12 +17,12 @@ export function BroadcastHeader({
   onNewClick,
 }: BroadcastHeaderProps) {
   return (
-    <div className="flex items-start justify-between mb-6">
+    <div className="flex items-start justify-between mb-2">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
           {title}
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">{description}</p>
+        <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">{description}</p>
       </div>
 
       {/* New Broadcast Button */}
