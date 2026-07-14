@@ -12,7 +12,7 @@ export default async function BroadcastEditPage({ params }: BroadcastParams) {
   const { id } = await params;
 
   const breadcrumbItems = [
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Home", href: "/dashboard" },
     { label: "Broadcasts", href: "/broadcasts" },
     { label: "Edit", isActive: true },
   ];

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
  */
 export default function CreateBroadcastPage() {
   const breadcrumbItems = [
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Home", href: "/dashboard" },
     { label: "Broadcasts", href: "/broadcasts" },
     { label: "Create", isActive: true },
   ];

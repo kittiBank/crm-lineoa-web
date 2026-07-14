@@ -11,7 +11,7 @@ import { Plus } from "lucide-react";
  */
 export default function TemplatesPage() {
   const breadcrumbItems = [
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Home", href: "/dashboard" },
     { label: "Message Templates", isActive: true },
   ];
 

@@ -16,8 +16,6 @@ import {
 } from "@/features/broadcasts/lib/mockData";
 import { FilterOptions } from "@/features/broadcasts/types";
 
-const ITEMS_PER_PAGE = 4;
-
 /**
  * Broadcasts list page container
  * Manages state, filtering, and pagination for the broadcasts list
@@ -25,6 +23,7 @@ const ITEMS_PER_PAGE = 4;
 export function BroadcastsListContainer() {
   // State management
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [filters, setFilters] = useState<FilterOptions>({
     searchQuery: "",
     status: "All Status",
@@ -42,11 +41,11 @@ export function BroadcastsListContainer() {
   );
 
   // Paginate filtered broadcasts
-  const totalPages = Math.ceil(filteredBroadcasts.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredBroadcasts.length / itemsPerPage);
   const paginatedBroadcasts = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    return filteredBroadcasts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredBroadcasts, currentPage]);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredBroadcasts.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredBroadcasts, currentPage, itemsPerPage]);
 
   // Reset to page 1 when filters change
   const handleFilterChange = (newFilters: FilterOptions) => {
@@ -61,12 +60,12 @@ export function BroadcastsListContainer() {
   };
 
   const breadcrumbItems = [
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Home", href: "/dashboard" },
     { label: "Broadcasts", isActive: true },
   ];
 
   return (
-    <div className="space-y-6" suppressHydrationWarning>
+    <div className="space-y-2" suppressHydrationWarning>
       {/* Breadcrumbs */}
       <Breadcrumbs items={breadcrumbItems} />
 
@@ -84,8 +83,12 @@ export function BroadcastsListContainer() {
         currentPage={currentPage}
         totalPages={totalPages}
         totalItems={filteredBroadcasts.length}
-        itemsPerPage={ITEMS_PER_PAGE}
+        itemsPerPage={itemsPerPage}
         onPageChange={handlePageChange}
+        onItemsPerPageChange={(newItemsPerPage) => {
+          setItemsPerPage(newItemsPerPage);
+          setCurrentPage(1);
+        }}
       />
 
       {/* Metrics Section */}
