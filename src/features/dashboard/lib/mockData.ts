@@ -7,15 +7,27 @@ export interface DashboardMetrics {
   newFollowers: number;
 }
 
+export interface FollowerStatus {
+  active: number;
+  inactive: number;
+}
+
 export interface BroadcastTrendData {
   day: string;
-  trend: number;
+  sent: number;
+  delivered: number;
 }
 
 export interface AudienceGrowthData {
   week: string;
   new: number;
   returning: number;
+}
+
+export interface BroadcastStatusData {
+  name: string;
+  value: number;
+  fill: string;
 }
 
 export interface RecentBroadcast {
@@ -43,14 +55,30 @@ export function generateDashboardMetrics(): DashboardMetrics {
 }
 
 /**
+ * Generate mock follower status data (active/inactive)
+ */
+export function generateFollowerStatus(): FollowerStatus {
+  const total = faker.number.int({ min: 30000, max: 50000 });
+  const active = Math.round(total * faker.number.float({ min: 0.6, max: 0.8 }));
+  return {
+    active,
+    inactive: total - active,
+  };
+}
+
+/**
  * Generate mock broadcast trend data (last 7 days)
  */
 export function generateBroadcastTrendData(): BroadcastTrendData[] {
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  return days.map((day) => ({
-    day,
-    trend: faker.number.int({ min: 500, max: 5000 }),
-  }));
+  return days.map((day) => {
+    const sent = faker.number.int({ min: 1000, max: 5000 });
+    return {
+      day,
+      sent,
+      delivered: Math.round(sent * faker.number.float({ min: 0.75, max: 0.95 })),
+    };
+  });
 }
 
 /**
@@ -77,6 +105,34 @@ export function generateAudienceGrowthData(): AudienceGrowthData[] {
       week: "W4",
       new: faker.number.int({ min: 500, max: 2000 }),
       returning: faker.number.int({ min: 3000, max: 8000 }),
+    },
+  ];
+}
+
+/**
+ * Generate mock broadcast status data (pie chart)
+ */
+export function generateBroadcastStatusData(): BroadcastStatusData[] {
+  return [
+    {
+      name: "Sent",
+      value: faker.number.int({ min: 40, max: 60 }),
+      fill: "#3b82f6",
+    },
+    {
+      name: "In Progress",
+      value: faker.number.int({ min: 10, max: 25 }),
+      fill: "#f59e0b",
+    },
+    {
+      name: "Scheduled",
+      value: faker.number.int({ min: 15, max: 30 }),
+      fill: "#10b981",
+    },
+    {
+      name: "Draft",
+      value: faker.number.int({ min: 5, max: 20 }),
+      fill: "#9ca3af",
     },
   ];
 }
