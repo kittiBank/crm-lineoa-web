@@ -79,7 +79,7 @@ export function BroadcastTable({
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
                       {broadcast.campaignName}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-400" suppressHydrationWarning>
                       Created{" "}
                       {broadcast.createdAt.toLocaleDateString("en-US", {
                         month: "short",
@@ -96,7 +96,7 @@ export function BroadcastTable({
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
                       {broadcast.targetAudience}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-400" suppressHydrationWarning>
                       ({broadcast.audienceCount.toLocaleString()} users)
                     </p>
                   </div>

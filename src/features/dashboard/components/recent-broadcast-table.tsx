@@ -88,13 +88,13 @@ export function RecentBroadcastTable({
                   <StatusBadge status={broadcast.status} />
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-gray-900 dark:text-white font-medium">
+                  <span className="text-gray-900 dark:text-white font-medium" suppressHydrationWarning>
                     {broadcast.sent.toLocaleString()}
                   </span>
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm">
-                    <div className="font-medium text-gray-900 dark:text-white">
+                    <div className="font-medium text-gray-900 dark:text-white" suppressHydrationWarning>
                       {broadcast.delivered.toLocaleString()}
                     </div>
                     <div className="text-gray-600 dark:text-gray-400">
@@ -104,7 +104,7 @@ export function RecentBroadcastTable({
                 </td>
                 <td className="px-6 py-4">
                   <div className="text-sm">
-                    <div className="font-medium text-gray-900 dark:text-white">
+                    <div className="font-medium text-gray-900 dark:text-white" suppressHydrationWarning>
                       {broadcast.read.toLocaleString()}
                     </div>
                     <div className="text-gray-600 dark:text-gray-400">
