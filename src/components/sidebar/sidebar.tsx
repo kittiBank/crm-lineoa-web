@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MENU_ITEMS } from "@/constants/navigation";
+import { useIsMounted } from "@/lib/hooks/useIsMounted";
 import {
   LayoutDashboard,
   Send,
@@ -19,6 +20,7 @@ import {
  */
 export function Sidebar() {
   const pathname = usePathname();
+  const mounted = useIsMounted();
 
   // Map icon names to lucide-react icon components
   const iconMap: Record<string, React.ReactNode> = {
@@ -35,6 +37,7 @@ export function Sidebar() {
    * Check if a menu item is currently active
    */
   const isActive = (href: string) => {
+    if (!mounted) return false;
     return pathname.startsWith(href);
   };
 
@@ -47,6 +50,7 @@ export function Sidebar() {
             <li key={item.id}>
               <Link
                 href={item.href}
+                suppressHydrationWarning
                 className={`flex items-center gap-3 px-4 py-2 rounded-lg transition-colors ${
                   isActive(item.href)
                     ? "bg-blue-50 text-blue-600 dark:bg-blue-900 dark:text-blue-400"

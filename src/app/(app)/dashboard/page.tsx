@@ -58,7 +58,7 @@ export default function DashboardPage() {
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                 Total Audience
               </p>
-              <p className="text-4xl font-bold text-gray-900 dark:text-white">
+              <p className="text-4xl font-bold text-gray-900 dark:text-white" suppressHydrationWarning>
                 {metrics.totalAudience.toLocaleString()}
               </p>
             </div>
@@ -95,7 +95,7 @@ export default function DashboardPage() {
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                 Message Sent Today
               </p>
-              <p className="text-4xl font-bold text-gray-900 dark:text-white">
+              <p className="text-4xl font-bold text-gray-900 dark:text-white" suppressHydrationWarning>
                 {metrics.messageSentToday.toLocaleString()}
               </p>
             </div>
@@ -112,14 +112,14 @@ export default function DashboardPage() {
               <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
                 Followers OA
               </p>
-              <p className="text-4xl font-bold text-gray-900 dark:text-white">
+              <p className="text-4xl font-bold text-gray-900 dark:text-white" suppressHydrationWarning>
                 {(followerStatus.active + followerStatus.inactive).toLocaleString()}
               </p>
               <div className="flex items-center gap-3 mt-2">
-                <span className="text-xs text-green-600 dark:text-green-400">
+                <span className="text-xs text-green-600 dark:text-green-400" suppressHydrationWarning>
                   Active: {followerStatus.active.toLocaleString()}
                 </span>
-                <span className="text-xs text-gray-600 dark:text-gray-400">
+                <span className="text-xs text-gray-600 dark:text-gray-400" suppressHydrationWarning>
                   Inactive: {followerStatus.inactive.toLocaleString()}
                 </span>
               </div>
