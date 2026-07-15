@@ -1,3 +1,15 @@
+"use client";
+
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import { AudienceGrowthData } from "../lib/mockData";
 
 interface AudienceGrowthChartProps {
@@ -5,16 +17,10 @@ interface AudienceGrowthChartProps {
 }
 
 /**
- * Simple bar chart for audience growth
- * Shows new vs returning audience for 4 weeks
+ * Audience Growth Chart using Recharts
+ * Shows new vs returning audience for 4 weeks with bar chart
  */
 export function AudienceGrowthChart({ data }: AudienceGrowthChartProps) {
-  const maxValue = Math.max(...data.flatMap((d) => [d.new, d.returning]));
-  const chartHeight = 250;
-  const barWidth = 30;
-  const barGap = 20;
-  const padding = 40;
-
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
       <div className="flex items-center justify-between mb-6">
@@ -35,104 +41,53 @@ export function AudienceGrowthChart({ data }: AudienceGrowthChartProps) {
         </div>
       </div>
 
-      <svg
-        width="100%"
-        height={chartHeight}
-        viewBox={`0 0 ${(barWidth + barGap) * data.length + 2 * padding} ${chartHeight}`}
-        preserveAspectRatio="none"
-      >
-        {/* Y-axis */}
-        <line
-          x1={padding}
-          y1={padding}
-          x2={padding}
-          y2={chartHeight - padding}
-          stroke="currentColor"
-          strokeWidth="1"
-          className="stroke-gray-300 dark:stroke-gray-600"
-        />
-
-        {/* X-axis */}
-        <line
-          x1={padding}
-          y1={chartHeight - padding}
-          x2={(barWidth + barGap) * data.length + padding}
-          y2={chartHeight - padding}
-          stroke="currentColor"
-          strokeWidth="1"
-          className="stroke-gray-300 dark:stroke-gray-600"
-        />
-
-        {/* Grid lines and values */}
-        {[0, 0.25, 0.5, 0.75, 1].map((ratio, i) => {
-          const y = chartHeight - padding - (chartHeight - 2 * padding) * ratio;
-          return (
-            <g key={i}>
-              <line
-                x1={padding - 5}
-                y1={y}
-                x2={padding}
-                y2={y}
-                stroke="currentColor"
-                strokeWidth="1"
-                className="stroke-gray-300 dark:stroke-gray-600"
-              />
-              <text
-                x={padding - 10}
-                y={y + 4}
-                textAnchor="end"
-                fontSize="12"
-                className="fill-gray-600 dark:fill-gray-400"
-              >
-                {Math.round(maxValue * ratio / 1000)}k
-              </text>
-            </g>
-          );
-        })}
-
-        {/* Bars */}
-        {data.map((d, i) => {
-          const groupX = padding + (barWidth + barGap) * i + barGap / 2;
-          const baseY = chartHeight - padding;
-          const chartArea = chartHeight - 2 * padding;
-
-          const newHeight = (d.new / maxValue) * chartArea;
-          const returningHeight = (d.returning / maxValue) * chartArea;
-
-          return (
-            <g key={d.week}>
-              {/* New (darker blue) */}
-              <rect
-                x={groupX}
-                y={baseY - newHeight}
-                width={barWidth / 2 - 2}
-                height={newHeight}
-                fill="currentColor"
-                className="fill-blue-700 dark:fill-blue-600"
-              />
-              {/* Returning (lighter blue) */}
-              <rect
-                x={groupX + barWidth / 2}
-                y={baseY - returningHeight}
-                width={barWidth / 2 - 2}
-                height={returningHeight}
-                fill="currentColor"
-                className="fill-blue-300 dark:fill-blue-400"
-              />
-              {/* Week label */}
-              <text
-                x={groupX + barWidth / 2}
-                y={baseY + 20}
-                textAnchor="middle"
-                fontSize="12"
-                className="fill-gray-600 dark:fill-gray-400"
-              >
-                {d.week}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
+      <ResponsiveContainer width="100%" height={300}>
+        <BarChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#e5e7eb"
+            className="dark:stroke-gray-700"
+          />
+          <XAxis
+            dataKey="week"
+            stroke="#6b7280"
+            className="dark:stroke-gray-400"
+          />
+          <YAxis
+            stroke="#6b7280"
+            className="dark:stroke-gray-400"
+            label={{ value: "Audience", angle: -90, position: "insideLeft" }}
+          />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "#1f2937",
+              border: "1px solid #374151",
+              borderRadius: "8px",
+              color: "#fff",
+            }}
+            cursor={{ fill: "#f3f4f6", fillOpacity: 0.1 }}
+          />
+          <Legend
+            wrapperStyle={{
+              paddingTop: "20px",
+            }}
+          />
+          <Bar
+            dataKey="new"
+            fill="#1e40af"
+            name="New"
+            radius={[8, 8, 0, 0]}
+            isAnimationActive={true}
+          />
+          <Bar
+            dataKey="returning"
+            fill="#93c5fd"
+            name="Returning"
+            radius={[8, 8, 0, 0]}
+            isAnimationActive={true}
+          />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }

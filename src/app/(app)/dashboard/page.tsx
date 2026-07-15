@@ -4,16 +4,17 @@ import { useState, useMemo } from "react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import {
   BroadcastTrendChart,
-  AudienceGrowthChart,
+  BroadcastStatusChart,
   RecentBroadcastTable,
 } from "@/features/dashboard/components";
 import {
   generateDashboardMetrics,
   generateBroadcastTrendData,
-  generateAudienceGrowthData,
+  generateBroadcastStatusData,
+  generateFollowerStatus,
   generateRecentBroadcasts,
 } from "@/features/dashboard/lib/mockData";
-import { Users, Radio, Send } from "lucide-react";
+import { Users, Radio, Send, UserCheck } from "lucide-react";
 
 /**
  * Dashboard page
@@ -29,7 +30,8 @@ export default function DashboardPage() {
   // Generate mock data on client-side to avoid hydration issues
   const [metrics] = useState(() => generateDashboardMetrics());
   const [broadcastTrendData] = useState(() => generateBroadcastTrendData());
-  const [audienceGrowthData] = useState(() => generateAudienceGrowthData());
+  const [broadcastStatusData] = useState(() => generateBroadcastStatusData());
+  const [followerStatus] = useState(() => generateFollowerStatus());
   const [recentBroadcasts] = useState(() => generateRecentBroadcasts(5));
 
   return (
@@ -48,7 +50,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Top Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4" suppressHydrationWarning>
         {/* Total Audience Card */}
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-start justify-between">
@@ -102,19 +104,48 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Follower Status Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+                Followers OA
+              </p>
+              <p className="text-4xl font-bold text-gray-900 dark:text-white">
+                {(followerStatus.active + followerStatus.inactive).toLocaleString()}
+              </p>
+              <div className="flex items-center gap-3 mt-2">
+                <span className="text-xs text-green-600 dark:text-green-400">
+                  Active: {followerStatus.active.toLocaleString()}
+                </span>
+                <span className="text-xs text-gray-600 dark:text-gray-400">
+                  Inactive: {followerStatus.inactive.toLocaleString()}
+                </span>
+              </div>
+            </div>
+            <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+              <UserCheck className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4" suppressHydrationWarning>
         {/* Broadcast Trend Chart */}
-        <BroadcastTrendChart data={broadcastTrendData} />
+        <div className="lg:col-span-2">
+          <BroadcastTrendChart data={broadcastTrendData} />
+        </div>
 
-        {/* Audience Growth Chart */}
-        <AudienceGrowthChart data={audienceGrowthData} />
+        {/* Broadcast Status Chart */}
+        <BroadcastStatusChart data={broadcastStatusData} />
       </div>
 
       {/* Recent Broadcasts Table */}
-      <RecentBroadcastTable broadcasts={recentBroadcasts} />
+      <div suppressHydrationWarning>
+        <RecentBroadcastTable broadcasts={recentBroadcasts} />
+      </div>
     </div>
   );
 }

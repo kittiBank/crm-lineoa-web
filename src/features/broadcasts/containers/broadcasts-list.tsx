@@ -76,7 +76,9 @@ export function BroadcastsListContainer() {
       <SearchFilters filters={filters} onFilterChange={handleFilterChange} />
 
       {/* Broadcasts Table */}
-      <BroadcastTable broadcasts={paginatedBroadcasts} />
+      <div className="mt-6">
+        <BroadcastTable broadcasts={paginatedBroadcasts} />
+      </div>
 
       {/* Pagination */}
       <Pagination

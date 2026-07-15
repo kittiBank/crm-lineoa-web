@@ -74,7 +74,7 @@ export function BroadcastTable({
                 className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
               >
                 {/* Campaign Name */}
-                <td className="px-4 py-2">
+                <td className="px-4 py-4">
                   <div>
                     <p className="text-sm font-semibold text-gray-900 dark:text-white">
                       {broadcast.campaignName}
@@ -91,7 +91,7 @@ export function BroadcastTable({
                 </td>
 
                 {/* Target Audience */}
-                <td className="px-4 py-2">
+                <td className="px-4 py-4">
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">
                       {broadcast.targetAudience}
@@ -103,19 +103,19 @@ export function BroadcastTable({
                 </td>
 
                 {/* Template */}
-                <td className="px-4 py-2">
+                <td className="px-4 py-4">
                   <span className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
                     {broadcast.template.name}
                   </span>
                 </td>
 
                 {/* Status */}
-                <td className="px-4 py-2">
+                <td className="px-4 py-4">
                   <StatusBadge status={broadcast.status} />
                 </td>
 
                 {/* Performance */}
-                <td className="px-4 py-2">
+                <td className="px-4 py-4">
                   <div className="flex gap-4">
                     <div>
                       <p className="text-xs font-semibold text-gray-900 dark:text-white">
@@ -137,7 +137,7 @@ export function BroadcastTable({
                 </td>
 
                 {/* Actions */}
-                <td className="px-4 py-2">
+                <td className="px-4 py-4">
                   <div className="flex items-center justify-center gap-2">
                     <button
                       onClick={() => onEdit?.(broadcast.id)}
