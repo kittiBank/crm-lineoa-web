@@ -1,18 +1,114 @@
 "use client";
 
 import Link from "next/link";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/lib/hooks/useToast";
+import { API_ENDPOINTS } from "@/constants/api";
 
 /**
  * Login page
  * User authentication form entry point with modern split-screen design
  */
 export default function LoginPage() {
+  const router = useRouter();
+  const toast = useToast();
+
   // State for password visibility toggle
   const [showPassword, setShowPassword] = useState(false);
   // State for keep logged in checkbox
   const [keepLoggedIn, setKeepLoggedIn] = useState(false);
+  // Form state
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {},
+  );
+
+  const validateForm = (): boolean => {
+    const newErrors: typeof errors = {};
+
+    if (!email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Please enter a valid email address";
+    }
+
+    if (!password.trim()) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(API_ENDPOINTS.AUTH.LOGIN, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.message || "Login failed");
+        return;
+      }
+
+      // Store token
+      const token = data.accessToken || data.token;
+      if (token) {
+        localStorage.setItem("token", token);
+      } else {
+        toast.error("No token received from server");
+        return;
+      }
+
+      // Store user info if available
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
+
+      toast.success("Login successful!");
+
+      // Redirect to dashboard
+      router.push("/dashboard");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInputChange = (field: "email" | "password", value: string) => {
+    if (field === "email") {
+      setEmail(value);
+    } else {
+      setPassword(value);
+    }
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
 
   return (
     <div className="w-full max-w-md">
@@ -25,7 +121,7 @@ export default function LoginPage() {
       </div>
 
       {/* Login Form */}
-      <form className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {/* Email Input */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -36,9 +132,16 @@ export default function LoginPage() {
             <input
               type="email"
               placeholder="name@company.com"
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              value={email}
+              onChange={(e) => handleInputChange("email", e.target.value)}
+              disabled={loading}
+              aria-invalid={!!errors.email}
+              className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed aria-invalid:border-red-500"
             />
           </div>
+          {errors.email && (
+            <p className="text-xs text-red-500 mt-1">{errors.email}</p>
+          )}
         </div>
 
         {/* Password Input */}
@@ -51,13 +154,18 @@ export default function LoginPage() {
             <input
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
-              className="w-full pl-10 pr-12 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              value={password}
+              onChange={(e) => handleInputChange("password", e.target.value)}
+              disabled={loading}
+              aria-invalid={!!errors.password}
+              className="w-full pl-10 pr-12 py-2.5 border border-gray-300 rounded-lg bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:opacity-50 disabled:cursor-not-allowed aria-invalid:border-red-500"
             />
             {/* Password visibility toggle */}
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors"
+              disabled={loading}
+              className="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {showPassword ? (
                 <EyeOff className="h-5 w-5" />
@@ -66,6 +174,9 @@ export default function LoginPage() {
               )}
             </button>
           </div>
+          {errors.password && (
+            <p className="text-xs text-red-500 mt-1">{errors.password}</p>
+          )}
         </div>
 
         {/* Remember Me & Forgot Password */}
@@ -75,7 +186,8 @@ export default function LoginPage() {
               type="checkbox"
               checked={keepLoggedIn}
               onChange={(e) => setKeepLoggedIn(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              disabled={loading}
+              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <span className="font-medium">Keep me logged in</span>
           </label>
@@ -88,11 +200,14 @@ export default function LoginPage() {
         </div>
 
         {/* Sign In Button */}
-        <Link href="/dashboard" className="block">
-          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors duration-200 active:scale-95">
-            Sign in
-          </button>
-        </Link>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {loading && <Loader2 className="h-5 w-5 animate-spin" />}
+          {loading ? "Signing in..." : "Sign in"}
+        </button>
       </form>
 
       {/* Footer Links */}
