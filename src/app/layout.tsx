@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter, IBM_Plex_Sans_Thai } from "next/font/google";
 import "./globals.css";
+import { ToastProvider } from "@/lib/toast-context";
+import { ToastContainer } from "@/components/ui/toast";
 
 // Main font - Inter for English and default content
 const inter = Inter({
@@ -31,7 +33,12 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${ibmPlexSansThai.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        <ToastProvider>
+          {children}
+          <ToastContainer />
+        </ToastProvider>
+      </body>
     </html>
   );
 }
