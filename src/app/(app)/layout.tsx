@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/navbar/navbar";
 import { Sidebar } from "@/components/sidebar/sidebar";
+import { getToken, redirectToLogin } from "@/lib/auth";
+import { useIsMounted } from "@/lib/hooks/useIsMounted";
 
 /**
  * Application layout
@@ -15,10 +17,21 @@ export default function AppLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // State for sidebar visibility
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const mounted = useIsMounted();
+  const isAuthenticated = mounted && !!getToken();
+
+  useEffect(() => {
+    if (mounted && !getToken()) {
+      redirectToLogin();
+    }
+  }, [mounted]);
 
   const handleSidebarToggle = () => setSidebarOpen(!sidebarOpen);
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
