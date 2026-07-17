@@ -11,5 +11,6 @@ export const API_ENDPOINTS = {
   },
   LINE: {
     VERIFY: `${API_BASE_URL}/api/v1/line/verify`,
+    USERS: `${API_BASE_URL}/api/v1/line/users`,
   },
 } as const;

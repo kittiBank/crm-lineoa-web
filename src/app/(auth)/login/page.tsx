@@ -2,18 +2,27 @@
 
 import Link from "next/link";
 import { Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useToast } from "@/lib/hooks/useToast";
 import { API_ENDPOINTS } from "@/constants/api";
+import {
+  getToken,
+  redirectToDashboard,
+  setAuthToken,
+} from "@/lib/auth";
 
 /**
  * Login page
  * User authentication form entry point with modern split-screen design
  */
 export default function LoginPage() {
-  const router = useRouter();
   const toast = useToast();
+
+  useEffect(() => {
+    if (getToken()) {
+      redirectToDashboard();
+    }
+  }, []);
 
   // State for password visibility toggle
   const [showPassword, setShowPassword] = useState(false);
@@ -73,24 +82,15 @@ export default function LoginPage() {
         return;
       }
 
-      // Store token
       const token = data.accessToken || data.token;
-      if (token) {
-        localStorage.setItem("token", token);
-      } else {
+      if (!token) {
         toast.error("No token received from server");
         return;
       }
 
-      // Store user info if available
-      if (data.user) {
-        localStorage.setItem("user", JSON.stringify(data.user));
-      }
-
+      setAuthToken(token, data.user);
       toast.success("Login successful!");
-
-      // Redirect to dashboard
-      router.push("/dashboard");
+      redirectToDashboard();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Login failed");
     } finally {
