@@ -13,4 +13,11 @@ export const API_ENDPOINTS = {
     VERIFY: `${API_BASE_URL}/api/v1/line/verify`,
     USERS: `${API_BASE_URL}/api/v1/line/users`,
   },
+  RICH_MENU: {
+    LIST: `${API_BASE_URL}/api/v1/rich-menus`,
+    CREATE: `${API_BASE_URL}/api/v1/rich-menus`,
+    LAYOUTS: `${API_BASE_URL}/api/v1/rich-menus/layouts`,
+    APPLY_MEMBER: (id: string) =>
+      `${API_BASE_URL}/api/v1/rich-menus/${id}/apply-member`,
+  },
 } as const;
