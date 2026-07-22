@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, Upload, ImageIcon } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
-import { Button } from "@/components/ui/button";
+import { FormActionFooter } from "@/components/ui/form-footer";
+import type { FormActionFooterMode } from "@/components/ui/form-footer";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/lib/hooks/useToast";
@@ -36,6 +36,7 @@ const inputClassName =
 
 interface RichMenuBuilderContainerProps {
   menuId?: string;
+  mode?: FormActionFooterMode;
 }
 
 async function resolveImageFile(
@@ -65,10 +66,13 @@ async function resolveImageFile(
 
 export function RichMenuBuilderContainer({
   menuId,
+  mode,
 }: RichMenuBuilderContainerProps) {
   const router = useRouter();
   const toast = useToast();
-  const isEditMode = Boolean(menuId);
+  const resolvedMode = mode ?? (menuId ? "edit" : "create");
+  const isViewMode = resolvedMode === "view";
+  const isEditMode = resolvedMode === "edit";
 
   const [name, setName] = useState("Default Guest Menu");
   const [chatBarText, setChatBarText] = useState("Menu");
@@ -78,7 +82,7 @@ export function RichMenuBuilderContainer({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingMenu, setIsLoadingMenu] = useState(isEditMode);
+  const [isLoadingMenu, setIsLoadingMenu] = useState(Boolean(menuId));
 
   const layout = useMemo(() => getLayoutById(layoutId), [layoutId]);
 
@@ -145,7 +149,10 @@ export function RichMenuBuilderContainer({
   const breadcrumbItems = [
     { label: "Home", href: "/dashboard" },
     { label: "Rich Menu", href: "/rich-menu" },
-    { label: isEditMode ? "Edit" : "Create", isActive: true },
+    {
+      label: isViewMode ? "View" : isEditMode ? "Edit" : "Create",
+      isActive: true,
+    },
   ];
 
   const handleLayoutChange = (nextLayoutId: string) => {
@@ -284,11 +291,16 @@ export function RichMenuBuilderContainer({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {isEditMode ? "Edit Rich Menu" : "Create Rich Menu"}
+            {isViewMode
+              ? "View Rich Menu"
+              : isEditMode
+                ? "Edit Rich Menu"
+                : "Create Rich Menu"}
           </h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Build a LINE rich menu with clickable areas, similar to LINE
-            Official Account Manager
+            {isViewMode
+              ? "Review rich menu settings and tap areas"
+              : "Build a LINE rich menu with clickable areas, similar to LINE Official Account Manager"}
           </p>
         </div>
         <Badge
@@ -314,6 +326,7 @@ export function RichMenuBuilderContainer({
                   value={name}
                   onChange={(event) => setName(event.target.value)}
                   className={inputClassName}
+                  readOnly={isViewMode}
                 />
               </div>
               <div>
@@ -325,6 +338,7 @@ export function RichMenuBuilderContainer({
                   maxLength={14}
                   onChange={(event) => setChatBarText(event.target.value)}
                   className={inputClassName}
+                  readOnly={isViewMode}
                 />
               </div>
             </div>
@@ -334,23 +348,32 @@ export function RichMenuBuilderContainer({
                 Menu type *
               </label>
               <div className="grid gap-3 md:grid-cols-2">
-                {MENU_TYPE_OPTIONS.map((option) => (
+                {MENU_TYPE_OPTIONS.map((option) => {
+                  if (isViewMode && menuType !== option.value) {
+                    return null;
+                  }
+
+                  return (
                   <label
                     key={option.value}
-                    className={`flex cursor-pointer gap-3 rounded-lg border p-4 transition-colors ${
+                    className={`flex gap-3 rounded-lg border p-4 transition-colors ${
+                      isViewMode ? "" : "cursor-pointer"
+                    } ${
                       menuType === option.value
                         ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
                         : "border-gray-200 dark:border-gray-700"
                     }`}
                   >
-                    <input
-                      type="radio"
-                      name="menuType"
-                      value={option.value}
-                      checked={menuType === option.value}
-                      onChange={() => setMenuType(option.value)}
-                      className="mt-1"
-                    />
+                    {!isViewMode && (
+                      <input
+                        type="radio"
+                        name="menuType"
+                        value={option.value}
+                        checked={menuType === option.value}
+                        onChange={() => setMenuType(option.value)}
+                        className="mt-1"
+                      />
+                    )}
                     <span>
                       <span className="block text-sm font-medium text-gray-900 dark:text-white">
                         {option.label}
@@ -360,7 +383,8 @@ export function RichMenuBuilderContainer({
                       </span>
                     </span>
                   </label>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </section>
@@ -376,6 +400,7 @@ export function RichMenuBuilderContainer({
               layouts={RICH_MENU_LAYOUTS}
               selectedLayoutId={layoutId}
               onSelect={handleLayoutChange}
+              readOnly={isViewMode}
             />
           </section>
 
@@ -383,6 +408,25 @@ export function RichMenuBuilderContainer({
             <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
               Menu image
             </h2>
+            {isViewMode ? (
+              <div className="flex flex-col items-center justify-center rounded-xl border border-gray-200 px-6 py-10 text-center dark:border-gray-700">
+                {imagePreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={imagePreview}
+                    alt="Rich menu"
+                    className="mx-auto max-h-48 rounded-lg object-contain"
+                  />
+                ) : (
+                  <>
+                    <ImageIcon className="mb-3 h-10 w-10 text-gray-400" />
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      No image
+                    </p>
+                  </>
+                )}
+              </div>
+            ) : (
             <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 px-6 py-10 text-center transition-colors hover:border-blue-400 hover:bg-blue-50/40 dark:border-gray-600 dark:hover:border-blue-500 dark:hover:bg-blue-950/20">
               {imagePreview ? (
                 <div className="space-y-3">
@@ -419,6 +463,7 @@ export function RichMenuBuilderContainer({
                 Choose image
               </span>
             </label>
+            )}
           </section>
 
           <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -446,6 +491,7 @@ export function RichMenuBuilderContainer({
               onChange={(nextArea) =>
                 updateArea(selectedAreaIndex, nextArea)
               }
+              readOnly={isViewMode}
             />
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -466,42 +512,30 @@ export function RichMenuBuilderContainer({
             </div>
           </section>
 
-          <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
-              Publish
-            </h2>
-            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              {menuType === "default"
-                ? "This menu will be set as the default rich menu for guest users on LINE."
-                : "This menu will be created on LINE. You can link it to members from the list page later."}
-            </p>
-
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="bg-blue-600 px-6 text-white hover:bg-blue-700"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isEditMode ? "Saving..." : "Creating..."}
-                  </>
-                ) : isEditMode ? (
-                  "Save Changes"
-                ) : (
-                  "Create Rich Menu"
-                )}
-              </Button>
-              <Link href="/rich-menu">
-                <Button className="w-full bg-gray-200 px-6 text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 sm:w-auto">
-                  Cancel
-                </Button>
-              </Link>
-            </div>
-          </section>
+          {!isViewMode && (
+            <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">
+                Publish
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {menuType === "default"
+                  ? "This menu will be set as the default rich menu for guest users on LINE."
+                  : "This menu will be created on LINE. You can link it to members from the list page later."}
+              </p>
+            </section>
+          )}
         </div>
       </div>
+
+      <FormActionFooter
+        mode={resolvedMode}
+        cancelHref="/rich-menu"
+        onSave={handleSubmit}
+        isSubmitting={isSubmitting}
+        createSaveLabel="Create Rich Menu"
+        editSaveLabel="Save Changes"
+        savingLabel={isEditMode ? "Saving..." : "Creating..."}
+      />
     </div>
   );
 }

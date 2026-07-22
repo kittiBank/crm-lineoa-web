@@ -1,5 +1,5 @@
 import { Edit2, Trash2, Eye } from "lucide-react";
-import { MessageTemplate } from "../types";
+import { MessageTemplate, MessageTemplateType } from "../types";
 
 interface TemplateTableProps {
   templates: MessageTemplate[];
@@ -16,21 +16,27 @@ interface TemplateTableProps {
 /**
  * Type badge component
  */
-function TypeBadge({ type }: { type: MessageTemplate["type"] }) {
-  const typeColors: Record<MessageTemplate["type"], string> = {
+function TypeBadge({ type }: { type: MessageTemplateType }) {
+  const typeColors: Record<MessageTemplateType, string> = {
     text: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400",
+    image: "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400",
+    video: "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400",
     flex: "bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400",
     carousel:
       "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400",
-    rich_menu:
-      "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
+    multi: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
   };
+
+  const label =
+    type === "multi"
+      ? "Multi"
+      : type.charAt(0).toUpperCase() + type.slice(1);
 
   return (
     <span
       className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${typeColors[type]}`}
     >
-      {type.charAt(0).toUpperCase() + type.slice(1)}
+      {label}
     </span>
   );
 }
@@ -123,7 +129,7 @@ export function TemplateTable({
                       {template.name}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {template.description}
+                      {template.description || "No description"}
                     </p>
                   </div>
                 </td>
@@ -158,7 +164,7 @@ export function TemplateTable({
                     className="text-sm text-gray-600 dark:text-gray-400"
                     suppressHydrationWarning
                   >
-                    {template.createdAt.toLocaleDateString("en-US", {
+                    {new Date(template.createdAt).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
                       year: "numeric",

@@ -69,6 +69,10 @@ export function RichMenuListContainer() {
     }
   };
 
+  const handleView = (menuId: string) => {
+    router.push(`/rich-menu/${menuId}/view`);
+  };
+
   const handleEdit = (menuId: string) => {
     router.push(`/rich-menu/${menuId}/edit`);
   };
@@ -158,6 +162,7 @@ export function RichMenuListContainer() {
               menu={menu}
               isApplying={applyingId === menu.id}
               isDeleting={deletingId === menu.id}
+              onView={handleView}
               onEdit={handleEdit}
               onDelete={handleDeleteClick}
               onApplyMember={
