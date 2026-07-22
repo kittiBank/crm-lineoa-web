@@ -1,4 +1,4 @@
-import { useCallback, useContext } from "react";
+import { useCallback, useContext, useMemo } from "react";
 import { ToastContext } from "@/lib/toast-context";
 
 export type ToastType = "success" | "error" | "info" | "warning";
@@ -30,10 +30,30 @@ export function useToast() {
     [context]
   );
 
-  return {
-    success: (message: string) => showToast(message, "success"),
-    error: (message: string) => showToast(message, "error"),
-    info: (message: string) => showToast(message, "info"),
-    warning: (message: string) => showToast(message, "warning"),
-  };
+  const success = useCallback(
+    (message: string) => showToast(message, "success"),
+    [showToast],
+  );
+  const error = useCallback(
+    (message: string) => showToast(message, "error"),
+    [showToast],
+  );
+  const info = useCallback(
+    (message: string) => showToast(message, "info"),
+    [showToast],
+  );
+  const warning = useCallback(
+    (message: string) => showToast(message, "warning"),
+    [showToast],
+  );
+
+  return useMemo(
+    () => ({
+      success,
+      error,
+      info,
+      warning,
+    }),
+    [success, error, info, warning],
+  );
 }

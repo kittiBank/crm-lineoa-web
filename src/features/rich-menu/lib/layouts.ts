@@ -128,6 +128,14 @@ export function getLayoutById(layoutId: string): RichMenuLayout {
   return layout;
 }
 
+export function getLayoutIdBySize(width: number, height: number): string {
+  const layout = RICH_MENU_LAYOUTS.find(
+    (item) => item.size.width === width && item.size.height === height,
+  );
+
+  return layout?.id ?? "large-2x3";
+}
+
 export function createDefaultAreas(count: number, layoutId: string) {
   const layout = getLayoutById(layoutId);
   const presets = [

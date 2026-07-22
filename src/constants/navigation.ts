@@ -60,6 +60,7 @@ export const BREADCRUMB_MAP: Record<string, string[]> = {
   "/line-users": ["LINE Users"],
   "/rich-menu": ["Rich Menu"],
   "/rich-menu/create": ["Rich Menu", "Create"],
+  "/rich-menu/[id]/edit": ["Rich Menu", "Edit"],
   "/settings": ["LINE OA Settings"],
   "/user-settings": ["User Settings"],
 };

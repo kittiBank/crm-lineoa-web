@@ -1,21 +1,41 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Loader2, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { fetchRichMenus, applyMemberRichMenu } from "../lib/api";
-import { RichMenuRecord } from "../types";
+import { RichMenuCard, RichMenuHeader, SearchFilters, DeleteRichMenuDialog } from "@/features/rich-menu/components";
+import {
+  applyMemberRichMenu,
+  deleteRichMenu,
+  fetchRichMenus,
+} from "@/features/rich-menu/lib/api";
+import { filterRichMenus } from "@/features/rich-menu/lib/filterRichMenus";
+import {
+  DEFAULT_RICH_MENU_FILTERS,
+  RichMenuFilterOptions,
+  RichMenuRecord,
+} from "@/features/rich-menu/types";
 import { useToast } from "@/lib/hooks/useToast";
 
 export function RichMenuListContainer() {
+  const router = useRouter();
   const toast = useToast();
   const [menus, setMenus] = useState<RichMenuRecord[]>([]);
+  const [filters, setFilters] = useState<RichMenuFilterOptions>(
+    DEFAULT_RICH_MENU_FILTERS,
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [applyingId, setApplyingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [menuToDelete, setMenuToDelete] = useState<RichMenuRecord | null>(null);
+
+  const filteredMenus = useMemo(
+    () => filterRichMenus(menus, filters),
+    [menus, filters],
+  );
 
   const loadMenus = async () => {
     setIsLoading(true);
@@ -49,31 +69,57 @@ export function RichMenuListContainer() {
     }
   };
 
+  const handleEdit = (menuId: string) => {
+    router.push(`/rich-menu/${menuId}/edit`);
+  };
+
+  const handleDeleteClick = (menuId: string) => {
+    const menu = menus.find((item) => item.id === menuId);
+    if (menu) {
+      setMenuToDelete(menu);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!menuToDelete) {
+      return;
+    }
+
+    setDeletingId(menuToDelete.id);
+    try {
+      await deleteRichMenu(menuToDelete.id);
+      setMenus((current) =>
+        current.filter((item) => item.id !== menuToDelete.id),
+      );
+      setMenuToDelete(null);
+      toast.success(`"${menuToDelete.name}" deleted successfully`);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to delete rich menu",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleDeleteDialogOpenChange = (open: boolean) => {
+    if (!open && !deletingId) {
+      setMenuToDelete(null);
+    }
+  };
+
   const breadcrumbItems = [
     { label: "Home", href: "/dashboard" },
     { label: "Rich Menu", isActive: true },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-2">
       <Breadcrumbs items={breadcrumbItems} />
 
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Rich Menu
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            Create and manage LINE Rich Menu configurations
-          </p>
-        </div>
-        <Link href="/rich-menu/create">
-          <Button className="bg-blue-600 text-white hover:bg-blue-700">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Rich Menu
-          </Button>
-        </Link>
-      </div>
+      <RichMenuHeader />
+
+      <SearchFilters filters={filters} onFilterChange={setFilters} />
 
       {isLoading ? (
         <div className="flex items-center justify-center py-16 text-gray-500">
@@ -90,75 +136,44 @@ export function RichMenuListContainer() {
             No rich menus yet. Create your first menu to show on LINE OA.
           </p>
           <Link href="/rich-menu/create" className="mt-4 inline-block">
-            <Button className="bg-blue-600 text-white hover:bg-blue-700">
-              Create Rich Menu
-            </Button>
+            <button
+              type="button"
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-blue-700 active:scale-95"
+            >
+              New Rich Menu
+            </button>
           </Link>
         </div>
+      ) : filteredMenus.length === 0 ? (
+        <div className="rounded-xl border border-gray-200 bg-white p-10 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <p className="text-gray-600 dark:text-gray-400">
+            No rich menus match your search filters.
+          </p>
+        </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {menus.map((menu) => (
-            <article
+        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {filteredMenus.map((menu) => (
+            <RichMenuCard
               key={menu.id}
-              className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800"
-            >
-              <div className="aspect-[2500/1686] bg-gray-100 dark:bg-gray-900">
-                {menu.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={menu.imageUrl}
-                    alt={menu.name}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-sm text-gray-400">
-                    No preview
-                  </div>
-                )}
-              </div>
-              <div className="space-y-3 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h2 className="font-semibold text-gray-900 dark:text-white">
-                      {menu.name}
-                    </h2>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {menu.chatBarText} · {menu.sizeWidth}×{menu.sizeHeight}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    <Badge variant={menu.menuType === "default" ? "default" : "secondary"}>
-                      {menu.menuType === "default" ? "Guest" : "Member"}
-                    </Badge>
-                    {menu.isActive && (
-                      <Badge variant="outline">Active</Badge>
-                    )}
-                  </div>
-                </div>
-
-                {menu.menuType === "member" && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={applyingId === menu.id}
-                    onClick={() => handleApplyMember(menu.id)}
-                    className="w-full"
-                  >
-                    {applyingId === menu.id ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Linking...
-                      </>
-                    ) : (
-                      "Link to all members"
-                    )}
-                  </Button>
-                )}
-              </div>
-            </article>
+              menu={menu}
+              isApplying={applyingId === menu.id}
+              isDeleting={deletingId === menu.id}
+              onEdit={handleEdit}
+              onDelete={handleDeleteClick}
+              onApplyMember={
+                menu.menuType === "member" ? handleApplyMember : undefined
+              }
+            />
           ))}
         </div>
       )}
+
+      <DeleteRichMenuDialog
+        menu={menuToDelete}
+        isDeleting={Boolean(deletingId)}
+        onOpenChange={handleDeleteDialogOpenChange}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }
