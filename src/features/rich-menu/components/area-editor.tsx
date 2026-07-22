@@ -12,6 +12,7 @@ interface AreaEditorProps {
   areaIndex: number;
   area: RichMenuAreaConfig;
   onChange: (area: RichMenuAreaConfig) => void;
+  readOnly?: boolean;
 }
 
 const inputClassName =
@@ -20,13 +21,21 @@ const inputClassName =
 const selectClassName =
   "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white";
 
-export function AreaEditor({ areaIndex, area, onChange }: AreaEditorProps) {
+export function AreaEditor({
+  areaIndex,
+  area,
+  onChange,
+  readOnly = false,
+}: AreaEditorProps) {
   const actionMeta = ACTION_TYPE_OPTIONS.find(
     (item) => item.value === area.actionType,
   );
 
   return (
-    <div className="space-y-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/40">
+    <fieldset
+      disabled={readOnly}
+      className="space-y-4 rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/40"
+    >
       <div className="flex items-center justify-between gap-2">
         <h3 className="font-medium text-gray-900 dark:text-white">
           Area {areaIndex + 1}
@@ -160,6 +169,6 @@ export function AreaEditor({ areaIndex, area, onChange }: AreaEditorProps) {
           </div>
         </>
       )}
-    </div>
+    </fieldset>
   );
 }

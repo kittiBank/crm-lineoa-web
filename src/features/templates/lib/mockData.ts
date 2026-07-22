@@ -6,23 +6,23 @@ import { MessageTemplate, TemplateCategory } from "../types";
  */
 export function generateMockTemplates(count: number = 12): MessageTemplate[] {
   const categories = ["Promotion", "Welcome", "Support", "Notification", "Survey"];
-  const templateTypes: Array<"text" | "flex" | "carousel" | "rich_menu"> = [
+  const templateTypes: MessageTemplate["type"][] = [
     "text",
     "flex",
     "carousel",
-    "rich_menu",
+    "multi",
   ];
 
   return Array.from({ length: count }, () => {
-    const createdDate = faker.date.past({ years: 1 });
+    const createdDate = faker.date.past({ years: 1 }).toISOString();
     return {
       id: faker.string.uuid(),
       name: faker.commerce.productName(),
       description: faker.lorem.sentence(),
       type: faker.helpers.arrayElement(templateTypes),
-      content: faker.lorem.paragraphs(2),
+      messages: [],
       createdAt: createdDate,
-      updatedAt: faker.date.between({ from: createdDate, to: new Date() }),
+      updatedAt: faker.date.recent().toISOString(),
       category: faker.helpers.arrayElement(categories),
       usageCount: faker.number.int({ min: 0, max: 500 }),
       isActive: faker.datatype.boolean({ probability: 0.8 }),
@@ -87,7 +87,7 @@ export function searchTemplates(
   return templates.filter(
     (t) =>
       t.name.toLowerCase().includes(lowerQuery) ||
-      t.description.toLowerCase().includes(lowerQuery) ||
-      t.category.toLowerCase().includes(lowerQuery)
+      (t.description ?? "").toLowerCase().includes(lowerQuery) ||
+      t.category.toLowerCase().includes(lowerQuery),
   );
 }

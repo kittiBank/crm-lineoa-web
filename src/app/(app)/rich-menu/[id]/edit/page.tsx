@@ -7,5 +7,5 @@ interface EditRichMenuPageProps {
 export default async function EditRichMenuPage({ params }: EditRichMenuPageProps) {
   const { id } = await params;
 
-  return <RichMenuBuilderContainer menuId={id} />;
+  return <RichMenuBuilderContainer menuId={id} mode="edit" />;
 }

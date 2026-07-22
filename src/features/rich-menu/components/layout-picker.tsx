@@ -7,6 +7,7 @@ interface LayoutPickerProps {
   layouts: RichMenuLayout[];
   selectedLayoutId: string;
   onSelect: (layoutId: string) => void;
+  readOnly?: boolean;
 }
 
 function LayoutPreview({
@@ -50,21 +51,28 @@ export function LayoutPicker({
   layouts,
   selectedLayoutId,
   onSelect,
+  readOnly = false,
 }: LayoutPickerProps) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       {layouts.map((layout) => {
         const selected = layout.id === selectedLayoutId;
+        if (readOnly && !selected) {
+          return null;
+        }
+
         return (
           <button
             key={layout.id}
             type="button"
             onClick={() => onSelect(layout.id)}
+            disabled={readOnly}
             className={cn(
               "rounded-lg border p-3 text-left transition-all hover:shadow-sm",
               selected
                 ? "border-blue-500 ring-2 ring-blue-200 dark:ring-blue-900"
                 : "border-gray-200 dark:border-gray-700",
+              readOnly && "cursor-default hover:shadow-none",
             )}
           >
             <LayoutPreview

@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   TemplateHeader,
   TemplateTable,
@@ -9,141 +12,191 @@ import {
   TemplatePagination,
 } from "@/features/templates/components";
 import {
-  generateMockTemplates,
-  generateTemplateCategories,
   filterTemplatesByCategory,
   filterTemplatesByStatus,
   searchTemplates,
 } from "@/features/templates/lib/mockData";
+import { deleteTemplate, fetchTemplates } from "@/features/templates/lib/api";
 import { MessageTemplate } from "@/features/templates/types";
+import { useToast } from "@/lib/hooks/useToast";
 
-/**
- * Templates list container
- * Manages state, filtering, and pagination for the templates list
- */
 export function TemplatesListContainer() {
-  // State management
+  const router = useRouter();
+  const toast = useToast();
+
+  const [templates, setTemplates] = useState<MessageTemplate[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [selectedStatus, setSelectedStatus] = useState<"all" | "active" | "inactive">("all");
+  const [selectedStatus, setSelectedStatus] = useState<
+    "all" | "active" | "inactive"
+  >("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [templateToDelete, setTemplateToDelete] =
+    useState<MessageTemplate | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Generate mock data on client-side
-  const [allTemplates] = useState<MessageTemplate[]>(() =>
-    generateMockTemplates(24)
-  );
+  const loadTemplates = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await fetchTemplates();
+      setTemplates(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load templates");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTemplates();
+  }, []);
 
   const categories = useMemo(() => {
-    const cats = generateTemplateCategories(allTemplates);
-    return ["All", ...cats.map((c) => c.name)];
-  }, [allTemplates]);
+    const unique = Array.from(new Set(templates.map((item) => item.category)));
+    return ["All", ...unique.sort()];
+  }, [templates]);
 
-  // Apply filters and search
   const filteredTemplates = useMemo(() => {
-    let result = [...allTemplates];
-
-    // Apply search
+    let result = [...templates];
     result = searchTemplates(result, searchQuery);
-
-    // Apply category filter
     result = filterTemplatesByCategory(result, selectedCategory);
-
-    // Apply status filter
     result = filterTemplatesByStatus(result, selectedStatus);
-
     return result;
-  }, [allTemplates, searchQuery, selectedCategory, selectedStatus]);
+  }, [templates, searchQuery, selectedCategory, selectedStatus]);
 
-  // Calculate pagination
   const totalPages = Math.ceil(filteredTemplates.length / itemsPerPage);
-  
-  // Reset to page 1 when filters change
-  useMemo(() => {
+
+  useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedCategory, selectedStatus]);
 
-  // Get paginated templates
   const paginatedTemplates = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredTemplates.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredTemplates, currentPage, itemsPerPage]);
 
-  // Breadcrumb items
+  const handleEdit = (id: string) => {
+    router.push(`/templates/${id}/edit`);
+  };
+
+  const handleView = (id: string) => {
+    router.push(`/templates/${id}/view`);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    const template = templates.find((item) => item.id === id);
+    if (template) {
+      setTemplateToDelete(template);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!templateToDelete) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteTemplate(templateToDelete.id);
+      setTemplates((current) =>
+        current.filter((item) => item.id !== templateToDelete.id),
+      );
+      setTemplateToDelete(null);
+      toast.success(`"${templateToDelete.name}" deleted successfully`);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to delete template",
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const breadcrumbItems = [
     { label: "Home", href: "/dashboard" },
     { label: "Message Templates", isActive: true },
   ];
 
-  const handleEdit = (id: string) => {
-    console.log("Edit template:", id);
-    // TODO: Navigate to edit page
-  };
-
-  const handleDelete = (id: string) => {
-    console.log("Delete template:", id);
-    // TODO: Implement delete
-  };
-
-  const handleView = (id: string) => {
-    console.log("View template:", id);
-    // TODO: Navigate to view page
-  };
-
-  const handleSearch = () => {
-    // Search is applied via onSearchChange, this can be used for additional logic
-    console.log("Search triggered with query:", searchQuery);
-  };
-
-  const handleClear = () => {
-    // All filters are cleared via onClear, this can be used for additional logic
-    console.log("Filters cleared");
-  };
-
   return (
     <div className="space-y-2" suppressHydrationWarning>
-      {/* Breadcrumbs */}
       <Breadcrumbs items={breadcrumbItems} />
-
-      {/* Page Header */}
       <TemplateHeader />
 
-      {/* Filters */}
       <TemplateFilters
         searchQuery={searchQuery}
         selectedCategory={selectedCategory}
         selectedStatus={selectedStatus}
-        categories={categories.filter((c) => c !== "All")}
+        categories={categories.filter((item) => item !== "All")}
         onSearchChange={setSearchQuery}
         onCategoryChange={setSelectedCategory}
         onStatusChange={setSelectedStatus}
-        onSearch={handleSearch}
-        onClear={handleClear}
+        onSearch={() => undefined}
+        onClear={() => undefined}
       />
 
-      {/* Template Table */}
-      <div className="mt-6">
-        <TemplateTable
-          templates={paginatedTemplates}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          itemsPerPage={itemsPerPage}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onView={handleView}
-          onPageChange={setCurrentPage}
-          onItemsPerPageChange={setItemsPerPage}
-        />
-      </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16 text-gray-500">
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+          Loading templates...
+        </div>
+      ) : error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+          {error}
+        </div>
+      ) : (
+        <>
+          <div className="mt-6">
+            <TemplateTable
+              templates={paginatedTemplates}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              itemsPerPage={itemsPerPage}
+              onEdit={handleEdit}
+              onDelete={handleDeleteClick}
+              onView={handleView}
+              onPageChange={setCurrentPage}
+              onItemsPerPageChange={setItemsPerPage}
+            />
+          </div>
 
-      {/* Pagination */}
-      <TemplatePagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={filteredTemplates.length}
-        itemsPerPage={itemsPerPage}
-        onPageChange={setCurrentPage}
-        onItemsPerPageChange={setItemsPerPage}
+          <TemplatePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredTemplates.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            onItemsPerPageChange={setItemsPerPage}
+          />
+        </>
+      )}
+
+      <ConfirmDialog
+        open={Boolean(templateToDelete)}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setTemplateToDelete(null);
+          }
+        }}
+        title="Delete Template"
+        description={
+          <>
+            Are you sure you want to delete{" "}
+            <span className="font-medium text-gray-900 dark:text-white">
+              &quot;{templateToDelete?.name}&quot;
+            </span>
+            ? This action cannot be undone.
+          </>
+        }
+        variant="destructive"
+        confirmLabel="Delete"
+        loadingLabel="Deleting..."
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        showCloseButton={!isDeleting}
       />
     </div>
   );

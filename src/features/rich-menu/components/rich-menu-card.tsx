@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit2, Loader2, Trash2 } from "lucide-react";
+import { Edit2, Eye, Loader2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RichMenuRecord } from "../types";
@@ -9,6 +9,7 @@ interface RichMenuCardProps {
   menu: RichMenuRecord;
   isApplying?: boolean;
   isDeleting?: boolean;
+  onView: (id: string) => void;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
   onApplyMember?: (id: string) => void;
@@ -34,6 +35,7 @@ export function RichMenuCard({
   menu,
   isApplying = false,
   isDeleting = false,
+  onView,
   onEdit,
   onDelete,
   onApplyMember,
@@ -55,6 +57,14 @@ export function RichMenuCard({
         )}
 
         <div className="absolute right-2 top-2 flex gap-1">
+          <button
+            type="button"
+            onClick={() => onView(menu.id)}
+            className="rounded-lg bg-white/90 p-2 text-gray-600 shadow-sm transition-colors hover:bg-blue-50 hover:text-blue-600 dark:bg-gray-900/90 dark:text-gray-300 dark:hover:bg-blue-900/30 dark:hover:text-blue-400"
+            title="View"
+          >
+            <Eye className="h-4 w-4" />
+          </button>
           <button
             type="button"
             onClick={() => onEdit(menu.id)}
