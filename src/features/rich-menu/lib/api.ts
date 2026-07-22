@@ -3,6 +3,7 @@ import { getToken } from "@/lib/auth";
 import {
   CreateRichMenuPayload,
   CreateRichMenuResponse,
+  RichMenuDetail,
   RichMenuRecord,
 } from "../types";
 
@@ -22,6 +23,42 @@ export async function fetchRichMenus(): Promise<RichMenuRecord[]> {
   }
 
   return response.json();
+}
+
+export async function fetchRichMenuById(id: string): Promise<RichMenuDetail> {
+  const token = getToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const response = await fetch(API_ENDPOINTS.RICH_MENU.DETAIL(id), {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || "Failed to fetch rich menu");
+  }
+
+  return response.json();
+}
+
+export async function deleteRichMenu(id: string): Promise<void> {
+  const token = getToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const response = await fetch(API_ENDPOINTS.RICH_MENU.DETAIL(id), {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.message || "Failed to delete rich menu");
+  }
 }
 
 export async function createRichMenu(

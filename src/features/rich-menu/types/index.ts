@@ -45,6 +45,22 @@ export interface RichMenuRecord {
   createdAt: string;
 }
 
+export interface RichMenuDetail extends RichMenuRecord {
+  areas: RichMenuAreaConfig[];
+}
+
+export interface RichMenuFilterOptions {
+  searchQuery: string;
+  menuType: RichMenuMenuType | "all";
+  status: "all" | "active" | "inactive";
+}
+
+export const DEFAULT_RICH_MENU_FILTERS: RichMenuFilterOptions = {
+  searchQuery: "",
+  menuType: "all",
+  status: "all",
+};
+
 export interface CreateRichMenuPayload {
   name: string;
   menuType: RichMenuMenuType;

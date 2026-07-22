@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2, Upload, ImageIcon } from "lucide-react";
@@ -14,10 +14,15 @@ import {
   LayoutPicker,
   RichMenuCanvas,
 } from "@/features/rich-menu/components";
-import { createRichMenu } from "@/features/rich-menu/lib/api";
+import {
+  createRichMenu,
+  deleteRichMenu,
+  fetchRichMenuById,
+} from "@/features/rich-menu/lib/api";
 import {
   createDefaultAreas,
   getLayoutById,
+  getLayoutIdBySize,
   RICH_MENU_LAYOUTS,
 } from "@/features/rich-menu/lib/layouts";
 import {
@@ -29,9 +34,41 @@ import {
 const inputClassName =
   "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white";
 
-export function RichMenuBuilderContainer() {
+interface RichMenuBuilderContainerProps {
+  menuId?: string;
+}
+
+async function resolveImageFile(
+  imageFile: File | null,
+  imagePreview: string | null,
+): Promise<File | null> {
+  if (imageFile) {
+    return imageFile;
+  }
+
+  if (!imagePreview) {
+    return null;
+  }
+
+  const response = await fetch(imagePreview);
+  if (!response.ok) {
+    throw new Error("Failed to load existing rich menu image");
+  }
+
+  const blob = await response.blob();
+  const extension = blob.type === "image/jpeg" ? "jpg" : "png";
+
+  return new File([blob], `rich-menu.${extension}`, {
+    type: blob.type || "image/png",
+  });
+}
+
+export function RichMenuBuilderContainer({
+  menuId,
+}: RichMenuBuilderContainerProps) {
   const router = useRouter();
   const toast = useToast();
+  const isEditMode = Boolean(menuId);
 
   const [name, setName] = useState("Default Guest Menu");
   const [chatBarText, setChatBarText] = useState("Menu");
@@ -41,6 +78,7 @@ export function RichMenuBuilderContainer() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingMenu, setIsLoadingMenu] = useState(isEditMode);
 
   const layout = useMemo(() => getLayoutById(layoutId), [layoutId]);
 
@@ -48,10 +86,66 @@ export function RichMenuBuilderContainer() {
     createDefaultAreas(getLayoutById("large-2x3").cells.length, "large-2x3"),
   );
 
+  useEffect(() => {
+    if (!menuId) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const loadMenu = async () => {
+      setIsLoadingMenu(true);
+      try {
+        const menu = await fetchRichMenuById(menuId);
+        if (isCancelled) {
+          return;
+        }
+
+        const resolvedLayoutId = getLayoutIdBySize(
+          menu.sizeWidth,
+          menu.sizeHeight,
+        );
+
+        setName(menu.name);
+        setChatBarText(menu.chatBarText);
+        setMenuType(menu.menuType);
+        setLayoutId(resolvedLayoutId);
+        setImagePreview(menu.imageUrl ?? null);
+        setAreas(
+          Array.isArray(menu.areas) && menu.areas.length > 0
+            ? menu.areas
+            : createDefaultAreas(
+                getLayoutById(resolvedLayoutId).cells.length,
+                resolvedLayoutId,
+              ),
+        );
+      } catch (error) {
+        if (isCancelled) {
+          return;
+        }
+
+        toast.error(
+          error instanceof Error ? error.message : "Failed to load rich menu",
+        );
+        router.push("/rich-menu");
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingMenu(false);
+        }
+      }
+    };
+
+    loadMenu();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [menuId]);
+
   const breadcrumbItems = [
     { label: "Home", href: "/dashboard" },
     { label: "Rich Menu", href: "/rich-menu" },
-    { label: "Create", isActive: true },
+    { label: isEditMode ? "Edit" : "Create", isActive: true },
   ];
 
   const handleLayoutChange = (nextLayoutId: string) => {
@@ -105,7 +199,7 @@ export function RichMenuBuilderContainer() {
       return false;
     }
 
-    if (!imageFile) {
+    if (!imageFile && !imagePreview) {
       toast.error("Please upload a rich menu image");
       return false;
     }
@@ -126,32 +220,44 @@ export function RichMenuBuilderContainer() {
   };
 
   const handleSubmit = async () => {
-    if (!validateForm() || !imageFile) {
+    if (!validateForm()) {
       return;
     }
 
     setIsSubmitting(true);
     try {
+      const resolvedImage = await resolveImageFile(imageFile, imagePreview);
+      if (!resolvedImage) {
+        toast.error("Please upload a rich menu image");
+        return;
+      }
+
       const result = await createRichMenu({
         name: name.trim(),
         menuType,
         chatBarText: chatBarText.trim(),
         layoutId,
         areas,
-        image: imageFile,
+        image: resolvedImage,
       });
 
+      if (isEditMode && menuId) {
+        await deleteRichMenu(menuId);
+      }
+
       toast.success(
-        menuType === "default"
-          ? "Default rich menu created and applied to guest users"
-          : "Member rich menu created successfully",
+        isEditMode
+          ? "Rich menu updated successfully"
+          : menuType === "default"
+            ? "Default rich menu created and applied to guest users"
+            : "Member rich menu created successfully",
       );
 
       router.push("/rich-menu");
       return result;
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to create rich menu",
+        error instanceof Error ? error.message : "Failed to save rich menu",
       );
     } finally {
       setIsSubmitting(false);
@@ -162,6 +268,15 @@ export function RichMenuBuilderContainer() {
     (option) => option.value === menuType,
   );
 
+  if (isLoadingMenu) {
+    return (
+      <div className="flex items-center justify-center py-16 text-gray-500">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+        Loading rich menu...
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <Breadcrumbs items={breadcrumbItems} />
@@ -169,7 +284,7 @@ export function RichMenuBuilderContainer() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Create Rich Menu
+            {isEditMode ? "Edit Rich Menu" : "Create Rich Menu"}
           </h1>
           <p className="mt-2 text-gray-600 dark:text-gray-400">
             Build a LINE rich menu with clickable areas, similar to LINE
@@ -365,19 +480,21 @@ export function RichMenuBuilderContainer() {
               <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="bg-blue-600 text-white hover:bg-blue-700"
+                className="bg-blue-600 px-6 text-white hover:bg-blue-700"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    {isEditMode ? "Saving..." : "Creating..."}
                   </>
+                ) : isEditMode ? (
+                  "Save Changes"
                 ) : (
-                  "Create & Publish"
+                  "Create Rich Menu"
                 )}
               </Button>
               <Link href="/rich-menu">
-                <Button className="w-full bg-gray-200 text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 sm:w-auto">
+                <Button className="w-full bg-gray-200 px-6 text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 sm:w-auto">
                   Cancel
                 </Button>
               </Link>
