@@ -22,6 +22,12 @@ export const MENU_ITEMS = [
     icon: "MessageSquare",
   },
   {
+    id: "auto-message",
+    label: "Auto Message",
+    href: "/auto-message",
+    icon: "Bot",
+  },
+  {
     id: "line-users",
     label: "LINE Users",
     href: "/line-users",
@@ -59,6 +65,7 @@ export const BREADCRUMB_MAP: Record<string, string[]> = {
   "/templates": ["Message Templates"],
   "/templates/create": ["Message Templates", "Create"],
   "/templates/[id]/edit": ["Message Templates", "Edit"],
+  "/auto-message": ["Auto Message"],
   "/line-users": ["LINE Users"],
   "/rich-menu": ["Rich Menu"],
   "/rich-menu/create": ["Rich Menu", "Create"],
