@@ -69,6 +69,7 @@ interface MetricsSectionProps {
   totalSent: number;
   percentageChange: number;
   averageReadRate: number;
+  readRatePercentageChange: number;
   activeScheduled: number;
   nextBroadcastTime: string;
 }
@@ -81,6 +82,7 @@ export function MetricsSection({
   totalSent,
   percentageChange,
   averageReadRate,
+  readRatePercentageChange,
   activeScheduled,
   nextBroadcastTime,
 }: MetricsSectionProps) {
@@ -102,8 +104,8 @@ export function MetricsSection({
         title="Average Read Rate"
         value={`${averageReadRate.toFixed(1)}%`}
         trend={{
-          value: 2.4,
-          isPositive: true,
+          value: readRatePercentageChange,
+          isPositive: readRatePercentageChange >= 0,
         }}
         icon={<TrendingUp className="w-5 h-5" />}
       />

@@ -136,6 +136,10 @@ export function normalizeTemplateMessages(
         } satisfies FlexMessageBlock;
       }
 
-      return { ...message, id };
+      return {
+        id,
+        type: "text",
+        text: "",
+      } satisfies TextMessageBlock;
     });
 }

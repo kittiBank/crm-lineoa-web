@@ -1,7 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   BroadcastHeader,
   SearchFilters,
@@ -9,19 +12,28 @@ import {
   MetricsSection,
   Pagination,
 } from "@/features/broadcasts/components";
+import { deleteBroadcast } from "@/features/broadcasts/lib/api";
 import {
-  generateMockBroadcasts,
-  generateMockMetrics,
-  filterBroadcasts,
-} from "@/features/broadcasts/lib/mockData";
-import { FilterOptions } from "@/features/broadcasts/types";
+  clearBroadcastListDataCache,
+  loadBroadcastListPageData,
+} from "@/features/broadcasts/lib/load-broadcast-list-data";
+import { filterBroadcasts } from "@/features/broadcasts/lib/mappers";
+import { Broadcast, FilterOptions, MetricsData } from "@/features/broadcasts/types";
+import { useToast } from "@/lib/hooks/useToast";
 
-/**
- * Broadcasts list page container
- * Manages state, filtering, and pagination for the broadcasts list
- */
+const EMPTY_METRICS: MetricsData = {
+  totalSent: 0,
+  percentageChange: 0,
+  averageReadRate: 0,
+  readRatePercentageChange: 0,
+  activeScheduled: 0,
+  nextBroadcastTime: "—",
+};
+
 export function BroadcastsListContainer() {
-  // State management
+  const router = useRouter();
+  const toast = useToast();
+
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [filters, setFilters] = useState<FilterOptions>({
@@ -29,25 +41,71 @@ export function BroadcastsListContainer() {
     status: "All Status",
     dateRange: "",
   });
+  const [allBroadcasts, setAllBroadcasts] = useState<Broadcast[]>([]);
+  const [metrics, setMetrics] = useState<MetricsData>(EMPTY_METRICS);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [broadcastToDelete, setBroadcastToDelete] = useState<Broadcast | null>(
+    null,
+  );
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  // Generate mock data - use state with lazy initialization for client-only rendering
-  const [allBroadcasts] = useState(() => generateMockBroadcasts(48));
-  const [metrics] = useState(() => generateMockMetrics());
+  useEffect(() => {
+    let isCancelled = false;
 
-  // Filter broadcasts based on current filters
+    const loadBroadcasts = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const data = await loadBroadcastListPageData();
+
+        if (isCancelled) {
+          return;
+        }
+
+        setAllBroadcasts(data.broadcasts);
+        setMetrics(data.metrics);
+      } catch (err) {
+        if (!isCancelled) {
+          setError(
+            err instanceof Error ? err.message : "Failed to load broadcasts",
+          );
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadBroadcasts();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
+
   const filteredBroadcasts = useMemo(
-    () => filterBroadcasts(allBroadcasts, filters.searchQuery, filters.status),
-    [allBroadcasts, filters]
+    () =>
+      filterBroadcasts(
+        allBroadcasts,
+        filters.searchQuery,
+        filters.status,
+        filters.dateRange,
+      ),
+    [allBroadcasts, filters],
   );
 
-  // Paginate filtered broadcasts
-  const totalPages = Math.ceil(filteredBroadcasts.length / itemsPerPage);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredBroadcasts.length / itemsPerPage),
+  );
   const paginatedBroadcasts = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredBroadcasts.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredBroadcasts, currentPage, itemsPerPage]);
 
-  // Reset to page 1 when filters change
   const handleFilterChange = (newFilters: FilterOptions) => {
     setFilters(newFilters);
     setCurrentPage(1);
@@ -55,8 +113,50 @@ export function BroadcastsListContainer() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll to top of table
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleEdit = (id: string) => {
+    router.push(`/broadcasts/${id}/edit`);
+  };
+
+  const handleView = (id: string) => {
+    router.push(`/broadcasts/${id}/view`);
+  };
+
+  const handleDeleteClick = (id: string) => {
+    const broadcast = allBroadcasts.find((item) => item.id === id);
+    if (
+      broadcast &&
+      (broadcast.status === "Draft" || broadcast.status === "Scheduled")
+    ) {
+      setBroadcastToDelete(broadcast);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!broadcastToDelete) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteBroadcast(broadcastToDelete.id);
+      setAllBroadcasts((current) =>
+        current.filter((item) => item.id !== broadcastToDelete.id),
+      );
+      clearBroadcastListDataCache();
+      setBroadcastToDelete(null);
+      toast.success(
+        `"${broadcastToDelete.campaignName}" deleted successfully`,
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to delete broadcast",
+      );
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const breadcrumbItems = [
@@ -64,23 +164,42 @@ export function BroadcastsListContainer() {
     { label: "Broadcasts", isActive: true },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16 text-gray-500">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+        Loading broadcasts...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-2">
+        <Breadcrumbs items={breadcrumbItems} />
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2" suppressHydrationWarning>
-      {/* Breadcrumbs */}
       <Breadcrumbs items={breadcrumbItems} />
-
-      {/* Page Header */}
       <BroadcastHeader />
 
-      {/* Search and Filters */}
       <SearchFilters filters={filters} onFilterChange={handleFilterChange} />
 
-      {/* Broadcasts Table */}
       <div className="mt-6">
-        <BroadcastTable broadcasts={paginatedBroadcasts} />
+        <BroadcastTable
+          broadcasts={paginatedBroadcasts}
+          onEdit={handleEdit}
+          onView={handleView}
+          onDelete={handleDeleteClick}
+        />
       </div>
 
-      {/* Pagination */}
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
@@ -93,13 +212,38 @@ export function BroadcastsListContainer() {
         }}
       />
 
-      {/* Metrics Section */}
       <MetricsSection
         totalSent={metrics.totalSent}
         percentageChange={metrics.percentageChange}
         averageReadRate={metrics.averageReadRate}
+        readRatePercentageChange={metrics.readRatePercentageChange}
         activeScheduled={metrics.activeScheduled}
         nextBroadcastTime={metrics.nextBroadcastTime}
+      />
+
+      <ConfirmDialog
+        open={Boolean(broadcastToDelete)}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setBroadcastToDelete(null);
+          }
+        }}
+        title="Delete Broadcast"
+        description={
+          <>
+            Are you sure you want to delete{" "}
+            <span className="font-medium text-gray-900 dark:text-white">
+              &quot;{broadcastToDelete?.campaignName}&quot;
+            </span>
+            ? This action cannot be undone.
+          </>
+        }
+        variant="destructive"
+        confirmLabel="Delete"
+        loadingLabel="Deleting..."
+        isLoading={isDeleting}
+        onConfirm={handleConfirmDelete}
+        showCloseButton={!isDeleting}
       />
     </div>
   );
