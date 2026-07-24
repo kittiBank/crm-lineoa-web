@@ -26,4 +26,12 @@ export const API_ENDPOINTS = {
     APPLY_MEMBER: (id: string) =>
       `${API_BASE_URL}/api/v1/rich-menus/${id}/apply-member`,
   },
+  BROADCASTS: {
+    LIST: `${API_BASE_URL}/api/v1/broadcasts`,
+    CREATE: `${API_BASE_URL}/api/v1/broadcasts`,
+    AUDIENCES: `${API_BASE_URL}/api/v1/broadcasts/audiences`,
+    STATS: `${API_BASE_URL}/api/v1/broadcasts/stats`,
+    DETAIL: (id: string) => `${API_BASE_URL}/api/v1/broadcasts/${id}`,
+    SEND: (id: string) => `${API_BASE_URL}/api/v1/broadcasts/${id}/send`,
+  },
 } as const;

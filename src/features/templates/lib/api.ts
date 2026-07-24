@@ -1,46 +1,25 @@
 import { API_ENDPOINTS } from "@/constants/api";
-import { getToken } from "@/lib/auth";
-import {
-  CreateMessageTemplatePayload,
-  MessageTemplate,
-} from "../types";
-
-async function authHeaders() {
-  const token = getToken();
-  if (!token) {
-    throw new Error("Authentication required");
-  }
-
-  return {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-  };
-}
+import { assertOkResponse, getAuthHeaders } from "@/lib/api-client";
+import { CreateMessageTemplatePayload, MessageTemplate } from "../types";
 
 export async function fetchTemplates(): Promise<MessageTemplate[]> {
   const response = await fetch(API_ENDPOINTS.TEMPLATES.LIST, {
-    headers: await authHeaders(),
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || "Failed to fetch templates");
-  }
+  await assertOkResponse(response, "Failed to fetch templates");
 
   return response.json();
 }
 
 export async function fetchTemplateById(id: string): Promise<MessageTemplate> {
   const response = await fetch(API_ENDPOINTS.TEMPLATES.DETAIL(id), {
-    headers: await authHeaders(),
+    headers: getAuthHeaders(),
     cache: "no-store",
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || "Failed to fetch template");
-  }
+  await assertOkResponse(response, "Failed to fetch template");
 
   return response.json();
 }
@@ -50,18 +29,11 @@ export async function createTemplate(
 ): Promise<MessageTemplate> {
   const response = await fetch(API_ENDPOINTS.TEMPLATES.CREATE, {
     method: "POST",
-    headers: await authHeaders(),
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(
-      Array.isArray(error.message)
-        ? error.message.join(", ")
-        : error.message || "Failed to create template",
-    );
-  }
+  await assertOkResponse(response, "Failed to create template");
 
   return response.json();
 }
@@ -72,31 +44,20 @@ export async function updateTemplate(
 ): Promise<MessageTemplate> {
   const response = await fetch(API_ENDPOINTS.TEMPLATES.DETAIL(id), {
     method: "PATCH",
-    headers: await authHeaders(),
+    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || "Failed to update template");
-  }
+  await assertOkResponse(response, "Failed to update template");
 
   return response.json();
 }
 
 export async function deleteTemplate(id: string): Promise<void> {
-  const token = getToken();
-  if (!token) {
-    throw new Error("Authentication required");
-  }
-
   const response = await fetch(API_ENDPOINTS.TEMPLATES.DETAIL(id), {
     method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: getAuthHeaders(),
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || "Failed to delete template");
-  }
+  await assertOkResponse(response, "Failed to delete template");
 }

@@ -41,6 +41,7 @@ export function generateMockMetrics(): MetricsData {
     totalSent: 124802,
     percentageChange: 12,
     averageReadRate: 34.2,
+    readRatePercentageChange: 2.4,
     activeScheduled: 18,
     nextBroadcastTime: "2h 15m",
   };
