@@ -34,4 +34,8 @@ export const API_ENDPOINTS = {
     DETAIL: (id: string) => `${API_BASE_URL}/api/v1/broadcasts/${id}`,
     SEND: (id: string) => `${API_BASE_URL}/api/v1/broadcasts/${id}/send`,
   },
+  MEMBER_LOGIN: {
+    REQUEST_OTP: `${API_BASE_URL}/api/v1/member-login/otp/request`,
+    VERIFY_OTP: `${API_BASE_URL}/api/v1/member-login/otp/verify`,
+  },
 } as const;
