@@ -39,6 +39,11 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/api/v1/auto-messages`,
     DETAIL: (id: string) => `${API_BASE_URL}/api/v1/auto-messages/${id}`,
   },
+  AUDIENCES: {
+    LIST: `${API_BASE_URL}/api/v1/audiences`,
+    CREATE: `${API_BASE_URL}/api/v1/audiences`,
+    DETAIL: (id: string) => `${API_BASE_URL}/api/v1/audiences/${id}`,
+  },
   MEMBER_LOGIN: {
     REQUEST_OTP: `${API_BASE_URL}/api/v1/member-login/otp/request`,
     VERIFY_OTP: `${API_BASE_URL}/api/v1/member-login/otp/verify`,
