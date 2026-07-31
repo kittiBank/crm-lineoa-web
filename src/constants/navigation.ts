@@ -34,6 +34,12 @@ export const MENU_ITEMS = [
     icon: "Users",
   },
   {
+    id: "audiences",
+    label: "Audience Management",
+    href: "/audiences",
+    icon: "UsersRound",
+  },
+  {
     id: "rich-menu",
     label: "Rich Menu",
     href: "/rich-menu",
@@ -67,6 +73,10 @@ export const BREADCRUMB_MAP: Record<string, string[]> = {
   "/templates/[id]/edit": ["Message Templates", "Edit"],
   "/auto-message": ["Auto Message"],
   "/line-users": ["LINE Users"],
+  "/audiences": ["Audience Management"],
+  "/audiences/create": ["Audience Management", "Create"],
+  "/audiences/[id]/edit": ["Audience Management", "Edit"],
+  "/audiences/[id]/view": ["Audience Management", "View"],
   "/rich-menu": ["Rich Menu"],
   "/rich-menu/create": ["Rich Menu", "Create"],
   "/rich-menu/[id]/edit": ["Rich Menu", "Edit"],
