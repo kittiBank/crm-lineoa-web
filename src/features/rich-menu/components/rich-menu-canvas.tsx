@@ -38,6 +38,7 @@ export function RichMenuCanvas({
           <img
             src={imagePreview}
             alt="Rich menu preview"
+            referrerPolicy="no-referrer"
             className="absolute inset-0 h-full w-full object-cover"
           />
         ) : (

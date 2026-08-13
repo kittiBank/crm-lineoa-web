@@ -66,6 +66,33 @@ export function createMessageBlock(
 
 export { createCarouselColumn };
 
+export function toPersistableMessages(
+  messages: TemplateMessageBlock[],
+): TemplateMessageBlock[] {
+  return messages.map((message) => {
+    if (message.type === "image") {
+      const { previewUrl: _previewUrl, ...rest } = message;
+      return rest;
+    }
+
+    if (message.type === "flex") {
+      const { previewUrl: _previewUrl, ...rest } = message;
+      return rest;
+    }
+
+    if (message.type === "carousel") {
+      return {
+        ...message,
+        columns: message.columns.map(
+          ({ previewUrl: _previewUrl, ...column }) => column,
+        ),
+      };
+    }
+
+    return message;
+  });
+}
+
 export function normalizeTemplateMessages(
   messages: TemplateMessageBlock[],
 ): TemplateMessageBlock[] {

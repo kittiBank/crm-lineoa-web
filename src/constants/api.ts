@@ -16,6 +16,7 @@ export const API_ENDPOINTS = {
   TEMPLATES: {
     LIST: `${API_BASE_URL}/api/v1/templates`,
     CREATE: `${API_BASE_URL}/api/v1/templates`,
+    MEDIA: `${API_BASE_URL}/api/v1/templates/media`,
     DETAIL: (id: string) => `${API_BASE_URL}/api/v1/templates/${id}`,
   },
   RICH_MENU: {

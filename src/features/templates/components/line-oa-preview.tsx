@@ -55,11 +55,12 @@ function PreviewBubble({ message }: { message: TemplateMessageBlock }) {
     case "image":
       return (
         <div className="max-w-[85%] overflow-hidden rounded-2xl rounded-tl-md bg-white shadow-sm">
-          {message.imageUrl ? (
+          {message.previewUrl || message.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={message.imageUrl}
+              src={message.previewUrl || message.imageUrl}
               alt="Preview"
+              referrerPolicy="no-referrer"
               className="max-h-56 w-full object-cover"
             />
           ) : (
@@ -78,6 +79,7 @@ function PreviewBubble({ message }: { message: TemplateMessageBlock }) {
               <img
                 src={message.previewImageUrl}
                 alt="Video preview"
+                referrerPolicy="no-referrer"
                 className="max-h-56 w-full object-cover"
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black/20">
@@ -97,11 +99,12 @@ function PreviewBubble({ message }: { message: TemplateMessageBlock }) {
     case "flex":
       return (
         <div className="max-w-[85%] overflow-hidden rounded-2xl rounded-tl-md bg-white shadow-sm">
-          {message.imageUrl ? (
+          {message.previewUrl || message.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={message.imageUrl}
+              src={message.previewUrl || message.imageUrl}
               alt={message.title}
+              referrerPolicy="no-referrer"
               className="h-36 w-full object-cover"
             />
           ) : (
@@ -134,11 +137,12 @@ function PreviewBubble({ message }: { message: TemplateMessageBlock }) {
                 key={column.id}
                 className="w-44 shrink-0 overflow-hidden rounded-2xl bg-white shadow-sm"
               >
-                {column.imageUrl ? (
+                {column.previewUrl || column.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={column.imageUrl}
+                    src={column.previewUrl || column.imageUrl}
                     alt={column.title}
+                    referrerPolicy="no-referrer"
                     className="h-24 w-full object-cover"
                   />
                 ) : (

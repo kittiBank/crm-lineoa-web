@@ -1,5 +1,6 @@
 import { API_ENDPOINTS } from "@/constants/api";
 import { getToken } from "@/lib/auth";
+import { dedupeAsync } from "@/lib/dedupe-async";
 import {
   CreateRichMenuPayload,
   CreateRichMenuResponse,
@@ -26,22 +27,24 @@ export async function fetchRichMenus(): Promise<RichMenuRecord[]> {
 }
 
 export async function fetchRichMenuById(id: string): Promise<RichMenuDetail> {
-  const token = getToken();
-  if (!token) {
-    throw new Error("Authentication required");
-  }
+  return dedupeAsync(`rich-menus:${id}`, async () => {
+    const token = getToken();
+    if (!token) {
+      throw new Error("Authentication required");
+    }
 
-  const response = await fetch(API_ENDPOINTS.RICH_MENU.DETAIL(id), {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
+    const response = await fetch(API_ENDPOINTS.RICH_MENU.DETAIL(id), {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || "Failed to fetch rich menu");
+    }
+
+    return response.json();
   });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || "Failed to fetch rich menu");
-  }
-
-  return response.json();
 }
 
 export async function deleteRichMenu(id: string): Promise<void> {

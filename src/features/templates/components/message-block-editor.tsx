@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/lib/hooks/useToast";
 import { createCarouselColumn } from "../lib/create-message";
+import { uploadTemplateImage } from "../lib/api";
 import {
   CarouselMessageBlock,
   FlexMessageBlock,
@@ -115,8 +118,42 @@ function ImageEditor({
   onChange: (message: TemplateMessageBlock) => void;
   readOnly?: boolean;
 }) {
+  const [isUploading, setIsUploading] = useState(false);
+  const toast = useToast();
+
+  const handleUpload = async (file: File | undefined) => {
+    if (!file) {
+      return;
+    }
+
+    const localPreviewUrl = URL.createObjectURL(file);
+    if (message.previewUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(message.previewUrl);
+    }
+    onChange({ ...message, previewUrl: localPreviewUrl });
+
+    setIsUploading(true);
+    try {
+      const { url, displayUrl } = await uploadTemplateImage(file);
+      onChange({
+        ...message,
+        imageUrl: displayUrl || url,
+        previewUrl: localPreviewUrl,
+      });
+      toast.success("Image uploaded");
+    } catch (error) {
+      URL.revokeObjectURL(localPreviewUrl);
+      onChange({ ...message, previewUrl: undefined });
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload image",
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
-    <fieldset disabled={readOnly} className="space-y-4 border-0 p-0">
+    <fieldset disabled={readOnly || isUploading} className="space-y-4 border-0 p-0">
       <Field label="Image URL">
         <input
           type="url"
@@ -133,14 +170,17 @@ function ImageEditor({
           <input
             type="file"
             accept="image/*"
+            disabled={isUploading}
             onChange={(event) => {
               const file = event.target.files?.[0];
-              if (file) {
-                onChange({ ...message, imageUrl: URL.createObjectURL(file) });
-              }
+              void handleUpload(file);
+              event.target.value = "";
             }}
-            className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-blue-700"
+            className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-blue-700 disabled:opacity-60"
           />
+          {isUploading && (
+            <p className="mt-1.5 text-xs text-gray-500">Uploading to storage...</p>
+          )}
         </Field>
       )}
     </fieldset>
@@ -193,8 +233,45 @@ function FlexEditor({
   onChange: (message: TemplateMessageBlock) => void;
   readOnly?: boolean;
 }) {
+  const [isUploading, setIsUploading] = useState(false);
+  const toast = useToast();
+
+  const handleUpload = async (file: File | undefined) => {
+    if (!file) {
+      return;
+    }
+
+    const localPreviewUrl = URL.createObjectURL(file);
+    if (message.previewUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(message.previewUrl);
+    }
+    onChange({ ...message, previewUrl: localPreviewUrl });
+
+    setIsUploading(true);
+    try {
+      const { url, displayUrl } = await uploadTemplateImage(file);
+      onChange({
+        ...message,
+        imageUrl: displayUrl || url,
+        previewUrl: localPreviewUrl,
+      });
+      toast.success("Image uploaded");
+    } catch (error) {
+      URL.revokeObjectURL(localPreviewUrl);
+      onChange({ ...message, previewUrl: undefined });
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload image",
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
-    <fieldset disabled={readOnly} className="grid gap-4 border-0 p-0 md:grid-cols-2">
+    <fieldset
+      disabled={readOnly || isUploading}
+      className="grid gap-4 border-0 p-0 md:grid-cols-2"
+    >
       <Field label="Alt text">
         <input
           value={message.altText}
@@ -214,6 +291,24 @@ function FlexEditor({
           className={inputClassName}
         />
       </Field>
+      {!readOnly && (
+        <Field label="Or upload image" className="md:col-span-2">
+          <input
+            type="file"
+            accept="image/*"
+            disabled={isUploading}
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              void handleUpload(file);
+              event.target.value = "";
+            }}
+            className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-blue-700 disabled:opacity-60"
+          />
+          {isUploading && (
+            <p className="mt-1.5 text-xs text-gray-500">Uploading to storage...</p>
+          )}
+        </Field>
+      )}
       <Field label="Title">
         <input
           value={message.title}
@@ -265,6 +360,11 @@ function CarouselEditor({
   onChange: (message: TemplateMessageBlock) => void;
   readOnly?: boolean;
 }) {
+  const [uploadingColumnId, setUploadingColumnId] = useState<string | null>(
+    null,
+  );
+  const toast = useToast();
+
   const updateColumn = (
     columnId: string,
     patch: Partial<CarouselMessageBlock["columns"][number]>,
@@ -275,6 +375,40 @@ function CarouselEditor({
         column.id === columnId ? { ...column, ...patch } : column,
       ),
     });
+  };
+
+  const handleColumnUpload = async (
+    columnId: string,
+    file: File | undefined,
+  ) => {
+    if (!file) {
+      return;
+    }
+
+    const column = message.columns.find((item) => item.id === columnId);
+    const localPreviewUrl = URL.createObjectURL(file);
+    if (column?.previewUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(column.previewUrl);
+    }
+    updateColumn(columnId, { previewUrl: localPreviewUrl });
+
+    setUploadingColumnId(columnId);
+    try {
+      const { url, displayUrl } = await uploadTemplateImage(file);
+      updateColumn(columnId, {
+        imageUrl: displayUrl || url,
+        previewUrl: localPreviewUrl,
+      });
+      toast.success("Image uploaded");
+    } catch (error) {
+      URL.revokeObjectURL(localPreviewUrl);
+      updateColumn(columnId, { previewUrl: undefined });
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload image",
+      );
+    } finally {
+      setUploadingColumnId(null);
+    }
   };
 
   const addColumn = () => {
@@ -300,7 +434,10 @@ function CarouselEditor({
   };
 
   return (
-    <fieldset disabled={readOnly} className="space-y-4 border-0 p-0">
+    <fieldset
+      disabled={readOnly || Boolean(uploadingColumnId)}
+      className="space-y-4 border-0 p-0"
+    >
       <Field label="Alt text">
         <input
           value={message.altText}
@@ -352,6 +489,26 @@ function CarouselEditor({
                 className={inputClassName}
               />
             </Field>
+            {!readOnly && (
+              <Field label="Or upload image" className="md:col-span-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={uploadingColumnId === column.id}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    void handleColumnUpload(column.id, file);
+                    event.target.value = "";
+                  }}
+                  className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-blue-700 disabled:opacity-60"
+                />
+                {uploadingColumnId === column.id && (
+                  <p className="mt-1.5 text-xs text-gray-500">
+                    Uploading to storage...
+                  </p>
+                )}
+              </Field>
+            )}
             <Field label="Text" className="md:col-span-2">
               <textarea
                 rows={2}

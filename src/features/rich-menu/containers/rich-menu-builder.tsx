@@ -415,6 +415,7 @@ export function RichMenuBuilderContainer({
                   <img
                     src={imagePreview}
                     alt="Rich menu"
+                    referrerPolicy="no-referrer"
                     className="mx-auto max-h-48 rounded-lg object-contain"
                   />
                 ) : (
@@ -434,6 +435,7 @@ export function RichMenuBuilderContainer({
                   <img
                     src={imagePreview}
                     alt="Uploaded rich menu"
+                    referrerPolicy="no-referrer"
                     className="mx-auto max-h-48 rounded-lg object-contain"
                   />
                   <p className="text-sm text-gray-600 dark:text-gray-300">
