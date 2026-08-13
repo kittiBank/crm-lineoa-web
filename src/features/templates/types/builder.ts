@@ -18,6 +18,8 @@ export interface TextMessageBlock extends TemplateMessageBase {
 export interface ImageMessageBlock extends TemplateMessageBase {
   type: "image";
   imageUrl: string;
+  /** Client-only local object URL for reliable preview; never persist */
+  previewUrl?: string;
 }
 
 export interface VideoMessageBlock extends TemplateMessageBase {
@@ -34,6 +36,8 @@ export interface FlexMessageBlock extends TemplateMessageBase {
   imageUrl: string;
   buttonLabel: string;
   buttonUrl: string;
+  /** Client-only local object URL for reliable preview; never persist */
+  previewUrl?: string;
 }
 
 export interface CarouselColumnBlock {
@@ -43,6 +47,8 @@ export interface CarouselColumnBlock {
   imageUrl: string;
   actionLabel: string;
   actionUrl: string;
+  /** Client-only local object URL for reliable preview; never persist */
+  previewUrl?: string;
 }
 
 export interface CarouselMessageBlock extends TemplateMessageBase {

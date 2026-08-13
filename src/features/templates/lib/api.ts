@@ -1,5 +1,7 @@
 import { API_ENDPOINTS } from "@/constants/api";
 import { assertOkResponse, getAuthHeaders } from "@/lib/api-client";
+import { dedupeAsync } from "@/lib/dedupe-async";
+import { getToken } from "@/lib/auth";
 import { CreateMessageTemplatePayload, MessageTemplate } from "../types";
 
 export async function fetchTemplates(): Promise<MessageTemplate[]> {
@@ -13,15 +15,39 @@ export async function fetchTemplates(): Promise<MessageTemplate[]> {
   return response.json();
 }
 
-export async function fetchTemplateById(id: string): Promise<MessageTemplate> {
-  const response = await fetch(API_ENDPOINTS.TEMPLATES.DETAIL(id), {
-    headers: getAuthHeaders(),
-    cache: "no-store",
+export async function uploadTemplateImage(
+  file: File,
+): Promise<{ url: string; displayUrl: string; key: string }> {
+  const token = getToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const response = await fetch(API_ENDPOINTS.TEMPLATES.MEDIA, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
   });
 
-  await assertOkResponse(response, "Failed to fetch template");
+  await assertOkResponse(response, "Failed to upload image");
 
   return response.json();
+}
+
+export async function fetchTemplateById(id: string): Promise<MessageTemplate> {
+  return dedupeAsync(`templates:${id}`, async () => {
+    const response = await fetch(API_ENDPOINTS.TEMPLATES.DETAIL(id), {
+      headers: getAuthHeaders(),
+      cache: "no-store",
+    });
+
+    await assertOkResponse(response, "Failed to fetch template");
+
+    return response.json();
+  });
 }
 
 export async function createTemplate(

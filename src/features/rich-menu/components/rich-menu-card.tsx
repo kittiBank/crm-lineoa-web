@@ -48,6 +48,7 @@ export function RichMenuCard({
           <img
             src={menu.imageUrl}
             alt={menu.name}
+            referrerPolicy="no-referrer"
             className="h-full w-full object-cover"
           />
         ) : (

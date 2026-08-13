@@ -18,7 +18,7 @@ import {
   fetchTemplateById,
   updateTemplate,
 } from "@/features/templates/lib/api";
-import { createMessageBlock, normalizeTemplateMessages } from "@/features/templates/lib/create-message";
+import { createMessageBlock, normalizeTemplateMessages, toPersistableMessages } from "@/features/templates/lib/create-message";
 import { TEMPLATE_CATEGORIES } from "@/features/templates/lib/message-types";
 import {
   TemplateMessageBlock,
@@ -184,7 +184,7 @@ export function TemplateBuilderContainer({
         name: name.trim(),
         description: description.trim() || undefined,
         category,
-        messages,
+        messages: toPersistableMessages(messages),
       };
 
       if (isEditMode && templateId) {
