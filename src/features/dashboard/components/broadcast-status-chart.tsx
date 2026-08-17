@@ -50,9 +50,10 @@ export function BroadcastStatusChart({ data }: BroadcastStatusChartProps) {
                 color: "#fff",
                 fontSize: "12px",
               }}
-              formatter={(value: number | undefined) => {
-                if (!value) return ["0%", "Percentage"];
-                return [`${((value / total) * 100).toFixed(1)}%`, "Percentage"];
+              formatter={(value) => {
+                const numericValue = typeof value === "number" ? value : Number(value) || 0;
+                if (!numericValue) return ["0%", "Percentage"];
+                return [`${((numericValue / total) * 100).toFixed(1)}%`, "Percentage"];
               }}
             />
             <Legend
