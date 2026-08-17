@@ -10,7 +10,12 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { AudienceGrowthData } from "../lib/mockData";
+
+export interface AudienceGrowthData {
+  week: string;
+  new: number;
+  returning: number;
+}
 
 interface AudienceGrowthChartProps {
   data: AudienceGrowthData[];

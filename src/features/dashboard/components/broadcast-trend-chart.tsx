@@ -10,27 +10,39 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { BroadcastTrendData } from "../lib/mockData";
+import { BroadcastTrendData, DashboardTrendDays } from "../types";
 
 interface BroadcastTrendChartProps {
   data: BroadcastTrendData[];
+  days: DashboardTrendDays;
+  onDaysChange: (days: DashboardTrendDays) => void;
 }
 
 /**
  * Broadcast Trend Chart using Recharts
  * Shows the last 7 days of broadcast trend with line chart
  */
-export function BroadcastTrendChart({ data }: BroadcastTrendChartProps) {
+export function BroadcastTrendChart({
+  data,
+  days,
+  onDaysChange,
+}: BroadcastTrendChartProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
           Broadcast Trend
         </h3>
-        <select className="text-sm border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-          <option>Last 7 Days</option>
-          <option>Last 30 Days</option>
-          <option>Last 90 Days</option>
+        <select
+          value={days}
+          onChange={(event) =>
+            onDaysChange(Number(event.target.value) as DashboardTrendDays)
+          }
+          className="text-sm border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        >
+          <option value={7}>Last 7 Days</option>
+          <option value={30}>Last 30 Days</option>
+          <option value={90}>Last 90 Days</option>
         </select>
       </div>
 

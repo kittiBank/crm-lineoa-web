@@ -40,6 +40,9 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/api/v1/auto-messages`,
     DETAIL: (id: string) => `${API_BASE_URL}/api/v1/auto-messages/${id}`,
   },
+  DASHBOARD: {
+    OVERVIEW: `${API_BASE_URL}/api/v1/dashboard`,
+  },
   AUDIENCES: {
     LIST: `${API_BASE_URL}/api/v1/audiences`,
     CREATE: `${API_BASE_URL}/api/v1/audiences`,
