@@ -1,12 +1,9 @@
-import { RecentBroadcast } from "../lib/mockData";
+import { RecentBroadcast } from "../types";
 
 interface RecentBroadcastTableProps {
   broadcasts: RecentBroadcast[];
 }
 
-/**
- * Status badge component
- */
 function StatusBadge({ status }: { status: RecentBroadcast["status"] }) {
   const statusColors: Record<RecentBroadcast["status"], string> = {
     Sent: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400",
@@ -20,11 +17,24 @@ function StatusBadge({ status }: { status: RecentBroadcast["status"] }) {
 
   return (
     <span
-      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusColors[status]}`}
+      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${statusColors[status] ?? statusColors.Draft}`}
     >
       {status}
     </span>
   );
+}
+
+function formatBroadcastDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 export function RecentBroadcastTable({
@@ -32,7 +42,6 @@ export function RecentBroadcastTable({
 }: RecentBroadcastTableProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-      {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
           Recent Broadcast
@@ -45,7 +54,6 @@ export function RecentBroadcastTable({
         </a>
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
@@ -63,62 +71,64 @@ export function RecentBroadcastTable({
                 Delivered
               </th>
               <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                Read
-              </th>
-              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Date
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {broadcasts.map((broadcast) => (
-              <tr
-                key={broadcast.id}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-              >
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded bg-gray-200 dark:bg-gray-700"></div>
-                    <span className="font-medium text-gray-900 dark:text-white">
-                      {broadcast.campaign}
-                    </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <StatusBadge status={broadcast.status} />
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-gray-900 dark:text-white font-medium" suppressHydrationWarning>
-                    {broadcast.sent.toLocaleString()}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm">
-                    <div className="font-medium text-gray-900 dark:text-white" suppressHydrationWarning>
-                      {broadcast.delivered.toLocaleString()}
-                    </div>
-                    <div className="text-gray-600 dark:text-gray-400">
-                      {broadcast.deliveredRate}%
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm">
-                    <div className="font-medium text-gray-900 dark:text-white" suppressHydrationWarning>
-                      {broadcast.read.toLocaleString()}
-                    </div>
-                    <div className="text-gray-600 dark:text-gray-400">
-                      {broadcast.readRate}%
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-gray-600 dark:text-gray-400 text-sm">
-                    {broadcast.date}
-                  </span>
+            {broadcasts.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="px-6 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
+                >
+                  No broadcasts yet
                 </td>
               </tr>
-            ))}
+            ) : (
+              broadcasts.map((broadcast) => (
+                <tr
+                  key={broadcast.id}
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                  <td className="px-6 py-4">
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        {broadcast.campaign}
+                      </p>
+                      {broadcast.description ? (
+                        <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                          {broadcast.description}
+                        </p>
+                      ) : null}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <StatusBadge status={broadcast.status} />
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-gray-900 dark:text-white font-medium">
+                      {broadcast.sent.toLocaleString()}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="text-sm">
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {broadcast.delivered.toLocaleString()}
+                      </div>
+                      <div className="text-gray-600 dark:text-gray-400">
+                        {broadcast.deliveredRate}%
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="text-gray-600 dark:text-gray-400 text-sm">
+                      {formatBroadcastDate(broadcast.date)}
+                    </span>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
