@@ -17,17 +17,12 @@ export type LineOaInfo = {
 
 export type LineAccountResponse = {
   connected: boolean;
+  status?: string;
+  saved?: boolean;
   id?: string;
   name?: string;
-  channelAccessToken?: string;
-  channelSecret?: string;
+  hasCredentials?: boolean;
+  channelAccessTokenMasked?: string;
+  channelSecretMasked?: string;
   oaInfo?: LineOaInfo | null;
-};
-
-export type VerifyLineResponse = {
-  status: string;
-  botUserId?: string;
-  botDisplayName?: string;
-  oaInfo?: LineOaInfo;
-  saved?: boolean;
 };

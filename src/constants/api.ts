@@ -10,9 +10,7 @@ export const API_ENDPOINTS = {
     LOGIN: `${API_BASE_URL}/api/v1/auth/login`,
   },
   LINE: {
-    VERIFY: `${API_BASE_URL}/api/v1/line/verify`,
     ACCOUNT: `${API_BASE_URL}/api/v1/line/account`,
-    ACCOUNT_TEST: `${API_BASE_URL}/api/v1/line/account/test`,
     USERS: `${API_BASE_URL}/api/v1/line/users`,
   },
   TEMPLATES: {
