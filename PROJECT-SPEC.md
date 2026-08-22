@@ -720,4 +720,32 @@ This project should demonstrate the following skills:
 - Production-ready Folder Structure
 
 # Developer more feature
-- 
+- หน้า DashBaord เพิ่ม Card Quota, Used, Remaining  Currrent (มี percent บอกด้วย)
+- หน้า Create Message tempalte ปรับให้สูงสุดรองรับ 5 bubble messages 
+- หน้า Create Message tempalte ปรับให้มี Default flex message ย้าย icon ไปหลังสุด และมีเช็ก flex เหมือน flex simulate
+- หน้า Create Auto Message Keyword Rule เพิ่มคำที่รอบรับได้แบบ multi tag 
+- หน้า Create New Audience เพิ่ม Section preview result ใช้ filter ข้อมูลตามที่เลือก
+- หน้า Create Rich menu เพิ่ม Validate ไฟล์ภาพ png, jpg ขนาดไฟล์ และ size ตามที่ line กำหนดเท่านั้น
+- หน้า Create Rich menu เพิ่มแบบ custom area วาดได้
+- หน้า Create Rich menu ให้เลือก layout น้อยลง แบบ Big, compact, Custom
+
+- หน้า Brodcast เพิ่ม TARGET specific audience แบบ ddl (ต้องไปสร้าง audienct มาก่อน)
+- ทำ User tracking reach, read
+- ทำ Import user ใช้ทำ audience group map user ระบบกับ line ได้ เช่น VIP 
+- [Done] ทำ LINE OA Settings ให้ดึงข้อมูลจาก DB มาถ้ามี Disabled ui ไว้เปลี่ยน concection และ test connected ได้
+- ทำ User Settings ให้มี defualt password และส่งเมลล์ไปให้ user เปลี่ยน password เอง
+- ปรับหน้า Dashboard ให้ filter ข้อมูลตาม date picker ได้
+
+- เพิ่มหน้าจัดการ Liff Content เช่น หน้า Ecom จัด layout ต่างๆ มี live preview เอา url ไปใส่ rich menu ได้
+- เพิ่มการทำระบบ Coupoun สะสมแต้มจาก LineOA
+- เพิ่มหน้า Brodcast planner แบบ Calendar view คล่าวๆ
+
+- เปลี่ยนเมนู จาก line user เป็น Customer Management กด View popup ดูข้อมูลละเอียดได้เพิ่ม เช่น Customer Info เบอร์, Mail, Address, ประวัติการสั่งซื้อ
+- Inbox chat 1:1 assign agent ได้ให้คนนั้นตอบ Chat history Status: Open / Pending / Closed
+- ทำ Noti แจ้งเตือนผูกกับ user ตอบแชทได้, แจ้งเตือน message จากไลน์\
+- เพิ่มเมนู Automation workflow เช่น User เพิ่มเพื่อน > ส่งข้อความ welcome > รอ 1 วัน > ส่ง Promotion
+- เพิ่มเมนู Liff builder จัดการหน้า Ecom สินค้าได้
+- เพิ่ม Animation frammer ui
+
+
+
