@@ -4,10 +4,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/lib/hooks/useToast";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
-import {
-  testSavedLineAccount,
-  verifyLineAccount,
-} from "@/features/settings/lib/api";
+import { submitLineAccount } from "@/features/settings/lib/api";
 import { LineAccountResponse, LineOaInfo } from "@/features/settings/types";
 
 interface LineAccountFormProps {
@@ -46,8 +43,8 @@ export function LineAccountForm({
   const [isConnectionVerified, setIsConnectionVerified] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: initialAccount.name ?? "",
-    channelAccessToken: initialAccount.channelAccessToken ?? "",
-    channelSecret: initialAccount.channelSecret ?? "",
+    channelAccessToken: initialAccount.channelAccessTokenMasked ?? "",
+    channelSecret: initialAccount.channelSecretMasked ?? "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -116,20 +113,27 @@ export function LineAccountForm({
 
     setTestingConnection(true);
     try {
-      const data = isExistingAccount
-        ? await testSavedLineAccount()
-        : await verifyLineAccount({
+      const data = await submitLineAccount(
+        isExistingAccount
+          ? { action: "test" }
+          : {
+            action: "test",
             channelAccessToken: formData.channelAccessToken,
             channelSecret: formData.channelSecret,
-            saveToDb: false,
-          });
+          },
+      );
 
-      toast.success(`Connected successfully! Bot: ${data.botDisplayName}`);
+      const botName = data.oaInfo?.displayName || data.name;
+      toast.success(
+        botName
+          ? `Connected successfully! Bot: ${botName}`
+          : "Connected successfully!",
+      );
 
-      if (!isExistingAccount && data.botDisplayName) {
+      if (!isExistingAccount && botName) {
         setFormData((prev) => ({
           ...prev,
-          name: data.botDisplayName || prev.name,
+          name: botName,
         }));
       }
 
@@ -165,14 +169,21 @@ export function LineAccountForm({
 
     setLoading(true);
     try {
-      const data = await verifyLineAccount({
-        ...formData,
-        saveToDb: true,
+      const data = await submitLineAccount({
+        action: "save",
+        channelAccessToken: formData.channelAccessToken,
+        channelSecret: formData.channelSecret,
+        name: formData.name,
       });
 
       toast.success("LINE account saved successfully!");
       setIsExistingAccount(true);
       setIsConnectionVerified(true);
+      setFormData({
+        name: data.name || formData.name,
+        channelAccessToken: data.channelAccessTokenMasked ?? "",
+        channelSecret: data.channelSecretMasked ?? "",
+      });
       if (data.oaInfo) {
         onOaInfoChange?.(data.oaInfo);
       }
