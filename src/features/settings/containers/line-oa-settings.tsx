@@ -1,27 +1,68 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import { LineAccountForm } from "@/components/line-account-form";
 import { LineOaProfileCard } from "@/features/settings/components/line-oa-profile-card";
-import { LineOaInfo } from "@/features/settings/types";
+import { fetchLineAccount } from "@/features/settings/lib/api";
+import { LineAccountResponse, LineOaInfo } from "@/features/settings/types";
+import { useToast } from "@/lib/hooks/useToast";
 
 export function LineOaSettings() {
+  const toast = useToast();
+  const [account, setAccount] = useState<LineAccountResponse | null>(null);
   const [oaInfo, setOaInfo] = useState<LineOaInfo | null>(null);
+  const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState({
-    loading: true,
     existing: false,
     verified: false,
     testing: false,
   });
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAccount() {
+      try {
+        const data = await fetchLineAccount();
+        if (cancelled) {
+          return;
+        }
+
+        setAccount(data);
+        setOaInfo(data.oaInfo ?? null);
+        setStatus((prev) => ({
+          ...prev,
+          existing: Boolean(data.connected),
+        }));
+      } catch (error) {
+        if (!cancelled) {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Failed to load LINE account",
+          );
+          setAccount({ connected: false });
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadAccount();
+
+    return () => {
+      cancelled = true;
+    };
+    // Load once per mount; fetchLineAccount() reuses the in-memory request.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleStatusChange = useCallback(
-    (next: {
-      loading: boolean;
-      existing: boolean;
-      verified: boolean;
-      testing: boolean;
-    }) => {
+    (next: { existing: boolean; verified: boolean; testing: boolean }) => {
       setStatus(next);
     },
     [],
@@ -51,16 +92,24 @@ export function LineOaSettings() {
           <h2 className="mb-6 text-lg font-semibold text-gray-900 dark:text-white">
             Connect LINE Official Account
           </h2>
-          <LineAccountForm
-            onStatusChange={handleStatusChange}
-            onOaInfoChange={setOaInfo}
-          />
+          {loading || !account ? (
+            <div className="flex items-center gap-2 py-8 text-sm text-gray-500 dark:text-gray-400">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading LINE account...
+            </div>
+          ) : (
+            <LineAccountForm
+              initialAccount={account}
+              onStatusChange={handleStatusChange}
+              onOaInfoChange={setOaInfo}
+            />
+          )}
         </div>
 
         <div className="xl:col-span-2">
           <LineOaProfileCard
             info={oaInfo}
-            loading={status.loading}
+            loading={loading}
             testing={status.testing}
             verified={status.verified}
           />

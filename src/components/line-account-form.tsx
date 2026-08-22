@@ -5,15 +5,14 @@ import { useToast } from "@/lib/hooks/useToast";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
 import {
-  fetchLineAccount,
   testSavedLineAccount,
   verifyLineAccount,
 } from "@/features/settings/lib/api";
-import { LineOaInfo } from "@/features/settings/types";
+import { LineAccountResponse, LineOaInfo } from "@/features/settings/types";
 
 interface LineAccountFormProps {
+  initialAccount: LineAccountResponse;
   onStatusChange?: (status: {
-    loading: boolean;
     existing: boolean;
     verified: boolean;
     testing: boolean;
@@ -34,19 +33,21 @@ interface FormErrors {
 }
 
 export function LineAccountForm({
+  initialAccount,
   onStatusChange,
   onOaInfoChange,
 }: LineAccountFormProps) {
   const toast = useToast();
-  const [loadingAccount, setLoadingAccount] = useState(true);
   const [loading, setLoading] = useState(false);
   const [testingConnection, setTestingConnection] = useState(false);
-  const [isExistingAccount, setIsExistingAccount] = useState(false);
+  const [isExistingAccount, setIsExistingAccount] = useState(
+    Boolean(initialAccount.connected),
+  );
   const [isConnectionVerified, setIsConnectionVerified] = useState(false);
   const [formData, setFormData] = useState<FormData>({
-    name: "",
-    channelAccessToken: "",
-    channelSecret: "",
+    name: initialAccount.name ?? "",
+    channelAccessToken: initialAccount.channelAccessToken ?? "",
+    channelSecret: initialAccount.channelSecret ?? "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -54,59 +55,16 @@ export function LineAccountForm({
 
   useEffect(() => {
     onStatusChange?.({
-      loading: loadingAccount,
       existing: isExistingAccount,
       verified: isConnectionVerified,
       testing: testingConnection,
     });
   }, [
-    loadingAccount,
     isExistingAccount,
     isConnectionVerified,
     testingConnection,
     onStatusChange,
   ]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadAccount() {
-      try {
-        const data = await fetchLineAccount();
-        if (cancelled || !data.connected) {
-          return;
-        }
-
-        setFormData({
-          name: data.name ?? "",
-          channelAccessToken: data.channelAccessToken ?? "",
-          channelSecret: data.channelSecret ?? "",
-        });
-        setIsExistingAccount(true);
-        onOaInfoChange?.(data.oaInfo ?? null);
-      } catch (error) {
-        if (!cancelled) {
-          toast.error(
-            error instanceof Error
-              ? error.message
-              : "Failed to load LINE account",
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingAccount(false);
-        }
-      }
-    }
-
-    void loadAccount();
-
-    return () => {
-      cancelled = true;
-    };
-    // Load once on mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (isExistingAccount) {
@@ -226,15 +184,6 @@ export function LineAccountForm({
       setLoading(false);
     }
   };
-
-  if (loadingAccount) {
-    return (
-      <div className="flex items-center gap-2 py-8 text-sm text-gray-500 dark:text-gray-400">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Loading LINE account...
-      </div>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
