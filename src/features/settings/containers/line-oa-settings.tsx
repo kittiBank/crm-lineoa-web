@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import { LineAccountForm } from "@/components/line-account-form";
 import { LineOaProfileCard } from "@/features/settings/components/line-oa-profile-card";
-import { fetchLineAccount } from "@/features/settings/lib/api";
+import { fetchLineAccount, peekLineAccountCache } from "@/features/settings/lib/api";
 import { LineAccountResponse, LineOaInfo } from "@/features/settings/types";
 import { useToast } from "@/lib/hooks/useToast";
 
@@ -24,6 +24,18 @@ export function LineOaSettings() {
     let cancelled = false;
 
     async function loadAccount() {
+      const cached = peekLineAccountCache();
+      if (cached) {
+        setAccount(cached);
+        setOaInfo(cached.oaInfo ?? null);
+        setStatus((prev) => ({
+          ...prev,
+          existing: Boolean(cached.connected),
+        }));
+        setLoading(false);
+        return;
+      }
+
       try {
         const data = await fetchLineAccount();
         if (cancelled) {
@@ -57,7 +69,6 @@ export function LineOaSettings() {
     return () => {
       cancelled = true;
     };
-    // Load once per mount; fetchLineAccount() reuses the in-memory request.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

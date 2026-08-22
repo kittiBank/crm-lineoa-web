@@ -16,6 +16,8 @@ export function setAuthToken(token: string, user?: unknown): void {
 export function clearAuth(): void {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(AUTH_USER_KEY);
+  localStorage.removeItem("crm.line-account.cache");
+  localStorage.removeItem("crm.line-account.cache.v2");
 }
 
 export function redirectToDashboard(): void {
