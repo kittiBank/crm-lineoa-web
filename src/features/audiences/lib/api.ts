@@ -1,6 +1,11 @@
 import { API_ENDPOINTS } from "@/constants/api";
 import { assertOkResponse, getAuthHeaders } from "@/lib/api-client";
 import {
+  dedupeAsync,
+  invalidateDedupe,
+  REMOUNT_DEDUPE_TTL_MS,
+} from "@/lib/dedupe-async";
+import {
   Audience,
   AudienceCriteria,
   AudienceSegmentType,
@@ -68,53 +73,40 @@ export function buildAudienceCriteria(
   }
 }
 
-let inflightAudiencesList: Promise<Audience[]> | null = null;
-const inflightAudienceById = new Map<string, Promise<Audience>>();
+export async function fetchAudiences(options?: {
+  force?: boolean;
+}): Promise<Audience[]> {
+  return dedupeAsync(
+    "audiences:list",
+    async () => {
+      const response = await fetch(API_ENDPOINTS.AUDIENCES.LIST, {
+        headers: getAuthHeaders(),
+        cache: "no-store",
+      });
 
-export async function fetchAudiences(): Promise<Audience[]> {
-  // Dedupe concurrent list calls (React Strict Mode remounts useEffect in dev)
-  if (inflightAudiencesList) {
-    return inflightAudiencesList;
-  }
+      await assertOkResponse(response, "Failed to fetch audiences");
 
-  inflightAudiencesList = (async () => {
-    const response = await fetch(API_ENDPOINTS.AUDIENCES.LIST, {
-      headers: getAuthHeaders(),
-      cache: "no-store",
-    });
-
-    await assertOkResponse(response, "Failed to fetch audiences");
-
-    return response.json();
-  })().finally(() => {
-    inflightAudiencesList = null;
-  });
-
-  return inflightAudiencesList;
+      return response.json();
+    },
+    { ttlMs: REMOUNT_DEDUPE_TTL_MS, force: options?.force },
+  );
 }
 
 export async function fetchAudienceById(id: string): Promise<Audience> {
-  // Dedupe concurrent detail calls (React Strict Mode remounts useEffect in dev)
-  const existing = inflightAudienceById.get(id);
-  if (existing) {
-    return existing;
-  }
+  return dedupeAsync(
+    `audiences:${id}`,
+    async () => {
+      const response = await fetch(API_ENDPOINTS.AUDIENCES.DETAIL(id), {
+        headers: getAuthHeaders(),
+        cache: "no-store",
+      });
 
-  const request = (async () => {
-    const response = await fetch(API_ENDPOINTS.AUDIENCES.DETAIL(id), {
-      headers: getAuthHeaders(),
-      cache: "no-store",
-    });
+      await assertOkResponse(response, "Failed to fetch audience");
 
-    await assertOkResponse(response, "Failed to fetch audience");
-
-    return response.json();
-  })().finally(() => {
-    inflightAudienceById.delete(id);
-  });
-
-  inflightAudienceById.set(id, request);
-  return request;
+      return response.json();
+    },
+    { ttlMs: REMOUNT_DEDUPE_TTL_MS },
+  );
 }
 
 export async function createAudience(
@@ -131,6 +123,7 @@ export async function createAudience(
 
   await assertOkResponse(response, "Failed to create audience");
 
+  invalidateDedupe("audiences:list");
   return response.json();
 }
 
@@ -141,9 +134,9 @@ export async function updateAudience(
   const body: UpdateAudiencePayload =
     payload.type !== undefined && payload.criteria !== undefined
       ? {
-          ...payload,
-          criteria: buildAudienceCriteria(payload.type, payload.criteria),
-        }
+        ...payload,
+        criteria: buildAudienceCriteria(payload.type, payload.criteria),
+      }
       : payload;
 
   const response = await fetch(API_ENDPOINTS.AUDIENCES.DETAIL(id), {
@@ -154,6 +147,8 @@ export async function updateAudience(
 
   await assertOkResponse(response, "Failed to update audience");
 
+  invalidateDedupe("audiences:list");
+  invalidateDedupe(`audiences:${id}`);
   return response.json();
 }
 
@@ -164,4 +159,6 @@ export async function deleteAudience(id: string): Promise<void> {
   });
 
   await assertOkResponse(response, "Failed to delete audience");
+  invalidateDedupe("audiences:list");
+  invalidateDedupe(`audiences:${id}`);
 }

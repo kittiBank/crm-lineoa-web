@@ -1,5 +1,6 @@
 import { API_ENDPOINTS } from "@/constants/api";
 import { getToken } from "@/lib/auth";
+import { dedupeAsync, REMOUNT_DEDUPE_TTL_MS } from "@/lib/dedupe-async";
 import { FilterOptions, LineUser } from "../types";
 
 export interface LineUsersResponse {
@@ -44,13 +45,8 @@ export async function fetchLineUsers(
   filters: FilterOptions,
   page: number,
   limit: number,
+  options?: { force?: boolean },
 ): Promise<{ users: LineUser[]; meta: LineUsersResponse["meta"] }> {
-  const token = getToken();
-
-  if (!token) {
-    throw new Error("Authentication required");
-  }
-
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit),
@@ -67,21 +63,33 @@ export async function fetchLineUsers(
     params.set("dateRange", filters.dateRange);
   }
 
-  const response = await fetch(`${API_ENDPOINTS.LINE.USERS}?${params}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
+  return dedupeAsync(
+    `line-users:${params.toString()}`,
+    async () => {
+      const token = getToken();
+
+      if (!token) {
+        throw new Error("Authentication required");
+      }
+
+      const response = await fetch(`${API_ENDPOINTS.LINE.USERS}?${params}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || "Failed to fetch LINE users");
+      }
+
+      const result: LineUsersResponse = await response.json();
+
+      return {
+        users: result.data.map(mapApiUserToLineUser),
+        meta: result.meta,
+      };
     },
-  });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || "Failed to fetch LINE users");
-  }
-
-  const result: LineUsersResponse = await response.json();
-
-  return {
-    users: result.data.map(mapApiUserToLineUser),
-    meta: result.meta,
-  };
+    { ttlMs: REMOUNT_DEDUPE_TTL_MS, force: options?.force },
+  );
 }

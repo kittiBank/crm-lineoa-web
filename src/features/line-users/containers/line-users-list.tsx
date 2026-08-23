@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import {
   LineUserHeader,
@@ -25,28 +25,49 @@ export function LineUsersListContainer() {
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
-  const loadUsers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const loadUsers = useCallback(
+    async (force = false) => {
+      const requestId = ++requestIdRef.current;
+      setLoading(true);
+      setError(null);
 
-    try {
-      const result = await fetchLineUsers(filters, currentPage, itemsPerPage);
-      setUsers(result.users);
-      setTotalItems(result.meta.total);
-      setTotalPages(result.meta.totalPages);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load LINE users");
-      setUsers([]);
-      setTotalItems(0);
-      setTotalPages(0);
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, currentPage, itemsPerPage]);
+      try {
+        const result = await fetchLineUsers(filters, currentPage, itemsPerPage, {
+          force,
+        });
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+        setUsers(result.users);
+        setTotalItems(result.meta.total);
+        setTotalPages(result.meta.totalPages);
+      } catch (err) {
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+        setError(
+          err instanceof Error ? err.message : "Failed to load LINE users",
+        );
+        setUsers([]);
+        setTotalItems(0);
+        setTotalPages(0);
+      } finally {
+        if (requestId === requestIdRef.current) {
+          setLoading(false);
+        }
+      }
+    },
+    [filters, currentPage, itemsPerPage],
+  );
 
   useEffect(() => {
-    loadUsers();
+    void loadUsers();
+
+    return () => {
+      requestIdRef.current += 1;
+    };
   }, [loadUsers]);
 
   const handleSearch = (newFilters: FilterOptions) => {
@@ -75,7 +96,7 @@ export function LineUsersListContainer() {
     <div className="space-y-4" suppressHydrationWarning>
       <Breadcrumbs items={breadcrumbItems} />
 
-      <LineUserHeader onRefresh={loadUsers} />
+      <LineUserHeader onRefresh={() => void loadUsers(true)} />
 
       <SearchFilters
         filters={filters}

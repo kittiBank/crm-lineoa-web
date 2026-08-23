@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
@@ -31,27 +31,42 @@ export function RichMenuListContainer() {
   const [applyingId, setApplyingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [menuToDelete, setMenuToDelete] = useState<RichMenuRecord | null>(null);
+  const requestIdRef = useRef(0);
 
   const filteredMenus = useMemo(
     () => filterRichMenus(menus, filters),
     [menus, filters],
   );
 
-  const loadMenus = async () => {
+  const loadMenus = async (force = false) => {
+    const requestId = ++requestIdRef.current;
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchRichMenus();
+      const data = await fetchRichMenus({ force });
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
       setMenus(data);
     } catch (err) {
+      if (requestId !== requestIdRef.current) {
+        return;
+      }
       setError(err instanceof Error ? err.message : "Failed to load rich menus");
     } finally {
-      setIsLoading(false);
+      if (requestId === requestIdRef.current) {
+        setIsLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    loadMenus();
+    void loadMenus();
+    return () => {
+      requestIdRef.current += 1;
+    };
+    // Initial load only; apply-member refresh calls loadMenus(true) directly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleApplyMember = async (menuId: string) => {
@@ -59,7 +74,7 @@ export function RichMenuListContainer() {
     try {
       const result = await applyMemberRichMenu(menuId);
       toast.success(`Linked member menu to ${result.linkedCount} users`);
-      await loadMenus();
+      await loadMenus(true);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to apply member menu",

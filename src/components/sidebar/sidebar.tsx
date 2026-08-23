@@ -46,6 +46,12 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
     return pathname.startsWith(href);
   };
 
+  const isCurrentPage = (href: string) => {
+    const current = pathname.replace(/\/$/, "") || "/";
+    const target = href.replace(/\/$/, "") || "/";
+    return current === target;
+  };
+
   return (
     <aside
       className={cn(
@@ -66,6 +72,12 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
                 href={item.href}
                 title={collapsed ? item.label : undefined}
                 suppressHydrationWarning
+                aria-current={isCurrentPage(item.href) ? "page" : undefined}
+                onClick={(event) => {
+                  if (isCurrentPage(item.href)) {
+                    event.preventDefault();
+                  }
+                }}
                 className={cn(
                   "flex items-center rounded-lg transition-colors",
                   collapsed

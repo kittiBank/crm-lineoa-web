@@ -40,23 +40,36 @@ export function AutoMessageListContainer() {
   const [itemToDelete, setItemToDelete] = useState<AutoMessage | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const loadAutoMessages = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await fetchAutoMessages();
-      setAutoMessages(data);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load auto messages",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadAutoMessages();
+    let isCancelled = false;
+
+    const loadAutoMessages = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await fetchAutoMessages();
+        if (isCancelled) {
+          return;
+        }
+        setAutoMessages(data);
+      } catch (err) {
+        if (!isCancelled) {
+          setError(
+            err instanceof Error ? err.message : "Failed to load auto messages",
+          );
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadAutoMessages();
+
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
   const filteredItems = useMemo(() => {
