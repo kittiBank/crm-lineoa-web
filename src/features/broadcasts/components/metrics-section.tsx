@@ -5,6 +5,8 @@ interface MetricsCardProps {
   value: string | number;
   subtext?: string;
   subtextPlacement?: "below" | "end";
+  footer?: string;
+  footerEnd?: string;
   icon?: React.ReactNode;
   trend?: {
     value: number;
@@ -25,6 +27,8 @@ export function MetricCard({
   value,
   subtext,
   subtextPlacement = "below",
+  footer,
+  footerEnd,
   icon,
   trend,
   progress,
@@ -100,6 +104,23 @@ export function MetricCard({
               style={{ width: `${progressPercent}%` }}
             />
           </div>
+        </div>
+      ) : null}
+
+      {footer || footerEnd ? (
+        <div className="mt-3 flex items-baseline justify-between gap-3">
+          {footer ? (
+            <p className="text-left text-xs text-gray-500 dark:text-gray-400">
+              {footer}
+            </p>
+          ) : (
+            <span />
+          )}
+          {footerEnd ? (
+            <p className="shrink-0 text-right text-xs text-gray-500 dark:text-gray-400">
+              {footerEnd}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>

@@ -49,53 +49,42 @@ export function QuotaSection({ quota, loading = false }: QuotaSectionProps) {
   const percentRemaining = unlimited ? 0 : Math.max(0, 100 - percentUsed);
 
   return (
-    <section className="space-y-3">
-      <div>
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-          Message Quota
-        </h2>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Current monthly LINE message quota · {quota.resetLabel}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <MetricCard
-          title="Quota"
-          value={formatCount(quota.quota, unlimited)}
-          subtext="Monthly message limit"
-          subtextPlacement="end"
-          icon={<Gauge className="h-5 w-5" />}
-        />
-        <MetricCard
-          title="Used"
-          value={quota.used.toLocaleString()}
-          subtext={
-            unlimited ? "Messages sent this month" : `${percentUsed.toFixed(1)}% of quota`
-          }
-          subtextPlacement="end"
-          icon={<Send className="h-5 w-5" />}
-          progress={
-            !unlimited && quota.quota != null
-              ? { current: quota.used, total: quota.quota }
-              : undefined
-          }
-        />
-        <MetricCard
-          title="Remaining"
-          value={formatCount(quota.remaining, unlimited)}
-          subtext={
-            unlimited ? "No monthly cap" : `${percentRemaining.toFixed(1)}% remaining`
-          }
-          subtextPlacement="end"
-          icon={<CircleCheck className="h-5 w-5" />}
-          progress={
-            !unlimited && quota.quota != null && quota.remaining != null
-              ? { current: quota.remaining, total: quota.quota }
-              : undefined
-          }
-        />
-      </div>
+    <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <MetricCard
+        title="Quota"
+        value={formatCount(quota.quota, unlimited)}
+        footer="Current monthly LINE message quota"
+        footerEnd={quota.resetLabel}
+        icon={<Gauge className="h-5 w-5" />}
+      />
+      <MetricCard
+        title="Used"
+        value={quota.used.toLocaleString()}
+        subtext={
+          unlimited ? "Messages sent this month" : `${percentUsed.toFixed(1)}% of quota`
+        }
+        subtextPlacement="end"
+        icon={<Send className="h-5 w-5" />}
+        progress={
+          !unlimited && quota.quota != null
+            ? { current: quota.used, total: quota.quota }
+            : undefined
+        }
+      />
+      <MetricCard
+        title="Remaining"
+        value={formatCount(quota.remaining, unlimited)}
+        subtext={
+          unlimited ? "No monthly cap" : `${percentRemaining.toFixed(1)}% remaining`
+        }
+        subtextPlacement="end"
+        icon={<CircleCheck className="h-5 w-5" />}
+        progress={
+          !unlimited && quota.quota != null && quota.remaining != null
+            ? { current: quota.remaining, total: quota.quota }
+            : undefined
+        }
+      />
     </section>
   );
 }
