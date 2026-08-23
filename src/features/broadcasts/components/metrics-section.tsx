@@ -4,10 +4,15 @@ interface MetricsCardProps {
   title: string;
   value: string | number;
   subtext?: string;
+  subtextPlacement?: "below" | "end";
   icon?: React.ReactNode;
   trend?: {
     value: number;
     isPositive: boolean;
+  };
+  progress?: {
+    current: number;
+    total: number;
   };
 }
 
@@ -19,9 +24,17 @@ export function MetricCard({
   title,
   value,
   subtext,
+  subtextPlacement = "below",
   icon,
   trend,
+  progress,
 }: MetricsCardProps) {
+  const progressPercent =
+    progress && progress.total > 0
+      ? Math.min(100, Math.max(0, (progress.current / progress.total) * 100))
+      : 0;
+  const showInlineSubtext = Boolean(subtext) && !trend && subtextPlacement === "end";
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
       {/* Header with icon */}
@@ -35,10 +48,23 @@ export function MetricCard({
       </div>
 
       {/* Value */}
-      <div className="mb-3">
-        <p className="text-3xl font-bold text-gray-900 dark:text-white">
-          {value}
-        </p>
+      <div className={showInlineSubtext ? "mb-0" : "mb-3"}>
+        <div
+          className={
+            showInlineSubtext
+              ? "flex items-baseline justify-between gap-3"
+              : undefined
+          }
+        >
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">
+            {value}
+          </p>
+          {showInlineSubtext ? (
+            <p className="shrink-0 text-right text-xs text-gray-500 dark:text-gray-400">
+              {subtext}
+            </p>
+          ) : null}
+        </div>
       </div>
 
       {/* Subtext or Trend */}
@@ -57,10 +83,25 @@ export function MetricCard({
           vs last month
         </p>
       ) : (
-        subtext && (
+        subtext &&
+        !showInlineSubtext && (
           <p className="text-sm text-gray-600 dark:text-gray-400">{subtext}</p>
         )
       )}
+
+      {progress && progress.total > 0 ? (
+        <div className="mt-3 space-y-1.5">
+          <p className="text-right text-xs text-gray-500 dark:text-gray-400">
+            ({progress.current.toLocaleString()}/{progress.total.toLocaleString()})
+          </p>
+          <div className="h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-700">
+            <div
+              className="h-full rounded-full bg-blue-600"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

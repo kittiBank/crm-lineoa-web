@@ -25,19 +25,18 @@ export function LineOaSettings() {
 
     async function loadAccount() {
       const cached = peekLineAccountCache();
-      if (cached) {
+      if (cached?.connected) {
         setAccount(cached);
         setOaInfo(cached.oaInfo ?? null);
         setStatus((prev) => ({
           ...prev,
-          existing: Boolean(cached.connected),
+          existing: true,
         }));
         setLoading(false);
-        return;
       }
 
       try {
-        const data = await fetchLineAccount();
+        const data = await fetchLineAccount({ force: true });
         if (cancelled) {
           return;
         }
@@ -55,7 +54,9 @@ export function LineOaSettings() {
               ? error.message
               : "Failed to load LINE account",
           );
-          setAccount({ connected: false });
+          if (!cached?.connected) {
+            setAccount({ connected: false });
+          }
         }
       } finally {
         if (!cancelled) {

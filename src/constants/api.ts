@@ -11,6 +11,7 @@ export const API_ENDPOINTS = {
   },
   LINE: {
     ACCOUNT: `${API_BASE_URL}/api/v1/line/account`,
+    MESSAGE_QUOTA: `${API_BASE_URL}/api/v1/line/message-quota`,
     USERS: `${API_BASE_URL}/api/v1/line/users`,
   },
   TEMPLATES: {

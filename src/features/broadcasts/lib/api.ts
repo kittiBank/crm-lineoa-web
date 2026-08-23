@@ -1,10 +1,12 @@
 import { API_ENDPOINTS } from "@/constants/api";
 import { assertOkResponse, getAuthHeaders } from "@/lib/api-client";
+import { dedupeAsync } from "@/lib/dedupe-async";
 import {
   BroadcastAudienceOption,
   BroadcastRecord,
   BroadcastStats,
   CreateBroadcastPayload,
+  MessageQuota,
   UpdateBroadcastPayload,
 } from "../types";
 
@@ -41,6 +43,32 @@ export async function fetchBroadcastStats(): Promise<BroadcastStats> {
   await assertOkResponse(response, "Failed to fetch broadcast stats");
 
   return response.json();
+}
+
+export async function fetchMessageQuota(): Promise<MessageQuota | null> {
+  return dedupeAsync("line:message-quota", async () => {
+    const response = await fetch(API_ENDPOINTS.LINE.MESSAGE_QUOTA, {
+      headers: getAuthHeaders(),
+      cache: "no-store",
+    });
+
+    await assertOkResponse(response, "Failed to fetch message quota");
+
+    const payload = (await response.json()) as {
+      success?: boolean;
+      data?: MessageQuota | MessageQuota[] | null;
+    };
+
+    const row = Array.isArray(payload.data)
+      ? payload.data[0]
+      : payload.data;
+
+    if (!payload.success || !row) {
+      return null;
+    }
+
+    return row;
+  });
 }
 
 export async function fetchBroadcastById(id: string): Promise<BroadcastRecord> {
