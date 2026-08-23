@@ -736,6 +736,7 @@ This project should demonstrate the following skills:
 - [Done] ทำ LINE OA Settings ให้ดึงข้อมูลจาก DB มาถ้ามี Disabled ui ไว้เปลี่ยน concection และ test connected ได้
 - ทำ User Settings ให้มี defualt password และส่งเมลล์ไปให้ user เปลี่ยน password เอง
 - ปรับหน้า Dashboard ให้ filter ข้อมูลตาม date picker ได้
+- ทำ Switching rich menu ได้
 
 - เพิ่มหน้าจัดการ Liff Content เช่น หน้า Ecom จัด layout ต่างๆ มี live preview เอา url ไปใส่ rich menu ได้
 - เพิ่มการทำระบบ Coupoun สะสมแต้มจาก LineOA

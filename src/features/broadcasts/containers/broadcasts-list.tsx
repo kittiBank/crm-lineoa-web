@@ -106,6 +106,51 @@ export function BroadcastsListContainer() {
     };
   }, []);
 
+  const hasProcessingBroadcast = allBroadcasts.some(
+    (broadcast) => broadcast.status === "Processing",
+  );
+
+  useEffect(() => {
+    if (!hasProcessingBroadcast) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const poll = async () => {
+      try {
+        const data = await loadBroadcastListPageData({ force: true });
+        if (isCancelled) {
+          return;
+        }
+
+        setAllBroadcasts(data.broadcasts);
+        setMetrics(data.metrics);
+
+        const stillProcessing = data.broadcasts.some(
+          (broadcast) => broadcast.status === "Processing",
+        );
+
+        if (!stillProcessing) {
+          const nextQuota = await fetchMessageQuota();
+          if (!isCancelled) {
+            setQuota(nextQuota);
+          }
+        }
+      } catch {
+        // Keep the current list/quota until the next poll.
+      }
+    };
+
+    void poll();
+    const timer = window.setInterval(poll, 3000);
+
+    return () => {
+      isCancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [hasProcessingBroadcast]);
+
   const filteredBroadcasts = useMemo(
     () =>
       filterBroadcasts(
