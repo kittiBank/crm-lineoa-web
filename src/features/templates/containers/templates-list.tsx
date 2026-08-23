@@ -38,21 +38,36 @@ export function TemplatesListContainer() {
     useState<MessageTemplate | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const loadTemplates = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await fetchTemplates();
-      setTemplates(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load templates");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    loadTemplates();
+    let isCancelled = false;
+
+    const loadTemplates = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const data = await fetchTemplates();
+        if (isCancelled) {
+          return;
+        }
+        setTemplates(data);
+      } catch (err) {
+        if (!isCancelled) {
+          setError(
+            err instanceof Error ? err.message : "Failed to load templates",
+          );
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadTemplates();
+
+    return () => {
+      isCancelled = true;
+    };
   }, []);
 
   const categories = useMemo(() => {

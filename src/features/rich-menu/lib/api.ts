@@ -1,6 +1,10 @@
 import { API_ENDPOINTS } from "@/constants/api";
 import { getToken } from "@/lib/auth";
-import { dedupeAsync } from "@/lib/dedupe-async";
+import {
+  dedupeAsync,
+  invalidateDedupe,
+  REMOUNT_DEDUPE_TTL_MS,
+} from "@/lib/dedupe-async";
 import {
   CreateRichMenuPayload,
   CreateRichMenuResponse,
@@ -8,43 +12,55 @@ import {
   RichMenuRecord,
 } from "../types";
 
-export async function fetchRichMenus(): Promise<RichMenuRecord[]> {
-  const token = getToken();
-  if (!token) {
-    throw new Error("Authentication required");
-  }
+export async function fetchRichMenus(options?: {
+  force?: boolean;
+}): Promise<RichMenuRecord[]> {
+  return dedupeAsync(
+    "rich-menus:list",
+    async () => {
+      const token = getToken();
+      if (!token) {
+        throw new Error("Authentication required");
+      }
 
-  const response = await fetch(API_ENDPOINTS.RICH_MENU.LIST, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+      const response = await fetch(API_ENDPOINTS.RICH_MENU.LIST, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || "Failed to fetch rich menus");
-  }
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || "Failed to fetch rich menus");
+      }
 
-  return response.json();
+      return response.json();
+    },
+    { ttlMs: REMOUNT_DEDUPE_TTL_MS, force: options?.force },
+  );
 }
 
 export async function fetchRichMenuById(id: string): Promise<RichMenuDetail> {
-  return dedupeAsync(`rich-menus:${id}`, async () => {
-    const token = getToken();
-    if (!token) {
-      throw new Error("Authentication required");
-    }
+  return dedupeAsync(
+    `rich-menus:${id}`,
+    async () => {
+      const token = getToken();
+      if (!token) {
+        throw new Error("Authentication required");
+      }
 
-    const response = await fetch(API_ENDPOINTS.RICH_MENU.DETAIL(id), {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: "no-store",
-    });
+      const response = await fetch(API_ENDPOINTS.RICH_MENU.DETAIL(id), {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.message || "Failed to fetch rich menu");
-    }
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message || "Failed to fetch rich menu");
+      }
 
-    return response.json();
-  });
+      return response.json();
+    },
+    { ttlMs: REMOUNT_DEDUPE_TTL_MS },
+  );
 }
 
 export async function deleteRichMenu(id: string): Promise<void> {
@@ -62,6 +78,9 @@ export async function deleteRichMenu(id: string): Promise<void> {
     const error = await response.json().catch(() => ({}));
     throw new Error(error.message || "Failed to delete rich menu");
   }
+
+  invalidateDedupe("rich-menus:list");
+  invalidateDedupe(`rich-menus:${id}`);
 }
 
 export async function createRichMenu(
@@ -95,6 +114,7 @@ export async function createRichMenu(
     );
   }
 
+  invalidateDedupe("rich-menus:list");
   return response.json();
 }
 
@@ -119,5 +139,7 @@ export async function applyMemberRichMenu(
     throw new Error(error.message || "Failed to apply member rich menu");
   }
 
+  invalidateDedupe("rich-menus:list");
+  invalidateDedupe(`rich-menus:${richMenuId}`);
   return response.json();
 }
