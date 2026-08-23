@@ -29,6 +29,14 @@ interface FormErrors {
   channelSecret?: string;
 }
 
+function accountToFormData(account: LineAccountResponse): FormData {
+  return {
+    name: account.name ?? "",
+    channelAccessToken: account.channelAccessTokenMasked ?? "",
+    channelSecret: account.channelSecretMasked ?? "",
+  };
+}
+
 export function LineAccountForm({
   initialAccount,
   onStatusChange,
@@ -41,12 +49,18 @@ export function LineAccountForm({
     Boolean(initialAccount.connected),
   );
   const [isConnectionVerified, setIsConnectionVerified] = useState(false);
-  const [formData, setFormData] = useState<FormData>({
-    name: initialAccount.name ?? "",
-    channelAccessToken: initialAccount.channelAccessTokenMasked ?? "",
-    channelSecret: initialAccount.channelSecretMasked ?? "",
-  });
+  const [formData, setFormData] = useState<FormData>(() =>
+    accountToFormData(initialAccount),
+  );
   const [errors, setErrors] = useState<FormErrors>({});
+
+  useEffect(() => {
+    setIsExistingAccount(Boolean(initialAccount.connected));
+    setFormData(accountToFormData(initialAccount));
+    if (initialAccount.oaInfo) {
+      onOaInfoChange?.(initialAccount.oaInfo);
+    }
+  }, [initialAccount, onOaInfoChange]);
 
   const fieldsDisabled = isExistingAccount || loading || testingConnection;
 

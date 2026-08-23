@@ -720,8 +720,9 @@ This project should demonstrate the following skills:
 - Production-ready Folder Structure
 
 # Developer more feature
-- หน้า DashBaord เพิ่ม Card Quota, Used, Remaining  Currrent (มี percent บอกด้วย)
-- หน้า Create Message tempalte ปรับให้สูงสุดรองรับ 5 bubble messages 
+- หน้า DashBaord เพิ่ม Date picker เลือกวันที่ได้ 7 วัน, เดือนนี้, ระหว่างวันที่ 
+- [Done] หน้า Brodcast เพิ่ม Card Quota, Used, Remaining  Currrent (มี percent บอกด้วย)
+- หน้า Create Message tempalte ปรับให้สูงสุดรองรับ 5 bubble messages ฺ
 - หน้า Create Message tempalte ปรับให้มี Default flex message ย้าย icon ไปหลังสุด และมีเช็ก flex เหมือน flex simulate
 - หน้า Create Auto Message Keyword Rule เพิ่มคำที่รอบรับได้แบบ multi tag 
 - หน้า Create New Audience เพิ่ม Section preview result ใช้ filter ข้อมูลตามที่เลือก

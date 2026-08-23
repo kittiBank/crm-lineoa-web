@@ -100,6 +100,16 @@ export interface FilterOptions {
   dateRange: string;
 }
 
+export interface MessageQuota {
+  quota: number | null;
+  used: number;
+  remaining: number | null;
+  quotaType: string | null;
+  resetLabel: string;
+  syncedAt?: string;
+  cached?: boolean;
+}
+
 export const SEND_MODE_OPTIONS: {
   value: BroadcastSendMode;
   label: string;

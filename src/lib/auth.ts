@@ -18,6 +18,7 @@ export function clearAuth(): void {
   localStorage.removeItem(AUTH_USER_KEY);
   localStorage.removeItem("crm.line-account.cache");
   localStorage.removeItem("crm.line-account.cache.v2");
+  localStorage.removeItem("crm.line-account.cache.v3");
 }
 
 export function redirectToDashboard(): void {

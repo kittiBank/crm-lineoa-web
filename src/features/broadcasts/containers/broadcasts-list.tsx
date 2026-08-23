@@ -10,15 +10,16 @@ import {
   SearchFilters,
   BroadcastTable,
   MetricsSection,
+  QuotaSection,
   Pagination,
 } from "@/features/broadcasts/components";
-import { deleteBroadcast } from "@/features/broadcasts/lib/api";
+import { deleteBroadcast, fetchMessageQuota } from "@/features/broadcasts/lib/api";
 import {
   clearBroadcastListDataCache,
   loadBroadcastListPageData,
 } from "@/features/broadcasts/lib/load-broadcast-list-data";
 import { filterBroadcasts } from "@/features/broadcasts/lib/mappers";
-import { Broadcast, FilterOptions, MetricsData } from "@/features/broadcasts/types";
+import { Broadcast, FilterOptions, MessageQuota, MetricsData } from "@/features/broadcasts/types";
 import { useToast } from "@/lib/hooks/useToast";
 
 const EMPTY_METRICS: MetricsData = {
@@ -43,6 +44,8 @@ export function BroadcastsListContainer() {
   });
   const [allBroadcasts, setAllBroadcasts] = useState<Broadcast[]>([]);
   const [metrics, setMetrics] = useState<MetricsData>(EMPTY_METRICS);
+  const [quota, setQuota] = useState<MessageQuota | null>(null);
+  const [quotaLoading, setQuotaLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [broadcastToDelete, setBroadcastToDelete] = useState<Broadcast | null>(
@@ -55,17 +58,33 @@ export function BroadcastsListContainer() {
 
     const loadBroadcasts = async () => {
       setIsLoading(true);
+      setQuotaLoading(true);
       setError(null);
 
       try {
-        const data = await loadBroadcastListPageData();
+        const [pageResult, quotaResult] = await Promise.allSettled([
+          loadBroadcastListPageData(),
+          fetchMessageQuota(),
+        ]);
 
         if (isCancelled) {
           return;
         }
 
-        setAllBroadcasts(data.broadcasts);
-        setMetrics(data.metrics);
+        if (pageResult.status === "fulfilled") {
+          setAllBroadcasts(pageResult.value.broadcasts);
+          setMetrics(pageResult.value.metrics);
+        } else {
+          setError(
+            pageResult.reason instanceof Error
+              ? pageResult.reason.message
+              : "Failed to load broadcasts",
+          );
+        }
+
+        setQuota(
+          quotaResult.status === "fulfilled" ? quotaResult.value : null,
+        );
       } catch (err) {
         if (!isCancelled) {
           setError(
@@ -75,6 +94,7 @@ export function BroadcastsListContainer() {
       } finally {
         if (!isCancelled) {
           setIsLoading(false);
+          setQuotaLoading(false);
         }
       }
     };
@@ -188,6 +208,8 @@ export function BroadcastsListContainer() {
     <div className="space-y-2" suppressHydrationWarning>
       <Breadcrumbs items={breadcrumbItems} />
       <BroadcastHeader />
+
+      <QuotaSection quota={quota} loading={quotaLoading} />
 
       <SearchFilters filters={filters} onFilterChange={handleFilterChange} />
 

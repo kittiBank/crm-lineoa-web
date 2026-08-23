@@ -4,7 +4,7 @@ import { assertOkResponse, getAuthHeaders } from "@/lib/api-client";
 import { LineAccountResponse } from "../types";
 
 export const LINE_ACCOUNT_CACHE_TTL_MS = 5 * 60 * 1000;
-export const LINE_ACCOUNT_CACHE_KEY = "crm.line-account.cache.v2";
+export const LINE_ACCOUNT_CACHE_KEY = "crm.line-account.cache.v3";
 
 type LineAccountCacheEntry = {
   data: LineAccountResponse;
@@ -65,6 +65,15 @@ function readStoredCache(): LineAccountCacheEntry | null {
 }
 
 export function peekLineAccountCache(): LineAccountResponse | null {
+  const data = readFreshCacheData();
+  if (!data?.connected) {
+    return null;
+  }
+
+  return data;
+}
+
+function readFreshCacheData(): LineAccountResponse | null {
   if (memoryCache && isFresh(memoryCache)) {
     return memoryCache.data;
   }
@@ -80,6 +89,10 @@ export function peekLineAccountCache(): LineAccountResponse | null {
 }
 
 export function setCachedLineAccount(data: LineAccountResponse) {
+  if (!data.connected) {
+    invalidateLineAccountCache();
+    return;
+  }
   const entry: LineAccountCacheEntry = {
     data: {
       connected: data.connected,
@@ -110,10 +123,14 @@ export function invalidateLineAccountCache() {
   }
 }
 
-export function fetchLineAccount(): Promise<LineAccountResponse> {
-  const cached = peekLineAccountCache();
-  if (cached) {
-    return Promise.resolve(cached);
+export function fetchLineAccount(options?: {
+  force?: boolean;
+}): Promise<LineAccountResponse> {
+  if (!options?.force) {
+    const cached = peekLineAccountCache();
+    if (cached) {
+      return Promise.resolve(cached);
+    }
   }
 
   if (inflightRequest) {
