@@ -1,5 +1,7 @@
 import { MessageTypeOption, TemplateMessageType } from "../types/builder";
 
+export const MAX_TEMPLATE_MESSAGES = 5;
+
 export const MESSAGE_TYPE_OPTIONS: MessageTypeOption[] = [
   {
     type: "text",
@@ -17,14 +19,14 @@ export const MESSAGE_TYPE_OPTIONS: MessageTypeOption[] = [
     description: "Send a video clip",
   },
   {
-    type: "flex",
-    label: "Flex",
-    description: "Rich card with image & button",
-  },
-  {
     type: "carousel",
     label: "Carousel",
     description: "Swipeable cards",
+  },
+  {
+    type: "flex",
+    label: "Flex",
+    description: "Paste LINE Flex Simulator JSON",
   },
 ];
 
@@ -37,5 +39,7 @@ export const TEMPLATE_CATEGORIES = [
 ];
 
 export function getMessageTypeLabel(type: TemplateMessageType): string {
-  return MESSAGE_TYPE_OPTIONS.find((option) => option.type === type)?.label ?? type;
+  return (
+    MESSAGE_TYPE_OPTIONS.find((option) => option.type === type)?.label ?? type
+  );
 }

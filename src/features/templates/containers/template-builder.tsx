@@ -18,8 +18,16 @@ import {
   fetchTemplateById,
   updateTemplate,
 } from "@/features/templates/lib/api";
-import { createMessageBlock, normalizeTemplateMessages, toPersistableMessages } from "@/features/templates/lib/create-message";
-import { TEMPLATE_CATEGORIES } from "@/features/templates/lib/message-types";
+import {
+  createMessageBlock,
+  normalizeTemplateMessages,
+  toPersistableMessages,
+} from "@/features/templates/lib/create-message";
+import { parseFlexSimulatorJson } from "@/features/templates/lib/flex-json";
+import {
+  MAX_TEMPLATE_MESSAGES,
+  TEMPLATE_CATEGORIES,
+} from "@/features/templates/lib/message-types";
 import {
   TemplateMessageBlock,
   TemplateMessageType,
@@ -123,6 +131,13 @@ export function TemplateBuilderContainer({
   ];
 
   const handleAddMessage = (type: TemplateMessageType) => {
+    if (messages.length >= MAX_TEMPLATE_MESSAGES) {
+      toast.error(
+        `A template can contain up to ${MAX_TEMPLATE_MESSAGES} messages`,
+      );
+      return;
+    }
+
     const nextMessage = createMessageBlock(type);
     setMessages((current) => [...current, nextMessage]);
     setSelectedMessageId(nextMessage.id);
@@ -168,6 +183,38 @@ export function TemplateBuilderContainer({
     if (messages.length === 0) {
       toast.error("Add at least one message block");
       return false;
+    }
+
+    if (messages.length > MAX_TEMPLATE_MESSAGES) {
+      toast.error(
+        `A template can contain up to ${MAX_TEMPLATE_MESSAGES} messages`,
+      );
+      return false;
+    }
+
+    for (const [index, message] of messages.entries()) {
+      if (message.type !== "flex") {
+        continue;
+      }
+
+      const parsed = parseFlexSimulatorJson(message.contentsJson ?? "");
+      if (!parsed.ok) {
+        toast.error(`Flex message ${index + 1}: ${parsed.error}`);
+        return false;
+      }
+
+      const altText = parsed.altText?.trim() || message.altText.trim();
+      if (!altText) {
+        toast.error(`Flex message ${index + 1}: Alt text is required`);
+        return false;
+      }
+
+      if (altText.length > 400) {
+        toast.error(
+          `Flex message ${index + 1}: Alt text must be 400 characters or fewer`,
+        );
+        return false;
+      }
     }
 
     return true;
@@ -293,9 +340,13 @@ export function TemplateBuilderContainer({
                 Add message
               </h2>
               <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                Choose a LINE message type to add to this broadcast template
+                Choose a LINE message type to add to this broadcast template (
+                {messages.length}/{MAX_TEMPLATE_MESSAGES})
               </p>
-              <MessageTypePicker onAdd={handleAddMessage} />
+              <MessageTypePicker
+                onAdd={handleAddMessage}
+                disabled={messages.length >= MAX_TEMPLATE_MESSAGES}
+              />
             </section>
           )}
 

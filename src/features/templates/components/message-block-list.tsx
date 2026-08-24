@@ -102,7 +102,7 @@ function getMessageSummary(message: TemplateMessageBlock): string {
     case "video":
       return message.videoUrl || "No video URL";
     case "flex":
-      return message.title || message.altText;
+      return message.altText || "Flex JSON message";
     case "carousel":
       return `${message.columns.length} columns`;
     default:

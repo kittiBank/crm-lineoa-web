@@ -1,6 +1,7 @@
 "use client";
 
 import { Play, User } from "lucide-react";
+import { FlexMessagePreview } from "./flex-message-preview";
 import { TemplateMessageBlock } from "../types/builder";
 
 interface LineOaPreviewProps {
@@ -98,35 +99,10 @@ function PreviewBubble({ message }: { message: TemplateMessageBlock }) {
       );
     case "flex":
       return (
-        <div className="max-w-[85%] overflow-hidden rounded-2xl rounded-tl-md bg-white shadow-sm">
-          {message.previewUrl || message.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={message.previewUrl || message.imageUrl}
-              alt={message.title}
-              referrerPolicy="no-referrer"
-              className="h-36 w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-36 items-center justify-center bg-gray-100 text-sm text-gray-400">
-              Flex image
-            </div>
-          )}
-          <div className="space-y-2 px-4 py-3">
-            <p className="text-sm font-semibold text-gray-900">
-              {message.title || "Flex title"}
-            </p>
-            <p className="text-xs leading-relaxed text-gray-600">
-              {message.description || "Flex description"}
-            </p>
-            <button
-              type="button"
-              className="w-full rounded-lg bg-[#06c755] px-3 py-2 text-sm font-medium text-white"
-            >
-              {message.buttonLabel || "Button"}
-            </button>
-          </div>
-        </div>
+        <FlexMessagePreview
+          rawJson={message.contentsJson}
+          altText={message.altText}
+        />
       );
     case "carousel":
       return (
