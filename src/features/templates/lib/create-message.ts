@@ -8,6 +8,12 @@ import {
   TextMessageBlock,
   VideoMessageBlock,
 } from "../types/builder";
+import {
+  DEFAULT_FLEX_CONTENTS_JSON,
+  formatFlexContents,
+  legacyFlexToContents,
+  parseFlexSimulatorJson,
+} from "./flex-json";
 
 function createId() {
   return crypto.randomUUID();
@@ -31,7 +37,11 @@ export function createMessageBlock(
 
   switch (type) {
     case "text":
-      return { id, type: "text", text: "Hello from LINE OA!" } satisfies TextMessageBlock;
+      return {
+        id,
+        type: "text",
+        text: "Hello from LINE OA!",
+      } satisfies TextMessageBlock;
     case "image":
       return { id, type: "image", imageUrl: "" } satisfies ImageMessageBlock;
     case "video":
@@ -46,11 +56,7 @@ export function createMessageBlock(
         id,
         type: "flex",
         altText: "Flex message",
-        title: "Special Offer",
-        description: "Describe your promotion here",
-        imageUrl: "",
-        buttonLabel: "Learn more",
-        buttonUrl: "https://",
+        contentsJson: DEFAULT_FLEX_CONTENTS_JSON,
       } satisfies FlexMessageBlock;
     case "carousel":
       return {
@@ -76,8 +82,17 @@ export function toPersistableMessages(
     }
 
     if (message.type === "flex") {
-      const { previewUrl: _previewUrl, ...rest } = message;
-      return rest;
+      const parsed = parseFlexSimulatorJson(message.contentsJson ?? "");
+      if (!parsed.ok) {
+        throw new Error(parsed.error);
+      }
+
+      return {
+        id: message.id,
+        type: "flex",
+        altText: parsed.altText?.trim() || message.altText.trim(),
+        contents: parsed.contents,
+      } satisfies FlexMessageBlock;
     }
 
     if (message.type === "carousel") {
@@ -151,15 +166,19 @@ export function normalizeTemplateMessages(
       }
 
       if (message.type === "flex") {
+        const savedContents =
+          message.contents &&
+          typeof message.contents === "object" &&
+          !Array.isArray(message.contents)
+            ? message.contents
+            : legacyFlexToContents(message);
+
         return {
           ...message,
           id,
           altText: message.altText ?? "",
-          title: message.title ?? "",
-          description: message.description ?? "",
-          imageUrl: message.imageUrl ?? "",
-          buttonLabel: message.buttonLabel ?? "",
-          buttonUrl: message.buttonUrl ?? "",
+          contents: savedContents,
+          contentsJson: formatFlexContents(savedContents),
         } satisfies FlexMessageBlock;
       }
 

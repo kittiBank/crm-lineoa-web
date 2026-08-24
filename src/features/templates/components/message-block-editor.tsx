@@ -40,11 +40,7 @@ export function MessageBlockEditor({
   switch (message.type) {
     case "text":
       return (
-        <TextEditor
-          message={message}
-          onChange={onChange}
-          readOnly={readOnly}
-        />
+        <TextEditor message={message} onChange={onChange} readOnly={readOnly} />
       );
     case "image":
       return (
@@ -64,11 +60,7 @@ export function MessageBlockEditor({
       );
     case "flex":
       return (
-        <FlexEditor
-          message={message}
-          onChange={onChange}
-          readOnly={readOnly}
-        />
+        <FlexEditor message={message} onChange={onChange} readOnly={readOnly} />
       );
     case "carousel":
       return (
@@ -153,7 +145,10 @@ function ImageEditor({
   };
 
   return (
-    <fieldset disabled={readOnly || isUploading} className="space-y-4 border-0 p-0">
+    <fieldset
+      disabled={readOnly || isUploading}
+      className="space-y-4 border-0 p-0"
+    >
       <Field label="Image URL">
         <input
           type="url"
@@ -179,7 +174,9 @@ function ImageEditor({
             className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-blue-700 disabled:opacity-60"
           />
           {isUploading && (
-            <p className="mt-1.5 text-xs text-gray-500">Uploading to storage...</p>
+            <p className="mt-1.5 text-xs text-gray-500">
+              Uploading to storage...
+            </p>
           )}
         </Field>
       )}
@@ -233,45 +230,8 @@ function FlexEditor({
   onChange: (message: TemplateMessageBlock) => void;
   readOnly?: boolean;
 }) {
-  const [isUploading, setIsUploading] = useState(false);
-  const toast = useToast();
-
-  const handleUpload = async (file: File | undefined) => {
-    if (!file) {
-      return;
-    }
-
-    const localPreviewUrl = URL.createObjectURL(file);
-    if (message.previewUrl?.startsWith("blob:")) {
-      URL.revokeObjectURL(message.previewUrl);
-    }
-    onChange({ ...message, previewUrl: localPreviewUrl });
-
-    setIsUploading(true);
-    try {
-      const { url, displayUrl } = await uploadTemplateImage(file);
-      onChange({
-        ...message,
-        imageUrl: displayUrl || url,
-        previewUrl: localPreviewUrl,
-      });
-      toast.success("Image uploaded");
-    } catch (error) {
-      URL.revokeObjectURL(localPreviewUrl);
-      onChange({ ...message, previewUrl: undefined });
-      toast.error(
-        error instanceof Error ? error.message : "Failed to upload image",
-      );
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   return (
-    <fieldset
-      disabled={readOnly || isUploading}
-      className="grid gap-4 border-0 p-0 md:grid-cols-2"
-    >
+    <fieldset disabled={readOnly} className="space-y-4 border-0 p-0">
       <Field label="Alt text">
         <input
           value={message.altText}
@@ -279,74 +239,33 @@ function FlexEditor({
             onChange({ ...message, altText: event.target.value })
           }
           className={inputClassName}
+          placeholder="Text shown when Flex content cannot be displayed"
         />
       </Field>
-      <Field label="Image URL">
-        <input
-          type="url"
-          value={message.imageUrl}
-          onChange={(event) =>
-            onChange({ ...message, imageUrl: event.target.value })
-          }
-          className={inputClassName}
-        />
-      </Field>
-      {!readOnly && (
-        <Field label="Or upload image" className="md:col-span-2">
-          <input
-            type="file"
-            accept="image/*"
-            disabled={isUploading}
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              void handleUpload(file);
-              event.target.value = "";
-            }}
-            className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-blue-700 disabled:opacity-60"
-          />
-          {isUploading && (
-            <p className="mt-1.5 text-xs text-gray-500">Uploading to storage...</p>
-          )}
-        </Field>
-      )}
-      <Field label="Title">
-        <input
-          value={message.title}
-          onChange={(event) =>
-            onChange({ ...message, title: event.target.value })
-          }
-          className={inputClassName}
-        />
-      </Field>
-      <Field label="Button label">
-        <input
-          value={message.buttonLabel}
-          onChange={(event) =>
-            onChange({ ...message, buttonLabel: event.target.value })
-          }
-          className={inputClassName}
-        />
-      </Field>
-      <Field label="Description" className="md:col-span-2">
+      <Field label="Flex JSON">
         <textarea
-          rows={3}
-          value={message.description}
+          rows={20}
+          value={message.contentsJson ?? ""}
           onChange={(event) =>
-            onChange({ ...message, description: event.target.value })
+            onChange({ ...message, contentsJson: event.target.value })
           }
-          className={`${inputClassName} resize-none`}
+          className={`${inputClassName} resize-y font-mono text-xs leading-5`}
+          placeholder='Paste a LINE Flex Simulator bubble, carousel, or full {"type":"flex",...} message'
+          spellCheck={false}
         />
       </Field>
-      <Field label="Button URL" className="md:col-span-2">
-        <input
-          type="url"
-          value={message.buttonUrl}
-          onChange={(event) =>
-            onChange({ ...message, buttonUrl: event.target.value })
-          }
-          className={inputClassName}
-        />
-      </Field>
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        Paste JSON from the{" "}
+        <a
+          href="https://developers.line.biz/flex-simulator/"
+          target="_blank"
+          rel="noreferrer"
+          className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+        >
+          LINE Flex Message Simulator
+        </a>
+        . JSON is validated when you save the template.
+      </p>
     </fieldset>
   );
 }

@@ -722,13 +722,15 @@ This project should demonstrate the following skills:
 # Developer more feature
 - หน้า DashBaord เพิ่ม Date picker เลือกวันที่ได้ 7 วัน, เดือนนี้, ระหว่างวันที่ 
 - [Done] หน้า Brodcast เพิ่ม Card Quota, Used, Remaining  Currrent (มี percent บอกด้วย)
-- หน้า Create Message tempalte ปรับให้สูงสุดรองรับ 5 bubble messages ฺ
-- หน้า Create Message tempalte ปรับให้มี Default flex message ย้าย icon ไปหลังสุด และมีเช็ก flex เหมือน flex simulate
+- [Done] หน้า Create Message tempalte ปรับให้สูงสุดรองรับ 5 bubble messages ฺ
+- [Done] หน้า Create Message tempalte ปรับให้มี Default flex message ย้าย icon ไปหลังสุด และมีเช็ก flex เหมือน flex simulate
 - หน้า Create Auto Message Keyword Rule เพิ่มคำที่รอบรับได้แบบ multi tag 
 - หน้า Create New Audience เพิ่ม Section preview result ใช้ filter ข้อมูลตามที่เลือก
 - หน้า Create Rich menu เพิ่ม Validate ไฟล์ภาพ png, jpg ขนาดไฟล์ และ size ตามที่ line กำหนดเท่านั้น
 - หน้า Create Rich menu เพิ่มแบบ custom area วาดได้
 - หน้า Create Rich menu ให้เลือก layout น้อยลง แบบ Big, compact, Custom
+- หน้า Create message  เพิ่ม Defualt img / video
+- หน้า Create message เพิ่ม Merge Tag ข้อมูล linruser กับ flex msg ได้
 
 - หน้า Brodcast เพิ่ม TARGET specific audience แบบ ddl (ต้องไปสร้าง audienct มาก่อน)
 - ทำ User tracking reach, read

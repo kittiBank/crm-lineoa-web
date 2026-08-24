@@ -31,12 +31,16 @@ export interface VideoMessageBlock extends TemplateMessageBase {
 export interface FlexMessageBlock extends TemplateMessageBase {
   type: "flex";
   altText: string;
-  title: string;
-  description: string;
-  imageUrl: string;
-  buttonLabel: string;
-  buttonUrl: string;
-  /** Client-only local object URL for reliable preview; never persist */
+  /** Client-only raw JSON copied from the LINE Flex Message Simulator */
+  contentsJson?: string;
+  /** Parsed bubble or carousel persisted to the API */
+  contents?: Record<string, unknown>;
+  /** Legacy fields retained while loading templates created by the old editor */
+  title?: string;
+  description?: string;
+  imageUrl?: string;
+  buttonLabel?: string;
+  buttonUrl?: string;
   previewUrl?: string;
 }
 
