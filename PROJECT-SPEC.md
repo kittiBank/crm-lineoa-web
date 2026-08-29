@@ -720,11 +720,11 @@ This project should demonstrate the following skills:
 - Production-ready Folder Structure
 
 # Developer more feature
-- หน้า DashBaord เพิ่ม Date picker เลือกวันที่ได้ 7 วัน, เดือนนี้, ระหว่างวันที่ 
+- [Done] หน้า DashBaord เพิ่ม Date picker เลือกวันที่ได้ 7 วัน, เดือนนี้, ระหว่างวันที่ 
 - [Done] หน้า Brodcast เพิ่ม Card Quota, Used, Remaining  Currrent (มี percent บอกด้วย)
 - [Done] หน้า Create Message tempalte ปรับให้สูงสุดรองรับ 5 bubble messages ฺ
 - [Done] หน้า Create Message tempalte ปรับให้มี Default flex message ย้าย icon ไปหลังสุด และมีเช็ก flex เหมือน flex simulate
-- หน้า Create Auto Message Keyword Rule เพิ่มคำที่รอบรับได้แบบ multi tag 
+- [Done] หน้า Create Auto Message Keyword Rule เพิ่มคำที่รอบรับได้แบบ multi tag 
 - หน้า Create New Audience เพิ่ม Section preview result ใช้ filter ข้อมูลตามที่เลือก
 - หน้า Create Rich menu เพิ่ม Validate ไฟล์ภาพ png, jpg ขนาดไฟล์ และ size ตามที่ line กำหนดเท่านั้น
 - หน้า Create Rich menu เพิ่มแบบ custom area วาดได้
@@ -750,6 +750,8 @@ This project should demonstrate the following skills:
 - ทำ Noti แจ้งเตือนผูกกับ user ตอบแชทได้, แจ้งเตือน message จากไลน์\
 - เพิ่มเมนู Automation workflow เช่น User เพิ่มเพื่อน > ส่งข้อความ welcome > รอ 1 วัน > ส่ง Promotion
 - เพิ่มเมนู Liff builder จัดการหน้า Ecom สินค้าได้
+- เพิ่มเมนู Liff builder จัดการหน้า Contents
+- เพิ่มเมนู Liff builder จัดการหน้า นัดหมายได้
 - เพิ่ม Animation frammer ui
 
 

@@ -4,10 +4,10 @@ export const DASHBOARD_PERIOD_OPTIONS: Array<{
   value: DashboardPeriod;
   label: string;
 }> = [
-  { value: "today", label: "Today" },
-  { value: "7d", label: "Last 7 days" },
-  { value: "month", label: "This month" },
-];
+    { value: "today", label: "Today" },
+    { value: "7d", label: "Last 7 days" },
+    { value: "month", label: "This month" },
+  ];
 
 export type DashboardBroadcastStatus =
   | "Sent"
@@ -59,10 +59,10 @@ export interface DashboardOverview {
 }
 
 export const BROADCAST_STATUS_COLORS: Record<DashboardBroadcastStatus, string> =
-  {
-    Sent: "#3b82f6",
-    "In Progress": "#f59e0b",
-    Scheduled: "#10b981",
-    Draft: "#9ca3af",
-    Failed: "#ef4444",
-  };
+{
+  Sent: "#3b82f6",
+  "In Progress": "#f59e0b",
+  Scheduled: "#10b981",
+  Draft: "#9ca3af",
+  Failed: "#ef4444",
+};

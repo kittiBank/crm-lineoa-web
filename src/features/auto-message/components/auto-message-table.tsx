@@ -1,5 +1,6 @@
 import { Edit2, Trash2, Eye } from "lucide-react";
 import { AutoMessage, AutoMessageMatchType, MATCH_TYPE_OPTIONS } from "../types";
+import { parseKeywords } from "../lib/keywords";
 
 interface AutoMessageTableProps {
   items: AutoMessage[];
@@ -107,9 +108,16 @@ export function AutoMessageTable({
                   </p>
                 </td>
                 <td className="px-6 py-4">
-                  <span className="text-sm text-gray-900 dark:text-white break-words">
-                    {item.keyword}
-                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {parseKeywords(item.keyword).map((keyword) => (
+                      <span
+                        key={keyword}
+                        className="inline-flex max-w-full items-center rounded-full bg-gray-200 px-2.5 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-600 dark:text-gray-100"
+                      >
+                        <span className="truncate">{keyword}</span>
+                      </span>
+                    ))}
+                  </div>
                 </td>
                 <td className="px-6 py-4">
                   <MatchTypeBadge matchType={item.matchType} />
