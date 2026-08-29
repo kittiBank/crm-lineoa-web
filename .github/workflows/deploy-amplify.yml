@@ -1,0 +1,115 @@
+name: Deploy Amplify
+
+# Manual only — merge to main does not deploy.
+# Disable Amplify auto-build on the connected branch in the Amplify Console.
+#
+# GitHub configuration:
+#   vars:     AMPLIFY_APP_ID, AWS_REGION (default ap-southeast-1), AMPLIFY_BRANCH (default main)
+#   secrets:  AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+# IAM on the AWS user/role:
+#   amplify:StartJob, amplify:GetJob
+#   on arn:aws:amplify:<region>:<account>:apps/<app-id>/branches/<branch>/jobs/*
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-amplify
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Trigger Amplify build
+    runs-on: ubuntu-latest
+    environment: production
+
+    env:
+      AWS_REGION: ${{ vars.AWS_REGION || 'ap-southeast-1' }}
+      AMPLIFY_APP_ID: ${{ vars.AMPLIFY_APP_ID }}
+      AMPLIFY_BRANCH: ${{ vars.AMPLIFY_BRANCH || 'main' }}
+
+    steps:
+      - name: Check required vars
+        run: |
+          if [ -z "$AMPLIFY_APP_ID" ]; then
+            echo "Set repository variable AMPLIFY_APP_ID (Amplify Console → App settings → General → App ID)."
+            exit 1
+          fi
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Start Amplify job
+        id: start
+        run: |
+          set -euo pipefail
+          JOB_JSON=$(aws amplify start-job \
+            --app-id "$AMPLIFY_APP_ID" \
+            --branch-name "$AMPLIFY_BRANCH" \
+            --job-type RELEASE)
+
+          JOB_ID=$(echo "$JOB_JSON" | jq -r '.jobSummary.jobId')
+          COMMIT_ID=$(echo "$JOB_JSON" | jq -r '.jobSummary.commitId // "unknown"')
+          STATUS=$(echo "$JOB_JSON" | jq -r '.jobSummary.status')
+
+          if [ -z "$JOB_ID" ] || [ "$JOB_ID" = "null" ]; then
+            echo "Failed to start Amplify job:"
+            echo "$JOB_JSON"
+            exit 1
+          fi
+
+          echo "job_id=$JOB_ID" >> "$GITHUB_OUTPUT"
+          echo "Started Amplify job ${JOB_ID} (${STATUS}) commit=${COMMIT_ID}"
+          echo "Console: https://${AWS_REGION}.console.aws.amazon.com/amplify/apps/${AMPLIFY_APP_ID}/branches/${AMPLIFY_BRANCH}/deployments/${JOB_ID}"
+
+      - name: Wait for Amplify job
+        env:
+          JOB_ID: ${{ steps.start.outputs.job_id }}
+        run: |
+          set -euo pipefail
+          TIMEOUT_SEC=1800
+          INTERVAL_SEC=20
+          elapsed=0
+
+          while true; do
+            STATUS=$(aws amplify get-job \
+              --app-id "$AMPLIFY_APP_ID" \
+              --branch-name "$AMPLIFY_BRANCH" \
+              --job-id "$JOB_ID" \
+              --query 'job.summary.status' \
+              --output text)
+
+            echo "Amplify job ${JOB_ID} status=${STATUS} elapsed=${elapsed}s"
+
+            case "$STATUS" in
+              SUCCEED)
+                echo "Amplify deploy succeeded."
+                exit 0
+                ;;
+              FAILED|CANCELLED)
+                echo "Amplify deploy ${STATUS}."
+                aws amplify get-job \
+                  --app-id "$AMPLIFY_APP_ID" \
+                  --branch-name "$AMPLIFY_BRANCH" \
+                  --job-id "$JOB_ID" \
+                  --query 'job.steps[].{step:stepName,status:status,reason:statusReason}' \
+                  --output table || true
+                exit 1
+                ;;
+            esac
+
+            if [ "$elapsed" -ge "$TIMEOUT_SEC" ]; then
+              echo "Timed out after ${TIMEOUT_SEC}s waiting for Amplify job ${JOB_ID} (last status=${STATUS})."
+              exit 1
+            fi
+
+            sleep "$INTERVAL_SEC"
+            elapsed=$((elapsed + INTERVAL_SEC))
+          done
