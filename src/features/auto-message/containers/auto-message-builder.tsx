@@ -14,6 +14,12 @@ import {
   fetchAutoMessageById,
   updateAutoMessage,
 } from "@/features/auto-message/lib/api";
+import { KeywordTagInput } from "@/features/auto-message/components/keyword-tag-input";
+import {
+  commitKeywordDraft,
+  parseKeywords,
+  serializeKeywords,
+} from "@/features/auto-message/lib/keywords";
 import {
   AutoMessageMatchType,
   MATCH_TYPE_OPTIONS,
@@ -38,7 +44,8 @@ export function AutoMessageBuilderContainer({
   const isEditMode = resolvedMode === "edit";
 
   const [name, setName] = useState("");
-  const [keyword, setKeyword] = useState("");
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [keywordDraft, setKeywordDraft] = useState("");
   const [matchType, setMatchType] = useState<AutoMessageMatchType>("exact");
   const [templateId, setTemplateId] = useState("");
   const [priority, setPriority] = useState(1);
@@ -105,7 +112,8 @@ export function AutoMessageBuilderContainer({
         if (isCancelled) return;
 
         setName(item.name);
-        setKeyword(item.keyword);
+        setKeywords(parseKeywords(item.keyword));
+        setKeywordDraft("");
         setMatchType(item.matchType);
         setTemplateId(item.templateId);
         setPriority(item.priority);
@@ -139,13 +147,33 @@ export function AutoMessageBuilderContainer({
     },
   ];
 
-  const validateForm = () => {
+  const rejectKeyword = (reason: "duplicate" | "limit") => {
+    if (reason === "limit") {
+      toast.error("Maximum 20 keywords allowed");
+      return;
+    }
+    toast.error("This keyword has already been added");
+  };
+
+  const resolveKeywords = () => {
+    const next = commitKeywordDraft(keywords, keywordDraft);
+    if (next.keywords !== keywords) {
+      setKeywords(next.keywords);
+    }
+    if (next.rejected) {
+      rejectKeyword(next.rejected);
+    }
+    setKeywordDraft("");
+    return next.keywords;
+  };
+
+  const validateForm = (nextKeywords: string[]) => {
     if (!name.trim()) {
       toast.error("Auto message name is required");
       return false;
     }
-    if (!keyword.trim()) {
-      toast.error("Keyword is required");
+    if (nextKeywords.length === 0) {
+      toast.error("At least one keyword is required");
       return false;
     }
     if (!templateId) {
@@ -160,13 +188,14 @@ export function AutoMessageBuilderContainer({
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) return;
+    const nextKeywords = resolveKeywords();
+    if (!validateForm(nextKeywords)) return;
 
     setIsSubmitting(true);
     try {
       const payload = {
         name: name.trim(),
-        keyword: keyword.trim(),
+        keyword: serializeKeywords(nextKeywords),
         matchType,
         templateId,
         priority,
@@ -277,16 +306,18 @@ export function AutoMessageBuilderContainer({
             Keyword Rule
           </h2>
           <div className="grid gap-4 md:grid-cols-2">
-            <div>
+            <div className="md:col-span-2">
               <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Keyword *
+                Keywords *
               </label>
-              <Input
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                className={inputClassName}
-                placeholder="e.g. hello, promo"
-                readOnly={isViewMode}
+              <KeywordTagInput
+                keywords={keywords}
+                draft={keywordDraft}
+                onChange={setKeywords}
+                onDraftChange={setKeywordDraft}
+                disabled={isViewMode}
+                placeholder="e.g. hello"
+                onReject={rejectKeyword}
               />
             </div>
             <div>
