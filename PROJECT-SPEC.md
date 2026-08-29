@@ -743,6 +743,7 @@ This project should demonstrate the following skills:
 - เพิ่มหน้าจัดการ Liff Content เช่น หน้า Ecom จัด layout ต่างๆ มี live preview เอา url ไปใส่ rich menu ได้
 - เพิ่มการทำระบบ Coupoun สะสมแต้มจาก LineOA
 - เพิ่มหน้า Brodcast planner แบบ Calendar view คล่าวๆ
+- ทำ Tag เพิ่มจาก Liff Ecom ว่าใครคือลูกค้าใหม่, ซื้อซ้ำ x ครั้ง
 
 - เปลี่ยนเมนู จาก line user เป็น Customer Management กด View popup ดูข้อมูลละเอียดได้เพิ่ม เช่น Customer Info เบอร์, Mail, Address, ประวัติการสั่งซื้อ
 - Inbox chat 1:1 assign agent ได้ให้คนนั้นตอบ Chat history Status: Open / Pending / Closed

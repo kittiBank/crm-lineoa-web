@@ -1,4 +1,13 @@
-export type DashboardTrendDays = 7 | 30 | 90;
+export type DashboardPeriod = "today" | "7d" | "month";
+
+export const DASHBOARD_PERIOD_OPTIONS: Array<{
+  value: DashboardPeriod;
+  label: string;
+}> = [
+  { value: "today", label: "Today" },
+  { value: "7d", label: "Last 7 days" },
+  { value: "month", label: "This month" },
+];
 
 export type DashboardBroadcastStatus =
   | "Sent"
