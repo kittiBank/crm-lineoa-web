@@ -731,6 +731,7 @@ This project should demonstrate the following skills:
 - หน้า Create Rich menu ให้เลือก layout น้อยลง แบบ Big, compact, Custom
 - หน้า Create message  เพิ่ม Defualt img / video
 - หน้า Create message เพิ่ม Merge Tag ข้อมูล linruser กับ flex msg ได้
+- หน้า Brodcast มีให้เลือก custome audience 
 
 - หน้า Brodcast เพิ่ม TARGET specific audience แบบ ddl (ต้องไปสร้าง audienct มาก่อน)
 - ทำ User tracking reach, read
@@ -739,6 +740,7 @@ This project should demonstrate the following skills:
 - ทำ User Settings ให้มี defualt password และส่งเมลล์ไปให้ user เปลี่ยน password เอง
 - ปรับหน้า Dashboard ให้ filter ข้อมูลตาม date picker ได้
 - ทำ Switching rich menu ได้
+- เพิ่ม Skeleton loading แต่ละเมนู
 
 - เพิ่มหน้าจัดการ Liff Content เช่น หน้า Ecom จัด layout ต่างๆ มี live preview เอา url ไปใส่ rich menu ได้
 - เพิ่มการทำระบบ Coupoun สะสมแต้มจาก LineOA
