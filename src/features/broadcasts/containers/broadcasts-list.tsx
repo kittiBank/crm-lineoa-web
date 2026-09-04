@@ -13,7 +13,11 @@ import {
   QuotaSection,
   Pagination,
 } from "@/features/broadcasts/components";
-import { deleteBroadcast, fetchMessageQuota } from "@/features/broadcasts/lib/api";
+import {
+  deleteBroadcast,
+  fetchBroadcastById,
+  fetchMessageQuota,
+} from "@/features/broadcasts/lib/api";
 import {
   clearBroadcastListDataCache,
   loadBroadcastListPageData,
@@ -30,6 +34,9 @@ const EMPTY_METRICS: MetricsData = {
   activeScheduled: 0,
   nextBroadcastTime: "—",
 };
+
+const STATUS_POLL_INTERVAL_MS = 3000;
+const TERMINAL_BROADCAST_STATUSES = new Set(["completed", "failed"]);
 
 export function BroadcastsListContainer() {
   const router = useRouter();
@@ -106,50 +113,77 @@ export function BroadcastsListContainer() {
     };
   }, []);
 
-  const hasProcessingBroadcast = allBroadcasts.some(
-    (broadcast) => broadcast.status === "Processing",
+  const processingBroadcastKey = useMemo(
+    () =>
+      allBroadcasts
+        .filter((broadcast) => broadcast.status === "Processing")
+        .map((broadcast) => broadcast.id)
+        .sort()
+        .join(","),
+    [allBroadcasts],
   );
 
   useEffect(() => {
-    if (!hasProcessingBroadcast) {
+    if (!processingBroadcastKey) {
       return;
     }
 
+    const processingBroadcastIds = processingBroadcastKey.split(",");
     let isCancelled = false;
 
-    const poll = async () => {
+    const refreshAfterTerminalStatus = async () => {
+      const data = await loadBroadcastListPageData({ force: true });
+      if (isCancelled) {
+        return;
+      }
+
+      setAllBroadcasts(data.broadcasts);
+      setMetrics(data.metrics);
+
+      const stillProcessing = data.broadcasts.some(
+        (broadcast) => broadcast.status === "Processing",
+      );
+
+      if (!stillProcessing) {
+        const nextQuota = await fetchMessageQuota();
+        if (!isCancelled) {
+          setQuota(nextQuota);
+        }
+      }
+    };
+
+    const pollProcessingStatus = async () => {
       try {
-        const data = await loadBroadcastListPageData({ force: true });
+        const records = await Promise.all(
+          processingBroadcastIds.map((id) => fetchBroadcastById(id)),
+        );
         if (isCancelled) {
           return;
         }
 
-        setAllBroadcasts(data.broadcasts);
-        setMetrics(data.metrics);
-
-        const stillProcessing = data.broadcasts.some(
-          (broadcast) => broadcast.status === "Processing",
+        const reachedTerminal = records.some((record) =>
+          TERMINAL_BROADCAST_STATUSES.has(record.status),
         );
 
-        if (!stillProcessing) {
-          const nextQuota = await fetchMessageQuota();
-          if (!isCancelled) {
-            setQuota(nextQuota);
-          }
+        if (reachedTerminal) {
+          await refreshAfterTerminalStatus();
         }
       } catch {
-        // Keep the current list/quota until the next poll.
+        // Keep the current list/quota until the next status poll.
       }
     };
 
-    void poll();
-    const timer = window.setInterval(poll, 3000);
+    void pollProcessingStatus();
+    const timer = window.setInterval(
+      pollProcessingStatus,
+      STATUS_POLL_INTERVAL_MS,
+    );
 
     return () => {
       isCancelled = true;
       window.clearInterval(timer);
     };
-  }, [hasProcessingBroadcast]);
+  }, [processingBroadcastKey]);
 
   const filteredBroadcasts = useMemo(
     () =>
