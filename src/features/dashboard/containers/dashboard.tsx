@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Radio, Send, UserCheck, Users } from "lucide-react";
+import { Radio, Send, UserCheck, Users } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import {
   BroadcastStatusChart,
   BroadcastTrendChart,
+  DashboardSkeleton,
   RecentBroadcastTable,
 } from "@/features/dashboard/components";
 import { fetchDashboardOverview } from "@/features/dashboard/lib/api";
@@ -59,6 +60,7 @@ export function DashboardContainer() {
     let cancelled = false;
 
     const loadDashboard = async () => {
+      setIsLoading(true);
       setError(null);
 
       try {
@@ -93,12 +95,7 @@ export function DashboardContainer() {
   }, [period]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-16 text-gray-500">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        Loading dashboard...
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (error) {
