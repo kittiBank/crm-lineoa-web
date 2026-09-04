@@ -733,6 +733,8 @@ This project should demonstrate the following skills:
 - หน้า Create message เพิ่ม Merge Tag ข้อมูล linruser กับ flex msg ได้
 - หน้า Brodcast มีให้เลือก custome audience 
 
+- refc โหลดแต่ละหน้าให้ fetch api ไม่เบิ้ลกัน
+- ทำ Chahing เพิ่ในแต่ละเมนู จะได้โหลดไวขึ้น
 - หน้า Brodcast เพิ่ม TARGET specific audience แบบ ddl (ต้องไปสร้าง audienct มาก่อน)
 - ทำ User tracking reach, read
 - ทำ Import user ใช้ทำ audience group map user ระบบกับ line ได้ เช่น VIP 
