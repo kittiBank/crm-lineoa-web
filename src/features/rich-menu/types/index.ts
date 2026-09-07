@@ -6,6 +6,8 @@ export type RichMenuActionType =
 
 export type RichMenuMenuType = "default" | "member";
 
+export type RichMenuSizeMode = "big" | "compact" | "custom";
+
 export interface RichMenuBounds {
   x: number;
   y: number;
@@ -20,10 +22,11 @@ export interface RichMenuAreaConfig {
   text?: string;
   uri?: string;
   mode?: "date" | "time" | "datetime";
+  bounds: RichMenuBounds;
 }
 
 export interface RichMenuLayout {
-  id: string;
+  id: RichMenuSizeMode | string;
   label: string;
   description: string;
   size: { width: number; height: number };
@@ -125,3 +128,6 @@ export const MENU_TYPE_OPTIONS: {
     description: "Linked to registered members individually",
   },
 ];
+
+export const LINE_RICH_MENU_MAX_AREAS = 20;
+export const LINE_RICH_MENU_MIN_DRAW_SIZE = 40;

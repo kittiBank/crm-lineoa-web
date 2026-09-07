@@ -20,15 +20,20 @@ import {
   fetchRichMenuById,
 } from "@/features/rich-menu/lib/api";
 import {
-  createDefaultAreas,
+  createInitialAreas,
+  DEFAULT_GRID_PRESET_BY_SIZE,
+  getGridPresetsForSize,
   getLayoutById,
   getLayoutIdBySize,
+  LINE_RICH_MENU_MAX_AREAS,
+  normalizeAreasWithBounds,
   RICH_MENU_LAYOUTS,
 } from "@/features/rich-menu/lib/layouts";
 import {
   MENU_TYPE_OPTIONS,
   RichMenuAreaConfig,
   RichMenuMenuType,
+  RichMenuSizeMode,
 } from "@/features/rich-menu/types";
 
 const inputClassName =
@@ -77,7 +82,10 @@ export function RichMenuBuilderContainer({
   const [name, setName] = useState("Default Guest Menu");
   const [chatBarText, setChatBarText] = useState("Menu");
   const [menuType, setMenuType] = useState<RichMenuMenuType>("default");
-  const [layoutId, setLayoutId] = useState("large-2x3");
+  const [layoutId, setLayoutId] = useState("big");
+  const [gridPresetId, setGridPresetId] = useState<string | null>(
+    DEFAULT_GRID_PRESET_BY_SIZE.big,
+  );
   const [selectedAreaIndex, setSelectedAreaIndex] = useState(0);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -85,9 +93,13 @@ export function RichMenuBuilderContainer({
   const [isLoadingMenu, setIsLoadingMenu] = useState(Boolean(menuId));
 
   const layout = useMemo(() => getLayoutById(layoutId), [layoutId]);
+  const gridPresets = useMemo(
+    () => getGridPresetsForSize(layoutId),
+    [layoutId],
+  );
 
   const [areas, setAreas] = useState<RichMenuAreaConfig[]>(() =>
-    createDefaultAreas(getLayoutById("large-2x3").cells.length, "large-2x3"),
+    createInitialAreas("big", DEFAULT_GRID_PRESET_BY_SIZE.big),
   );
 
   useEffect(() => {
@@ -109,20 +121,25 @@ export function RichMenuBuilderContainer({
           menu.sizeWidth,
           menu.sizeHeight,
         );
+        const nextAreas = normalizeAreasWithBounds(menu.areas, {
+          width: menu.sizeWidth,
+          height: menu.sizeHeight,
+        });
 
         setName(menu.name);
         setChatBarText(menu.chatBarText);
         setMenuType(menu.menuType);
         setLayoutId(resolvedLayoutId);
-        setImagePreview(menu.imageUrl ?? null);
-        setAreas(
-          Array.isArray(menu.areas) && menu.areas.length > 0
-            ? menu.areas
-            : createDefaultAreas(
-                getLayoutById(resolvedLayoutId).cells.length,
-                resolvedLayoutId,
-              ),
+        setGridPresetId(
+          resolvedLayoutId === "custom"
+            ? null
+            : DEFAULT_GRID_PRESET_BY_SIZE[
+                resolvedLayoutId as Exclude<RichMenuSizeMode, "custom">
+              ],
         );
+        setImagePreview(menu.imageUrl ?? null);
+        setAreas(nextAreas);
+        setSelectedAreaIndex(0);
       } catch (error) {
         if (isCancelled) {
           return;
@@ -156,9 +173,26 @@ export function RichMenuBuilderContainer({
   ];
 
   const handleLayoutChange = (nextLayoutId: string) => {
-    const nextLayout = getLayoutById(nextLayoutId);
     setLayoutId(nextLayoutId);
-    setAreas(createDefaultAreas(nextLayout.cells.length, nextLayoutId));
+
+    if (nextLayoutId === "custom") {
+      setGridPresetId(null);
+      setAreas(createInitialAreas("custom"));
+    } else {
+      const nextPreset =
+        DEFAULT_GRID_PRESET_BY_SIZE[
+          nextLayoutId as Exclude<RichMenuSizeMode, "custom">
+        ];
+      setGridPresetId(nextPreset);
+      setAreas(createInitialAreas(nextLayoutId, nextPreset));
+    }
+
+    setSelectedAreaIndex(0);
+  };
+
+  const handleGridPresetChange = (nextPresetId: string) => {
+    setGridPresetId(nextPresetId);
+    setAreas(createInitialAreas(layoutId, nextPresetId));
     setSelectedAreaIndex(0);
   };
 
@@ -211,6 +245,16 @@ export function RichMenuBuilderContainer({
       return false;
     }
 
+    if (areas.length === 0) {
+      toast.error("Draw at least one tap area on the preview");
+      return false;
+    }
+
+    if (areas.length > LINE_RICH_MENU_MAX_AREAS) {
+      toast.error(`Maximum ${LINE_RICH_MENU_MAX_AREAS} areas allowed`);
+      return false;
+    }
+
     for (const [index, area] of areas.entries()) {
       if (!area.label.trim()) {
         toast.error(`Label is required for area ${index + 1}`);
@@ -219,6 +263,15 @@ export function RichMenuBuilderContainer({
 
       if (area.actionType === "uri" && !area.uri?.trim()) {
         toast.error(`URL is required for area ${index + 1}`);
+        return false;
+      }
+
+      if (
+        !area.bounds ||
+        area.bounds.width < 1 ||
+        area.bounds.height < 1
+      ) {
+        toast.error(`Invalid bounds for area ${index + 1}`);
         return false;
       }
     }
@@ -274,6 +327,7 @@ export function RichMenuBuilderContainer({
   const selectedMenuType = MENU_TYPE_OPTIONS.find(
     (option) => option.value === menuType,
   );
+  const selectedArea = areas[selectedAreaIndex];
 
   if (isLoadingMenu) {
     return (
@@ -300,7 +354,7 @@ export function RichMenuBuilderContainer({
           <p className="mt-2 text-gray-600 dark:text-gray-400">
             {isViewMode
               ? "Review rich menu settings and tap areas"
-              : "Build a LINE rich menu with clickable areas, similar to LINE Official Account Manager"}
+              : "Choose Big, Compact, or Custom size, then draw tap areas on the image"}
           </p>
         </div>
         <Badge
@@ -354,35 +408,35 @@ export function RichMenuBuilderContainer({
                   }
 
                   return (
-                  <label
-                    key={option.value}
-                    className={`flex gap-3 rounded-lg border p-4 transition-colors ${
-                      isViewMode ? "" : "cursor-pointer"
-                    } ${
-                      menuType === option.value
-                        ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
-                        : "border-gray-200 dark:border-gray-700"
-                    }`}
-                  >
-                    {!isViewMode && (
-                      <input
-                        type="radio"
-                        name="menuType"
-                        value={option.value}
-                        checked={menuType === option.value}
-                        onChange={() => setMenuType(option.value)}
-                        className="mt-1"
-                      />
-                    )}
-                    <span>
-                      <span className="block text-sm font-medium text-gray-900 dark:text-white">
-                        {option.label}
+                    <label
+                      key={option.value}
+                      className={`flex gap-3 rounded-lg border p-4 transition-colors ${
+                        isViewMode ? "" : "cursor-pointer"
+                      } ${
+                        menuType === option.value
+                          ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
+                          : "border-gray-200 dark:border-gray-700"
+                      }`}
+                    >
+                      {!isViewMode && (
+                        <input
+                          type="radio"
+                          name="menuType"
+                          value={option.value}
+                          checked={menuType === option.value}
+                          onChange={() => setMenuType(option.value)}
+                          className="mt-1"
+                        />
+                      )}
+                      <span>
+                        <span className="block text-sm font-medium text-gray-900 dark:text-white">
+                          {option.label}
+                        </span>
+                        <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+                          {option.description}
+                        </span>
                       </span>
-                      <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
-                        {option.description}
-                      </span>
-                    </span>
-                  </label>
+                    </label>
                   );
                 })}
               </div>
@@ -391,15 +445,19 @@ export function RichMenuBuilderContainer({
 
           <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-              Layout template
+              Menu size
             </h2>
             <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              Choose how the menu is divided into tap areas
+              Choose Big or Compact and a default grid, or Custom to draw areas
+              freely.
             </p>
             <LayoutPicker
               layouts={RICH_MENU_LAYOUTS}
               selectedLayoutId={layoutId}
               onSelect={handleLayoutChange}
+              gridPresets={gridPresets}
+              selectedGridPresetId={gridPresetId}
+              onSelectGridPreset={handleGridPresetChange}
               readOnly={isViewMode}
             />
           </section>
@@ -428,49 +486,49 @@ export function RichMenuBuilderContainer({
                 )}
               </div>
             ) : (
-            <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 px-6 py-10 text-center transition-colors hover:border-blue-400 hover:bg-blue-50/40 dark:border-gray-600 dark:hover:border-blue-500 dark:hover:bg-blue-950/20">
-              {imagePreview ? (
-                <div className="space-y-3">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={imagePreview}
-                    alt="Uploaded rich menu"
-                    referrerPolicy="no-referrer"
-                    className="mx-auto max-h-48 rounded-lg object-contain"
-                  />
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    {imageFile?.name}
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <ImageIcon className="mb-3 h-10 w-10 text-gray-400" />
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                    Upload rich menu image
-                  </p>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    PNG or JPEG, max 1 MB. Recommended {layout.size.width}×
-                    {layout.size.height}px
-                  </p>
-                </>
-              )}
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/jpg"
-                className="hidden"
-                onChange={handleImageChange}
-              />
-              <span className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white">
-                <Upload className="h-4 w-4" />
-                Choose image
-              </span>
-            </label>
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 px-6 py-10 text-center transition-colors hover:border-blue-400 hover:bg-blue-50/40 dark:border-gray-600 dark:hover:border-blue-500 dark:hover:bg-blue-950/20">
+                {imagePreview ? (
+                  <div className="space-y-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={imagePreview}
+                      alt="Uploaded rich menu"
+                      referrerPolicy="no-referrer"
+                      className="mx-auto max-h-48 rounded-lg object-contain"
+                    />
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      {imageFile?.name}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <ImageIcon className="mb-3 h-10 w-10 text-gray-400" />
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                      Upload rich menu image
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      PNG or JPEG, max 1 MB. Recommended {layout.size.width}×
+                      {layout.size.height}px
+                    </p>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+                <span className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white">
+                  <Upload className="h-4 w-4" />
+                  Choose image
+                </span>
+              </label>
             )}
           </section>
 
           <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-              Preview & area selection
+              Preview & draw areas
             </h2>
             <RichMenuCanvas
               layout={layout}
@@ -478,6 +536,8 @@ export function RichMenuBuilderContainer({
               areas={areas}
               selectedIndex={selectedAreaIndex}
               onSelectArea={setSelectedAreaIndex}
+              onChangeAreas={setAreas}
+              readOnly={isViewMode}
             />
           </section>
         </div>
@@ -487,31 +547,39 @@ export function RichMenuBuilderContainer({
             <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
               Area action
             </h2>
-            <AreaEditor
-              areaIndex={selectedAreaIndex}
-              area={areas[selectedAreaIndex]}
-              onChange={(nextArea) =>
-                updateArea(selectedAreaIndex, nextArea)
-              }
-              readOnly={isViewMode}
-            />
+            {selectedArea ? (
+              <AreaEditor
+                areaIndex={selectedAreaIndex}
+                area={selectedArea}
+                onChange={(nextArea) =>
+                  updateArea(selectedAreaIndex, nextArea)
+                }
+                readOnly={isViewMode}
+              />
+            ) : (
+              <p className="rounded-lg border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
+                Draw an area on the preview to configure its action
+              </p>
+            )}
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              {areas.map((area, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => setSelectedAreaIndex(index)}
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                    selectedAreaIndex === index
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200"
-                  }`}
-                >
-                  {index + 1}. {area.label}
-                </button>
-              ))}
-            </div>
+            {areas.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {areas.map((area, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setSelectedAreaIndex(index)}
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                      selectedAreaIndex === index
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200"
+                    }`}
+                  >
+                    {index + 1}. {area.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </section>
 
           {!isViewMode && (

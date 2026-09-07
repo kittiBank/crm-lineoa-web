@@ -727,8 +727,8 @@ This project should demonstrate the following skills:
 - [Done] หน้า Create Auto Message Keyword Rule เพิ่มคำที่รอบรับได้แบบ multi tag 
 - หน้า Create New Audience เพิ่ม Section preview result ใช้ filter ข้อมูลตามที่เลือก
 - หน้า Create Rich menu เพิ่ม Validate ไฟล์ภาพ png, jpg ขนาดไฟล์ และ size ตามที่ line กำหนดเท่านั้น
-- หน้า Create Rich menu เพิ่มแบบ custom area วาดได้
-- หน้า Create Rich menu ให้เลือก layout น้อยลง แบบ Big, compact, Custom
+- [Done] หน้า Create Rich menu เพิ่มแบบ custom area วาดได้
+- [Done] หน้า Create Rich menu ให้เลือก layout น้อยลง แบบ Big, compact, Custom
 - หน้า Create message  เพิ่ม Defualt img / video
 - หน้า Create message เพิ่ม Merge Tag ข้อมูล linruser กับ flex msg ได้
 - หน้า Brodcast มีให้เลือก custome audience 
@@ -742,12 +742,15 @@ This project should demonstrate the following skills:
 - ทำ User Settings ให้มี defualt password และส่งเมลล์ไปให้ user เปลี่ยน password เอง
 - ปรับหน้า Dashboard ให้ filter ข้อมูลตาม date picker ได้
 - ทำ Switching rich menu ได้
+- [Done] ทำ Skeleton loading หน้า Dashboard
 - เพิ่ม Skeleton loading แต่ละเมนู
 
 - เพิ่มหน้าจัดการ Liff Content เช่น หน้า Ecom จัด layout ต่างๆ มี live preview เอา url ไปใส่ rich menu ได้
 - เพิ่มการทำระบบ Coupoun สะสมแต้มจาก LineOA
 - เพิ่มหน้า Brodcast planner แบบ Calendar view คล่าวๆ
 - ทำ Tag เพิ่มจาก Liff Ecom ว่าใครคือลูกค้าใหม่, ซื้อซ้ำ x ครั้ง
+- เพิ่ม Unit test 
+- เพิ่ม E2E Test
 
 - เปลี่ยนเมนู จาก line user เป็น Customer Management กด View popup ดูข้อมูลละเอียดได้เพิ่ม เช่น Customer Info เบอร์, Mail, Address, ประวัติการสั่งซื้อ
 - Inbox chat 1:1 assign agent ได้ให้คนนั้นตอบ Chat history Status: Open / Pending / Closed

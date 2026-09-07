@@ -70,6 +70,7 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
             <li key={item.id}>
               <Link
                 href={item.href}
+                prefetch={false}
                 title={collapsed ? item.label : undefined}
                 suppressHydrationWarning
                 aria-current={isCurrentPage(item.href) ? "page" : undefined}
