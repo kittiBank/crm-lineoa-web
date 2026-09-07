@@ -74,11 +74,11 @@ function PreviewBubble({ message }: { message: TemplateMessageBlock }) {
     case "video":
       return (
         <div className="max-w-[85%] overflow-hidden rounded-2xl rounded-tl-md bg-white shadow-sm">
-          {message.previewImageUrl ? (
+          {message.previewUrl || message.previewImageUrl ? (
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={message.previewImageUrl}
+                src={message.previewUrl || message.previewImageUrl}
                 alt="Video preview"
                 referrerPolicy="no-referrer"
                 className="max-h-56 w-full object-cover"

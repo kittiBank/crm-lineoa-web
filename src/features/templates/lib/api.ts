@@ -49,6 +49,28 @@ export async function uploadTemplateImage(
   return response.json();
 }
 
+export async function uploadTemplateVideo(
+  file: File,
+): Promise<{ url: string; displayUrl: string; key: string }> {
+  const token = getToken();
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const formData = new FormData();
+  formData.append("video", file);
+
+  const response = await fetch(API_ENDPOINTS.TEMPLATES.MEDIA_VIDEO, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+
+  await assertOkResponse(response, "Failed to upload video");
+
+  return response.json();
+}
+
 export async function fetchTemplateById(id: string): Promise<MessageTemplate> {
   return dedupeAsync(
     `templates:${id}`,

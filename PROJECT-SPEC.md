@@ -724,15 +724,17 @@ This project should demonstrate the following skills:
 - [Done] หน้า Brodcast เพิ่ม Card Quota, Used, Remaining  Currrent (มี percent บอกด้วย)
 - [Done] หน้า Create Message tempalte ปรับให้สูงสุดรองรับ 5 bubble messages ฺ
 - [Done] หน้า Create Message tempalte ปรับให้มี Default flex message ย้าย icon ไปหลังสุด และมีเช็ก flex เหมือน flex simulate
+- [Done] หน้า Create Message tempalte ปรับ Default Flex เป็น bubble ต้อนรับ + ปุ่มดูรายละเอียด
 - [Done] หน้า Create Auto Message Keyword Rule เพิ่มคำที่รอบรับได้แบบ multi tag 
 - หน้า Create New Audience เพิ่ม Section preview result ใช้ filter ข้อมูลตามที่เลือก
 - หน้า Create Rich menu เพิ่ม Validate ไฟล์ภาพ png, jpg ขนาดไฟล์ และ size ตามที่ line กำหนดเท่านั้น
 - [Done] หน้า Create Rich menu เพิ่มแบบ custom area วาดได้
-- [Done] หน้า Create Rich menu ให้เลือก layout น้อยลง แบบ Big, compact, Custom
-- หน้า Create message  เพิ่ม Defualt img / video
+- [Done] หน้า Create Rich menu ให้เลือก layout น้อยลง แบบ Big, compact, Custom (พร้อม default grid ใต้ Big/Compact)
+- [Done] หน้า Create message เพิ่ม Default img / video / carousel (ไฟล์ใน `public/defaults`) + อัปโหลด video พร้อม thumbnail อัตโนมัติ
 - หน้า Create message เพิ่ม Merge Tag ข้อมูล linruser กับ flex msg ได้
 - หน้า Brodcast มีให้เลือก custome audience 
 
+- [Done] Sidebar ปิด Link prefetch เพื่อไม่โหลดหน้าเมนูอื่นล่วงหน้าบน prod
 - refc โหลดแต่ละหน้าให้ fetch api ไม่เบิ้ลกัน
 - ทำ Chahing เพิ่ในแต่ละเมนู จะได้โหลดไวขึ้น
 - หน้า Brodcast เพิ่ม TARGET specific audience แบบ ddl (ต้องไปสร้าง audienct มาก่อน)

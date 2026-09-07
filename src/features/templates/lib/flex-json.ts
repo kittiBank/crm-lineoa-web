@@ -21,16 +21,33 @@ const DEFAULT_FLEX_CONTENTS: FlexContents = {
     contents: [
       {
         type: "text",
-        text: "Hello from LINE OA!",
+        text: "สวัสดีครับ",
         weight: "bold",
-        size: "lg",
-        wrap: true,
+        size: "xl",
       },
       {
         type: "text",
-        text: "Edit this JSON using the LINE Flex Message Simulator format.",
-        margin: "md",
+        text: "ยินดีต้อนรับเข้าสู่ระบบของเรา สามารถกดปุ่มด้านล่างเพื่อดูรายละเอียดเพิ่มเติมได้เลยครับ",
+        size: "md",
+        color: "#666666",
         wrap: true,
+        margin: "md",
+      },
+    ],
+  },
+  footer: {
+    type: "box",
+    layout: "vertical",
+    contents: [
+      {
+        type: "button",
+        style: "primary",
+        color: "#06C755",
+        action: {
+          type: "uri",
+          label: "ดูรายละเอียด",
+          uri: "https://www.line.me",
+        },
       },
     ],
   },
