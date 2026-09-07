@@ -4,8 +4,12 @@ import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/lib/hooks/useToast";
-import { createCarouselColumn } from "../lib/create-message";
-import { uploadTemplateImage } from "../lib/api";
+import {
+  createCarouselColumn,
+  DEFAULT_TEMPLATE_MEDIA_PATH,
+} from "../lib/create-message";
+import { uploadTemplateImage, uploadTemplateVideo } from "../lib/api";
+import { captureVideoThumbnail } from "../lib/video-thumbnail";
 import {
   CarouselMessageBlock,
   FlexMessageBlock,
@@ -151,13 +155,13 @@ function ImageEditor({
     >
       <Field label="Image URL">
         <input
-          type="url"
+          type="text"
           value={message.imageUrl}
           onChange={(event) =>
             onChange({ ...message, imageUrl: event.target.value })
           }
           className={inputClassName}
-          placeholder="https://example.com/image.jpg"
+          placeholder="/defaults/template-preview.jpg"
         />
       </Field>
       {!readOnly && (
@@ -193,8 +197,98 @@ function VideoEditor({
   onChange: (message: TemplateMessageBlock) => void;
   readOnly?: boolean;
 }) {
+  const [isUploading, setIsUploading] = useState(false);
+  const toast = useToast();
+
+  const handleUpload = async (file: File | undefined) => {
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("video/")) {
+      toast.error("Please upload a video file");
+      return;
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("Video must be 50 MB or smaller");
+      return;
+    }
+
+    let localThumbnailUrl: string | undefined;
+    setIsUploading(true);
+
+    try {
+      let thumbnailFile: File | null = null;
+      try {
+        thumbnailFile = await captureVideoThumbnail(file);
+        localThumbnailUrl = URL.createObjectURL(thumbnailFile);
+        if (message.previewUrl?.startsWith("blob:")) {
+          URL.revokeObjectURL(message.previewUrl);
+        }
+        onChange({
+          ...message,
+          previewUrl: localThumbnailUrl,
+        });
+      } catch {
+        // Keep the default thumbnail if frame capture fails.
+        localThumbnailUrl = undefined;
+      }
+
+      const videoResult = await uploadTemplateVideo(file);
+
+      let nextPreviewImageUrl =
+        message.previewImageUrl || DEFAULT_TEMPLATE_MEDIA_PATH;
+      let thumbnailUploadFailed = false;
+
+      if (thumbnailFile) {
+        try {
+          const thumbnailResult = await uploadTemplateImage(thumbnailFile);
+          nextPreviewImageUrl =
+            thumbnailResult.displayUrl || thumbnailResult.url;
+        } catch {
+          // Video can still be saved with the default/public thumbnail.
+          thumbnailUploadFailed = true;
+        }
+      }
+
+      onChange({
+        ...message,
+        videoUrl: videoResult.displayUrl || videoResult.url,
+        previewImageUrl: nextPreviewImageUrl,
+        previewUrl: localThumbnailUrl,
+      });
+
+      if (thumbnailUploadFailed) {
+        toast.error(
+          "Video uploaded, but thumbnail upload failed. Using default thumbnail.",
+        );
+      } else {
+        toast.success("Video uploaded");
+      }
+    } catch (error) {
+      if (localThumbnailUrl?.startsWith("blob:")) {
+        URL.revokeObjectURL(localThumbnailUrl);
+      }
+      onChange({
+        ...message,
+        previewUrl: undefined,
+        previewImageUrl:
+          message.previewImageUrl || DEFAULT_TEMPLATE_MEDIA_PATH,
+      });
+      toast.error(
+        error instanceof Error ? error.message : "Failed to upload video",
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
-    <fieldset disabled={readOnly} className="space-y-4 border-0 p-0">
+    <fieldset
+      disabled={readOnly || isUploading}
+      className="space-y-4 border-0 p-0"
+    >
       <Field label="Video URL">
         <input
           type="url"
@@ -206,17 +300,30 @@ function VideoEditor({
           placeholder="https://example.com/video.mp4"
         />
       </Field>
-      <Field label="Preview image URL">
-        <input
-          type="url"
-          value={message.previewImageUrl}
-          onChange={(event) =>
-            onChange({ ...message, previewImageUrl: event.target.value })
-          }
-          className={inputClassName}
-          placeholder="https://example.com/preview.jpg"
-        />
-      </Field>
+      {!readOnly && (
+        <Field label="Or upload video">
+          <input
+            type="file"
+            accept="video/mp4,video/quicktime,video/webm,video/*"
+            disabled={isUploading}
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              void handleUpload(file);
+              event.target.value = "";
+            }}
+            className="block w-full text-sm text-gray-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-blue-700 disabled:opacity-60"
+          />
+          {isUploading && (
+            <p className="mt-1.5 text-xs text-gray-500">
+              Uploading video and generating thumbnail...
+            </p>
+          )}
+          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+            Thumbnail is generated automatically from the video. A default
+            thumbnail is used until a video is uploaded.
+          </p>
+        </Field>
+      )}
     </fieldset>
   );
 }
@@ -400,12 +507,13 @@ function CarouselEditor({
             </Field>
             <Field label="Image URL">
               <input
-                type="url"
+                type="text"
                 value={column.imageUrl}
                 onChange={(event) =>
                   updateColumn(column.id, { imageUrl: event.target.value })
                 }
                 className={inputClassName}
+                placeholder="/defaults/template-preview.jpg"
               />
             </Field>
             {!readOnly && (

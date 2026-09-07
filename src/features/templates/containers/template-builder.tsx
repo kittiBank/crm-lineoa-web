@@ -193,6 +193,11 @@ export function TemplateBuilderContainer({
     }
 
     for (const [index, message] of messages.entries()) {
+      if (message.type === "video" && !message.videoUrl.trim()) {
+        toast.error(`Video message ${index + 1}: Please upload a video`);
+        return false;
+      }
+
       if (message.type !== "flex") {
         continue;
       }

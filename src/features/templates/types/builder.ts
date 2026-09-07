@@ -26,6 +26,8 @@ export interface VideoMessageBlock extends TemplateMessageBase {
   type: "video";
   videoUrl: string;
   previewImageUrl: string;
+  /** Client-only local object URL for thumbnail preview; never persist */
+  previewUrl?: string;
 }
 
 export interface FlexMessageBlock extends TemplateMessageBase {
