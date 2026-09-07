@@ -45,6 +45,19 @@ export function AreaEditor({
 
       <div>
         <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+          Bounds (px)
+        </label>
+        <p className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
+          x: {area.bounds.x}, y: {area.bounds.y}, w: {area.bounds.width}, h:{" "}
+          {area.bounds.height}
+        </p>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          Draw, move, or resize on the preview canvas
+        </p>
+      </div>
+
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
           Label *
         </label>
         <Input
