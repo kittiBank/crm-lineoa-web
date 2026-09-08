@@ -15,14 +15,22 @@ import {
   updateAudience,
 } from "@/features/audiences/lib/api";
 import {
+  criteriaForRules,
+  inferMatchMode,
+  inferRulesFromAudience,
+  resolveAudienceType,
+} from "@/features/audiences/lib/targeting";
+import {
   ACTIVITY_DAY_OPTIONS,
+  AUDIENCE_MATCH_MODE_LABELS,
   AUDIENCE_SEGMENT_OPTIONS,
   AUDIENCE_TYPE_LABELS,
   AudienceCriteria,
-  AudienceSegmentType,
+  AudienceMatchMode,
   AudienceUserTierFilter,
   AudienceUserTypeFilter,
   NEW_FOLLOWER_DAY_OPTIONS,
+  TargetingRule,
   USER_TIER_FILTER_OPTIONS,
   USER_TYPE_FILTER_OPTIONS,
 } from "@/features/audiences/types";
@@ -32,22 +40,50 @@ const inputClassName =
 
 const readOnlyInputClassName = `${inputClassName} cursor-not-allowed bg-gray-50 dark:bg-gray-800/80`;
 
+const errorInputClassName =
+  "border-red-500 focus:ring-red-500 dark:border-red-500";
+
+type AudienceFormErrors = {
+  name?: string;
+  targetingRules?: string;
+  userTypes?: string;
+  activityDays?: string;
+  newFollowerDays?: string;
+};
+
+function RequiredMark() {
+  return <span className="text-red-500">*</span>;
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">{message}</p>
+  );
+}
+
+function optionCardClass({
+  isReadOnly,
+  isSelected,
+  hasError,
+}: {
+  isReadOnly: boolean;
+  isSelected: boolean;
+  hasError?: boolean;
+}) {
+  const cursor = isReadOnly ? "cursor-default" : "cursor-pointer";
+  if (isSelected) {
+    return `${cursor} border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20`;
+  }
+  if (hasError) {
+    return `${cursor} border-red-500 dark:border-red-500`;
+  }
+  return `${cursor} border-gray-200 dark:border-gray-700`;
+}
+
 interface AudienceBuilderProps {
   audienceId?: string;
   mode?: "create" | "edit" | "view";
-}
-
-function defaultCriteria(type: AudienceSegmentType): AudienceCriteria {
-  switch (type) {
-    case "user_type":
-      return { userTypes: ["Member"], userTiers: [] };
-    case "active":
-      return { activityDays: 30 };
-    case "new":
-      return { newFollowerDays: 14 };
-    default:
-      return {};
-  }
 }
 
 export function AudienceBuilderContainer({
@@ -63,9 +99,12 @@ export function AudienceBuilderContainer({
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [segmentType, setSegmentType] = useState<AudienceSegmentType>("active");
+  const [selectedRules, setSelectedRules] = useState<TargetingRule[]>([
+    "active",
+  ]);
+  const [matchMode, setMatchMode] = useState<AudienceMatchMode>("and");
   const [criteria, setCriteria] = useState<AudienceCriteria>(
-    defaultCriteria("active"),
+    criteriaForRules(["active"], {}),
   );
   const [isActive, setIsActive] = useState(true);
   const [memberCount, setMemberCount] = useState<number | null>(null);
@@ -76,27 +115,43 @@ export function AudienceBuilderContainer({
     null,
   );
   const [isEstimatingMembers, setIsEstimatingMembers] = useState(false);
+  const [errors, setErrors] = useState<AudienceFormErrors>({});
   const isSubmittingRef = useRef(false);
 
   const fieldClassName = isReadOnly ? readOnlyInputClassName : inputClassName;
+  const segmentType = resolveAudienceType(selectedRules);
+  const includesUserType = selectedRules.includes("user_type");
+  const includesActive = selectedRules.includes("active");
+  const includesNew = selectedRules.includes("new");
+  const showMatchMode = selectedRules.length >= 2;
+  const resolvedCriteria = useMemo(
+    () => ({
+      ...criteria,
+      ...(showMatchMode ? { match: matchMode } : {}),
+    }),
+    [criteria, matchMode, showMatchMode],
+  );
 
   const estimatedCount = useMemo(
-    () => estimateMemberCount(segmentType, criteria),
-    [segmentType, criteria],
+    () => estimateMemberCount(segmentType, resolvedCriteria),
+    [segmentType, resolvedCriteria],
   );
 
   const usesLiveEstimate =
-    segmentType === "all" ||
-    segmentType === "user_type" ||
-    segmentType === "active" ||
-    segmentType === "new";
+    selectedRules.length > 0 &&
+    (segmentType === "user_type" ||
+      segmentType === "active" ||
+      segmentType === "new" ||
+      segmentType === "combined");
 
   const displayCount =
     isViewMode && memberCount !== null
       ? memberCount
-      : usesLiveEstimate
-        ? (liveEstimateCount ?? 0)
-        : estimatedCount;
+      : selectedRules.length === 0
+        ? 0
+        : usesLiveEstimate
+          ? (liveEstimateCount ?? 0)
+          : estimatedCount;
 
   useEffect(() => {
     if (!audienceId) return;
@@ -109,10 +164,15 @@ export function AudienceBuilderContainer({
         const audience = await fetchAudienceById(audienceId);
         if (isCancelled) return;
 
+        const rules = inferRulesFromAudience(
+          audience.type,
+          audience.criteria ?? {},
+        );
         setName(audience.name);
         setDescription(audience.description ?? "");
-        setSegmentType(audience.type);
-        setCriteria(audience.criteria ?? defaultCriteria(audience.type));
+        setSelectedRules(rules);
+        setMatchMode(inferMatchMode(audience.criteria ?? {}));
+        setCriteria(audience.criteria ?? criteriaForRules(rules, {}));
         setIsActive(audience.isActive);
         setMemberCount(audience.memberCount);
       } catch (error) {
@@ -136,22 +196,17 @@ export function AudienceBuilderContainer({
   }, [audienceId]);
 
   useEffect(() => {
-    const canEstimate =
-      !isViewMode &&
-      (segmentType === "all" ||
-        segmentType === "user_type" ||
-        segmentType === "active" ||
-        segmentType === "new");
+    const canEstimate = !isViewMode && usesLiveEstimate;
 
     if (!canEstimate) {
       setIsEstimatingMembers(false);
+      if (selectedRules.length === 0) {
+        setLiveEstimateCount(0);
+      }
       return;
     }
 
-    if (
-      segmentType === "user_type" &&
-      (criteria.userTypes ?? []).length === 0
-    ) {
+    if (includesUserType && (criteria.userTypes ?? []).length === 0) {
       setLiveEstimateCount(0);
       setIsEstimatingMembers(false);
       return;
@@ -162,7 +217,10 @@ export function AudienceBuilderContainer({
     const loadEstimate = async () => {
       setIsEstimatingMembers(true);
       try {
-        const estimate = await fetchAudienceEstimate(segmentType, criteria);
+        const estimate = await fetchAudienceEstimate(
+          segmentType,
+          resolvedCriteria,
+        );
         if (isCancelled) return;
         setLiveEstimateCount(estimate.memberCount);
       } catch (error) {
@@ -187,17 +245,43 @@ export function AudienceBuilderContainer({
     };
   }, [
     isViewMode,
+    usesLiveEstimate,
+    selectedRules.length,
     segmentType,
+    includesUserType,
+    matchMode,
     criteria.userTypes,
     criteria.userTiers,
     criteria.activityDays,
     criteria.newFollowerDays,
   ]);
 
-  const handleSegmentTypeChange = (type: AudienceSegmentType) => {
+  const applyRules = (rules: TargetingRule[]) => {
+    setSelectedRules(rules);
+    setCriteria(criteriaForRules(rules, { ...criteria, match: matchMode }));
+    setErrors((prev) => ({
+      ...prev,
+      targetingRules: rules.length > 0 ? undefined : prev.targetingRules,
+      userTypes: rules.includes("user_type") ? prev.userTypes : undefined,
+      activityDays: rules.includes("active") ? prev.activityDays : undefined,
+      newFollowerDays: rules.includes("new") ? prev.newFollowerDays : undefined,
+    }));
+  };
+
+  const handleToggleRule = (rule: TargetingRule) => {
     if (isReadOnly) return;
-    setSegmentType(type);
-    setCriteria(defaultCriteria(type));
+
+    const nextRules = selectedRules.includes(rule)
+      ? selectedRules.filter((item) => item !== rule)
+      : [...selectedRules, rule];
+
+    applyRules(nextRules);
+  };
+
+  const handleMatchModeChange = (next: AudienceMatchMode) => {
+    if (isReadOnly) return;
+    setMatchMode(next);
+    setCriteria({ ...criteria, match: next });
   };
 
   const toggleUserType = (userType: AudienceUserTypeFilter) => {
@@ -209,6 +293,11 @@ export function AudienceBuilderContainer({
       : [...current, userType];
 
     setCriteria({ ...criteria, userTypes: next });
+    setErrors((prev) => ({
+      ...prev,
+      userTypes:
+        next.length === 0 ? "Select at least one user type" : undefined,
+    }));
   };
 
   const toggleUserTier = (userTier: AudienceUserTierFilter) => {
@@ -223,25 +312,26 @@ export function AudienceBuilderContainer({
   };
 
   const validateForm = () => {
+    const nextErrors: AudienceFormErrors = {};
+
     if (!name.trim()) {
-      toast.error("Audience name is required");
-      return false;
+      nextErrors.name = "Audience name is required";
     }
-    if (segmentType === "user_type") {
-      if ((criteria.userTypes ?? []).length === 0) {
-        toast.error("Select at least one user type");
-        return false;
-      }
+    if (selectedRules.length === 0) {
+      nextErrors.targetingRules = "Select at least one targeting rule";
     }
-    if (segmentType === "active" && !criteria.activityDays) {
-      toast.error("Select an activity window");
-      return false;
+    if (includesUserType && (criteria.userTypes ?? []).length === 0) {
+      nextErrors.userTypes = "Select at least one user type";
     }
-    if (segmentType === "new" && !criteria.newFollowerDays) {
-      toast.error("Select a new follower window");
-      return false;
+    if (includesActive && !criteria.activityDays) {
+      nextErrors.activityDays = "Select an activity window";
     }
-    return true;
+    if (includesNew && !criteria.newFollowerDays) {
+      nextErrors.newFollowerDays = "Select a new follower window";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
   };
 
   const handleSubmit = async () => {
@@ -258,7 +348,7 @@ export function AudienceBuilderContainer({
             ? null
             : undefined,
         type: segmentType,
-        criteria,
+        criteria: resolvedCriteria,
         isActive,
       };
 
@@ -341,16 +431,23 @@ export function AudienceBuilderContainer({
             <div className="grid gap-4 md:grid-cols-2">
               <div className="md:col-span-2">
                 <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Audience name *
+                  Audience name <RequiredMark />
                 </label>
                 <Input
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className={fieldClassName}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (errors.name) {
+                      setErrors((prev) => ({ ...prev, name: undefined }));
+                    }
+                  }}
+                  className={`${fieldClassName} ${errors.name ? errorInputClassName : ""}`}
                   placeholder="e.g. Active Members (30 days)"
                   readOnly={isReadOnly}
                   disabled={isReadOnly}
+                  aria-invalid={Boolean(errors.name)}
                 />
+                <FieldError message={errors.name} />
               </div>
               <div className="md:col-span-2">
                 <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -385,35 +482,33 @@ export function AudienceBuilderContainer({
 
           <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-              Targeting rules *
+              Targeting rules <RequiredMark />
             </h2>
             <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              Choose how this audience group is built from LINE users
+              Combine User Type, Active Users, and New Followers with AND or OR.
+              Targeting every follower is available when sending a broadcast.
             </p>
 
             <div className="grid gap-3">
               {AUDIENCE_SEGMENT_OPTIONS.map((option) => {
-                const isSelected = segmentType === option.value;
+                const isSelected = selectedRules.includes(option.value);
 
                 return (
                   <label
                     key={option.value}
-                    className={`flex gap-3 rounded-lg border p-4 transition-colors ${
-                      isReadOnly
-                        ? "cursor-default"
-                        : "cursor-pointer"
-                    } ${
-                      isSelected
-                        ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
-                        : "border-gray-200 dark:border-gray-700"
-                    }`}
+                    className={`flex gap-3 rounded-lg border p-4 transition-colors ${optionCardClass(
+                      {
+                        isReadOnly,
+                        isSelected,
+                        hasError: Boolean(errors.targetingRules),
+                      },
+                    )}`}
                   >
                     <input
-                      type="radio"
-                      name="segmentType"
+                      type="checkbox"
                       value={option.value}
                       checked={isSelected}
-                      onChange={() => handleSegmentTypeChange(option.value)}
+                      onChange={() => handleToggleRule(option.value)}
                       className="mt-1"
                       disabled={isReadOnly}
                     />
@@ -429,12 +524,66 @@ export function AudienceBuilderContainer({
                 );
               })}
             </div>
+            <FieldError message={errors.targetingRules} />
 
-            {segmentType === "user_type" && (
+            {showMatchMode && (
+              <div className="mt-5 space-y-3 border-t border-gray-200 pt-5 dark:border-gray-700">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  Match mode <RequiredMark />
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {matchMode === "and"
+                    ? "Users must match every selected rule, e.g. Silver AND active in the last 7 days."
+                    : "Users matching any selected rule are included."}
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {(["and", "or"] as const).map((mode) => {
+                    const checked = matchMode === mode;
+                    return (
+                      <label
+                        key={mode}
+                        className={`rounded-lg border p-4 transition-colors ${
+                          isReadOnly ? "cursor-default" : "cursor-pointer"
+                        } ${
+                          checked
+                            ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
+                            : "border-gray-200 dark:border-gray-700"
+                        }`}
+                      >
+                        <span className="flex items-start gap-3">
+                          <input
+                            type="radio"
+                            name="matchMode"
+                            checked={checked}
+                            onChange={() => handleMatchModeChange(mode)}
+                            className="mt-1"
+                            disabled={isReadOnly}
+                          />
+                          <span>
+                            <span className="text-sm font-medium text-gray-900 dark:text-white">
+                              {mode === "and"
+                                ? "Match all (AND)"
+                                : "Match any (OR)"}
+                            </span>
+                            <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+                              {mode === "and"
+                                ? "Intersection of selected rules"
+                                : "Union of selected rules"}
+                            </span>
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {includesUserType && (
               <>
                 <div className="mt-5 space-y-3 border-t border-gray-200 pt-5 dark:border-gray-700">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    User types *
+                    User types <RequiredMark />
                   </p>
                   <div className="grid gap-3 md:grid-cols-2">
                     {USER_TYPE_FILTER_OPTIONS.map((option) => {
@@ -444,15 +593,13 @@ export function AudienceBuilderContainer({
                       return (
                         <label
                           key={option.value}
-                          className={`rounded-lg border p-4 transition-colors ${
-                            isReadOnly
-                              ? "cursor-default"
-                              : "cursor-pointer"
-                          } ${
-                            checked
-                              ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
-                              : "border-gray-200 dark:border-gray-700"
-                          }`}
+                          className={`rounded-lg border p-4 transition-colors ${optionCardClass(
+                            {
+                              isReadOnly,
+                              isSelected: checked,
+                              hasError: Boolean(errors.userTypes),
+                            },
+                          )}`}
                         >
                           <span className="flex items-start gap-3">
                             <input
@@ -475,6 +622,7 @@ export function AudienceBuilderContainer({
                       );
                     })}
                   </div>
+                  <FieldError message={errors.userTypes} />
                 </div>
 
                 <div className="mt-5 space-y-3 border-t border-gray-200 pt-5 dark:border-gray-700">
@@ -495,9 +643,7 @@ export function AudienceBuilderContainer({
                         <label
                           key={option.value}
                           className={`rounded-lg border p-4 transition-colors ${
-                            isReadOnly
-                              ? "cursor-default"
-                              : "cursor-pointer"
+                            isReadOnly ? "cursor-default" : "cursor-pointer"
                           } ${
                             checked
                               ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
@@ -529,10 +675,10 @@ export function AudienceBuilderContainer({
               </>
             )}
 
-            {segmentType === "active" && (
+            {includesActive && (
               <div className="mt-5 space-y-3 border-t border-gray-200 pt-5 dark:border-gray-700">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  Active within *
+                  Active within <RequiredMark />
                 </p>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                   {ACTIVITY_DAY_OPTIONS.map((days) => {
@@ -540,22 +686,26 @@ export function AudienceBuilderContainer({
                     return (
                       <label
                         key={days}
-                        className={`rounded-lg border p-4 text-center transition-colors ${
-                          isReadOnly ? "cursor-default" : "cursor-pointer"
-                        } ${
-                          checked
-                            ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
-                            : "border-gray-200 dark:border-gray-700"
-                        }`}
+                        className={`rounded-lg border p-4 text-center transition-colors ${optionCardClass(
+                          {
+                            isReadOnly,
+                            isSelected: checked,
+                            hasError: Boolean(errors.activityDays),
+                          },
+                        )}`}
                       >
                         <input
                           type="radio"
                           name="activityDays"
                           className="sr-only"
                           checked={checked}
-                          onChange={() =>
-                            setCriteria({ ...criteria, activityDays: days })
-                          }
+                          onChange={() => {
+                            setCriteria({ ...criteria, activityDays: days });
+                            setErrors((prev) => ({
+                              ...prev,
+                              activityDays: undefined,
+                            }));
+                          }}
                           disabled={isReadOnly}
                         />
                         <span className="block text-sm font-semibold text-gray-900 dark:text-white">
@@ -565,13 +715,14 @@ export function AudienceBuilderContainer({
                     );
                   })}
                 </div>
+                <FieldError message={errors.activityDays} />
               </div>
             )}
 
-            {segmentType === "new" && (
+            {includesNew && (
               <div className="mt-5 space-y-3 border-t border-gray-200 pt-5 dark:border-gray-700">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  Followed within *
+                  Followed within <RequiredMark />
                 </p>
                 <div className="grid gap-3 sm:grid-cols-3">
                   {NEW_FOLLOWER_DAY_OPTIONS.map((days) => {
@@ -579,25 +730,29 @@ export function AudienceBuilderContainer({
                     return (
                       <label
                         key={days}
-                        className={`rounded-lg border p-4 text-center transition-colors ${
-                          isReadOnly ? "cursor-default" : "cursor-pointer"
-                        } ${
-                          checked
-                            ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
-                            : "border-gray-200 dark:border-gray-700"
-                        }`}
+                        className={`rounded-lg border p-4 text-center transition-colors ${optionCardClass(
+                          {
+                            isReadOnly,
+                            isSelected: checked,
+                            hasError: Boolean(errors.newFollowerDays),
+                          },
+                        )}`}
                       >
                         <input
                           type="radio"
                           name="newFollowerDays"
                           className="sr-only"
                           checked={checked}
-                          onChange={() =>
+                          onChange={() => {
                             setCriteria({
                               ...criteria,
                               newFollowerDays: days,
-                            })
-                          }
+                            });
+                            setErrors((prev) => ({
+                              ...prev,
+                              newFollowerDays: undefined,
+                            }));
+                          }}
                           disabled={isReadOnly}
                         />
                         <span className="block text-sm font-semibold text-gray-900 dark:text-white">
@@ -607,6 +762,7 @@ export function AudienceBuilderContainer({
                     );
                   })}
                 </div>
+                <FieldError message={errors.newFollowerDays} />
               </div>
             )}
           </section>
@@ -649,16 +805,26 @@ export function AudienceBuilderContainer({
               <div className="flex items-start justify-between gap-4">
                 <dt className="text-gray-500 dark:text-gray-400">Type</dt>
                 <dd className="text-right font-medium text-gray-900 dark:text-white">
-                  {AUDIENCE_TYPE_LABELS[segmentType]}
+                  {selectedRules.length === 0
+                    ? "—"
+                    : AUDIENCE_TYPE_LABELS[segmentType]}
                 </dd>
               </div>
+              {showMatchMode && (
+                <div className="flex items-start justify-between gap-4">
+                  <dt className="text-gray-500 dark:text-gray-400">Match</dt>
+                  <dd className="text-right font-medium text-gray-900 dark:text-white">
+                    {AUDIENCE_MATCH_MODE_LABELS[matchMode]}
+                  </dd>
+                </div>
+              )}
               <div className="flex items-start justify-between gap-4">
                 <dt className="text-gray-500 dark:text-gray-400">Status</dt>
                 <dd className="text-right font-medium text-gray-900 dark:text-white">
                   {isActive ? "Active" : "Inactive"}
                 </dd>
               </div>
-              {segmentType === "user_type" && (
+              {includesUserType && (
                 <>
                   <div className="flex items-start justify-between gap-4">
                     <dt className="text-gray-500 dark:text-gray-400">
@@ -682,7 +848,7 @@ export function AudienceBuilderContainer({
                   </div>
                 </>
               )}
-              {segmentType === "active" && (
+              {includesActive && (
                 <div className="flex items-start justify-between gap-4">
                   <dt className="text-gray-500 dark:text-gray-400">
                     Activity window
@@ -692,7 +858,7 @@ export function AudienceBuilderContainer({
                   </dd>
                 </div>
               )}
-              {segmentType === "new" && (
+              {includesNew && (
                 <div className="flex items-start justify-between gap-4">
                   <dt className="text-gray-500 dark:text-gray-400">
                     Follow window

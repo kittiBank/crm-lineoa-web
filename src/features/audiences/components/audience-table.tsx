@@ -1,5 +1,5 @@
 import { Edit2, Trash2, Eye } from "lucide-react";
-import { Audience, AudienceSegmentType, AUDIENCE_TYPE_LABELS } from "../types";
+import { Audience, AudienceSegmentType, AUDIENCE_MATCH_MODE_LABELS, AUDIENCE_TYPE_LABELS } from "../types";
 
 interface AudienceTableProps {
   audiences: Audience[];
@@ -8,7 +8,13 @@ interface AudienceTableProps {
   onView?: (id: string) => void;
 }
 
-function TypeBadge({ type }: { type: AudienceSegmentType }) {
+function TypeBadge({
+  type,
+  match,
+}: {
+  type: AudienceSegmentType;
+  match?: "and" | "or";
+}) {
   const typeColors: Record<AudienceSegmentType, string> = {
     all: "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400",
     user_type:
@@ -16,15 +22,22 @@ function TypeBadge({ type }: { type: AudienceSegmentType }) {
     active:
       "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400",
     new: "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400",
+    combined:
+      "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400",
     segment:
       "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
   };
 
+  const label =
+    type === "combined" && match
+      ? `${AUDIENCE_TYPE_LABELS[type]} (${AUDIENCE_MATCH_MODE_LABELS[match]})`
+      : (AUDIENCE_TYPE_LABELS[type] ?? type);
+
   return (
     <span
-      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${typeColors[type]}`}
+      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${typeColors[type] ?? typeColors.combined}`}
     >
-      {AUDIENCE_TYPE_LABELS[type]}
+      {label}
     </span>
   );
 }
@@ -109,7 +122,10 @@ export function AudienceTable({
                 </td>
 
                 <td className="px-6 py-4">
-                  <TypeBadge type={audience.type} />
+                  <TypeBadge
+                    type={audience.type}
+                    match={audience.criteria?.match}
+                  />
                 </td>
 
                 <td className="px-6 py-4">

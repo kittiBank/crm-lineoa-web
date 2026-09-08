@@ -46,6 +46,7 @@ export function estimateMemberCount(
       if (days <= 14) return 1620;
       return 3100;
     }
+    case "combined":
     case "segment":
       return 0;
     default:
@@ -70,6 +71,25 @@ export function buildAudienceCriteria(
       return { activityDays: criteria.activityDays };
     case "new":
       return { newFollowerDays: criteria.newFollowerDays };
+    case "combined": {
+      const next: AudienceCriteria = {
+        match: criteria.match === "or" ? "or" : "and",
+      };
+      const userTypes = (criteria.userTypes ?? []).filter(
+        (item) => item === "Member" || item === "Guest",
+      );
+      if (userTypes.length > 0) {
+        next.userTypes = userTypes;
+        next.userTiers = (criteria.userTiers ?? []).filter(isUserTier);
+      }
+      if (criteria.activityDays) {
+        next.activityDays = criteria.activityDays;
+      }
+      if (criteria.newFollowerDays) {
+        next.newFollowerDays = criteria.newFollowerDays;
+      }
+      return next;
+    }
     default:
       return {};
   }
@@ -80,8 +100,20 @@ export async function fetchAudienceEstimate(
   criteria?: AudienceCriteria,
 ): Promise<AudienceEstimate> {
   const params = new URLSearchParams({ type });
+  const includeUserType =
+    type === "user_type" ||
+    (type === "combined" && (criteria?.userTypes ?? []).length > 0);
+  const includeActive =
+    type === "active" || (type === "combined" && Boolean(criteria?.activityDays));
+  const includeNew =
+    type === "new" ||
+    (type === "combined" && Boolean(criteria?.newFollowerDays));
 
-  if (type === "user_type") {
+  if (type === "combined") {
+    params.set("match", criteria?.match === "or" ? "or" : "and");
+  }
+
+  if (includeUserType) {
     for (const userType of criteria?.userTypes ?? []) {
       params.append("userTypes", userType);
     }
@@ -90,11 +122,11 @@ export async function fetchAudienceEstimate(
     }
   }
 
-  if (type === "active" && criteria?.activityDays) {
+  if (includeActive && criteria?.activityDays) {
     params.set("activityDays", String(criteria.activityDays));
   }
 
-  if (type === "new" && criteria?.newFollowerDays) {
+  if (includeNew && criteria?.newFollowerDays) {
     params.set("newFollowerDays", String(criteria.newFollowerDays));
   }
 

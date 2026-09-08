@@ -14,7 +14,13 @@ export type AudienceSegmentType =
   | "user_type"
   | "active"
   | "new"
+  | "combined"
   | "segment";
+
+export const COMBINABLE_AUDIENCE_RULES = ["user_type", "active", "new"] as const;
+export type CombinableAudienceRule = (typeof COMBINABLE_AUDIENCE_RULES)[number];
+export type TargetingRule = CombinableAudienceRule;
+export type AudienceMatchMode = "and" | "or";
 
 /**
  * LINE user type filters
@@ -24,13 +30,15 @@ export type AudienceUserTierFilter = UserTier;
 export { UserTier, isUserTier };
 
 export interface AudienceCriteria {
-  /** Selected user types when type = user_type */
+  /** How to combine rules when type = combined */
+  match?: AudienceMatchMode;
+  /** Selected user types when type = user_type or combined */
   userTypes?: AudienceUserTypeFilter[];
-  /** Selected user tiers when type = user_type */
+  /** Selected user tiers when user type is selected */
   userTiers?: AudienceUserTierFilter[];
-  /** Days of recent activity when type = active */
+  /** Days of recent activity when type = active or combined */
   activityDays?: number;
-  /** Days since follow when type = new */
+  /** Days since follow when type = new or combined */
   newFollowerDays?: number;
 }
 
@@ -52,10 +60,15 @@ export interface AudienceEstimate {
   memberCount: number;
 }
 
+export type AudienceWritableType = Exclude<
+  AudienceSegmentType,
+  "all" | "segment"
+>;
+
 export interface CreateAudiencePayload {
   name: string;
   description?: string;
-  type: AudienceSegmentType;
+  type: AudienceWritableType;
   criteria: AudienceCriteria;
   isActive?: boolean;
 }
@@ -63,37 +76,32 @@ export interface CreateAudiencePayload {
 export interface UpdateAudiencePayload {
   name?: string;
   description?: string | null;
-  type?: AudienceSegmentType;
+  type?: AudienceWritableType;
   criteria?: AudienceCriteria;
   isActive?: boolean;
 }
 
 export interface AudienceSegmentOption {
-  value: AudienceSegmentType;
+  value: TargetingRule;
   label: string;
   description: string;
 }
 
 export const AUDIENCE_SEGMENT_OPTIONS: AudienceSegmentOption[] = [
   {
-    value: "all",
-    label: "All LINE Users",
-    description: "Target every user who follows this LINE OA",
-  },
-  {
     value: "user_type",
     label: "By User Type",
-    description: "Filter by Member, Guest, and user tier",
+    description: "Filter by Member, Guest, and user tier. Can be combined with other rules.",
   },
   {
     value: "active",
     label: "Active Users",
-    description: "Users who interacted with the OA recently",
+    description: "Users who interacted with the OA recently. Can be combined with other rules.",
   },
   {
     value: "new",
     label: "New Followers",
-    description: "Users who recently started following the OA",
+    description: "Users who recently started following the OA. Can be combined with other rules.",
   },
 ];
 
@@ -132,5 +140,11 @@ export const AUDIENCE_TYPE_LABELS: Record<AudienceSegmentType, string> = {
   user_type: "User Type",
   active: "Active",
   new: "New",
+  combined: "Combined",
   segment: "Segment",
+};
+
+export const AUDIENCE_MATCH_MODE_LABELS: Record<AudienceMatchMode, string> = {
+  and: "AND",
+  or: "OR",
 };

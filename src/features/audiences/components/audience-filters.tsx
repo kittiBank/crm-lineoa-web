@@ -83,10 +83,10 @@ export function AudienceFilters({
             className="w-full px-4 py-2 h-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
           >
             <option value="All">All Types</option>
-            <option value="all">All Users</option>
             <option value="user_type">User Type</option>
             <option value="active">Active</option>
             <option value="new">New</option>
+            <option value="combined">Combined</option>
           </select>
         </div>
 
