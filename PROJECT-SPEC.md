@@ -726,7 +726,9 @@ This project should demonstrate the following skills:
 - [Done] หน้า Create Message tempalte ปรับให้มี Default flex message ย้าย icon ไปหลังสุด และมีเช็ก flex เหมือน flex simulate
 - [Done] หน้า Create Message tempalte ปรับ Default Flex เป็น bubble ต้อนรับ + ปุ่มดูรายละเอียด
 - [Done] หน้า Create Auto Message Keyword Rule เพิ่มคำที่รอบรับได้แบบ multi tag 
-- หน้า Create New Audience เพิ่ม Section preview result ใช้ filter ข้อมูลตามที่เลือก
+- [Done] หน้า Create New Audience เพิ่ม Section preview result ใช้ filter ข้อมูลตามที่เลือก (live estimate + cached member count)
+- [Done] หน้า Create New Audience เพิ่ม filter User Tier (Silver / Gold / Platinum) คู่กับ User Type
+- [Done] หน้า LINE Users เพิ่มคอลัมน์ User Tier (Silver / Gold / Platinum)
 - หน้า Create Rich menu เพิ่ม Validate ไฟล์ภาพ png, jpg ขนาดไฟล์ และ size ตามที่ line กำหนดเท่านั้น
 - [Done] หน้า Create Rich menu เพิ่มแบบ custom area วาดได้
 - [Done] หน้า Create Rich menu ให้เลือก layout น้อยลง แบบ Big, compact, Custom (พร้อม default grid ใต้ Big/Compact)
@@ -746,14 +748,19 @@ This project should demonstrate the following skills:
 - ทำ Switching rich menu ได้
 - [Done] ทำ Skeleton loading หน้า Dashboard
 - เพิ่ม Skeleton loading แต่ละเมนู
+- เพิ่ม เมนูจัดการ Stock Ecom Liff
+- เพิ่ม เมนูจัดการ นัดหมาย Clinic Liff
+- เพิ่ม Import user ใช้ Map กับ Line เพื่อจัดกลุ่ม Audience
+- ทำ Tag เพิ่มจาก Liff Ecom ว่าใครคือลูกค้าใหม่, ซื้อซ้ำ x ครั้ง
+- เปลี่ยน Toast ใช้ของ Sandui
+- เพิ่ม Export excel ได้หลัง Brodcast แล้ว
 
 - เพิ่มหน้าจัดการ Liff Content เช่น หน้า Ecom จัด layout ต่างๆ มี live preview เอา url ไปใส่ rich menu ได้
 - เพิ่มการทำระบบ Coupoun สะสมแต้มจาก LineOA
 - เพิ่มหน้า Brodcast planner แบบ Calendar view คล่าวๆ
-- ทำ Tag เพิ่มจาก Liff Ecom ว่าใครคือลูกค้าใหม่, ซื้อซ้ำ x ครั้ง
+
 - เพิ่ม Unit test 
 - เพิ่ม E2E Test
-
 - เปลี่ยนเมนู จาก line user เป็น Customer Management กด View popup ดูข้อมูลละเอียดได้เพิ่ม เช่น Customer Info เบอร์, Mail, Address, ประวัติการสั่งซื้อ
 - Inbox chat 1:1 assign agent ได้ให้คนนั้นตอบ Chat history Status: Open / Pending / Closed
 - ทำ Noti แจ้งเตือนผูกกับ user ตอบแชทได้, แจ้งเตือน message จากไลน์\
@@ -762,6 +769,12 @@ This project should demonstrate the following skills:
 - เพิ่มเมนู Liff builder จัดการหน้า Contents
 - เพิ่มเมนู Liff builder จัดการหน้า นัดหมายได้
 - เพิ่ม Animation frammer ui
+
+- หน้า LINE Users เพิ่ม filter ตาม User Tier
+- หน้า Create Audience preview แสดงรายชื่อ user ตัวอย่างที่ตรง filter
+- หน้า Audience กด Recalculate / refresh member count ได้
+- หน้า View Audience ดูรายชื่อสมาชิกในกลุ่มได้
+- หน้า Create Audience บันทึกแล้วไปใช้เลือกเป็น TARGET ใน Broadcast ได้เลย
 
 
 
