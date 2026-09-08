@@ -87,7 +87,6 @@ export function AudienceFilters({
             <option value="user_type">User Type</option>
             <option value="active">Active</option>
             <option value="new">New</option>
-            <option value="segment">Segment</option>
           </select>
         </div>
 

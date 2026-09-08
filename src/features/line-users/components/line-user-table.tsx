@@ -1,6 +1,6 @@
 "use client";
 
-import { LineUser, UserStatus } from "../types";
+import { LineUser, UserStatus, UserTier } from "../types";
 import { Eye, MoreVertical } from "lucide-react";
 
 interface LineUserTableProps {
@@ -58,6 +58,31 @@ function UserTypeBadge({ userType }: { userType: string }) {
   );
 }
 
+function UserTierBadge({ userTier }: { userTier: UserTier | null }) {
+  if (!userTier) {
+    return (
+      <span className="text-xs text-gray-500 dark:text-gray-400">—</span>
+    );
+  }
+
+  const tierStyles: Record<UserTier, string> = {
+    [UserTier.Silver]:
+      "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300",
+    [UserTier.Gold]:
+      "bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300",
+    [UserTier.Platinum]:
+      "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300",
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-medium ${tierStyles[userTier]}`}
+    >
+      {userTier}
+    </span>
+  );
+}
+
 export function LineUserTable({
   users,
   startIndex = 0,
@@ -78,6 +103,9 @@ export function LineUserTable({
               </th>
               <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 User Type
+              </th>
+              <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                User Tier
               </th>
               <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Status
@@ -130,6 +158,10 @@ export function LineUserTable({
 
                   <td className="px-4 py-4">
                     <UserTypeBadge userType={user.userType} />
+                  </td>
+
+                  <td className="px-4 py-4">
+                    <UserTierBadge userTier={user.userTier} />
                   </td>
 
                   <td className="px-4 py-4">
@@ -194,7 +226,7 @@ export function LineUserTable({
               ))
             ) : (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center">
+                <td colSpan={9} className="px-4 py-8 text-center">
                   <p className="text-gray-500 dark:text-gray-400 text-sm">
                     No users found. Try adjusting your search filters.
                   </p>

@@ -6,12 +6,12 @@ import { Loader2, Users } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import { FormActionFooter } from "@/components/ui/form-footer";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/lib/hooks/useToast";
 import {
   createAudience,
   estimateMemberCount,
   fetchAudienceById,
+  fetchAudienceEstimate,
   updateAudience,
 } from "@/features/audiences/lib/api";
 import {
@@ -20,8 +20,10 @@ import {
   AUDIENCE_TYPE_LABELS,
   AudienceCriteria,
   AudienceSegmentType,
+  AudienceUserTierFilter,
   AudienceUserTypeFilter,
   NEW_FOLLOWER_DAY_OPTIONS,
+  USER_TIER_FILTER_OPTIONS,
   USER_TYPE_FILTER_OPTIONS,
 } from "@/features/audiences/types";
 
@@ -38,7 +40,7 @@ interface AudienceBuilderProps {
 function defaultCriteria(type: AudienceSegmentType): AudienceCriteria {
   switch (type) {
     case "user_type":
-      return { userTypes: ["Member"] };
+      return { userTypes: ["Member"], userTiers: [] };
     case "active":
       return { activityDays: 30 };
     case "new":
@@ -70,6 +72,10 @@ export function AudienceBuilderContainer({
 
   const [isLoading, setIsLoading] = useState(Boolean(audienceId));
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [liveEstimateCount, setLiveEstimateCount] = useState<number | null>(
+    null,
+  );
+  const [isEstimatingMembers, setIsEstimatingMembers] = useState(false);
   const isSubmittingRef = useRef(false);
 
   const fieldClassName = isReadOnly ? readOnlyInputClassName : inputClassName;
@@ -79,7 +85,18 @@ export function AudienceBuilderContainer({
     [segmentType, criteria],
   );
 
-  const displayCount = isViewMode && memberCount !== null ? memberCount : estimatedCount;
+  const usesLiveEstimate =
+    segmentType === "all" ||
+    segmentType === "user_type" ||
+    segmentType === "active" ||
+    segmentType === "new";
+
+  const displayCount =
+    isViewMode && memberCount !== null
+      ? memberCount
+      : usesLiveEstimate
+        ? (liveEstimateCount ?? 0)
+        : estimatedCount;
 
   useEffect(() => {
     if (!audienceId) return;
@@ -118,26 +135,73 @@ export function AudienceBuilderContainer({
     };
   }, [audienceId]);
 
-  const handleSegmentTypeChange = (type: AudienceSegmentType) => {
-    if (isReadOnly) return;
-    const option = AUDIENCE_SEGMENT_OPTIONS.find((item) => item.value === type);
-    if (option?.comingSoon) {
-      toast.info("Custom segments will be available later");
+  useEffect(() => {
+    const canEstimate =
+      !isViewMode &&
+      (segmentType === "all" ||
+        segmentType === "user_type" ||
+        segmentType === "active" ||
+        segmentType === "new");
+
+    if (!canEstimate) {
+      setIsEstimatingMembers(false);
       return;
     }
+
+    if (
+      segmentType === "user_type" &&
+      (criteria.userTypes ?? []).length === 0
+    ) {
+      setLiveEstimateCount(0);
+      setIsEstimatingMembers(false);
+      return;
+    }
+
+    let isCancelled = false;
+
+    const loadEstimate = async () => {
+      setIsEstimatingMembers(true);
+      try {
+        const estimate = await fetchAudienceEstimate(segmentType, criteria);
+        if (isCancelled) return;
+        setLiveEstimateCount(estimate.memberCount);
+      } catch (error) {
+        if (isCancelled) return;
+        setLiveEstimateCount(0);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to estimate audience members",
+        );
+      } finally {
+        if (!isCancelled) {
+          setIsEstimatingMembers(false);
+        }
+      }
+    };
+
+    loadEstimate();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [
+    isViewMode,
+    segmentType,
+    criteria.userTypes,
+    criteria.userTiers,
+    criteria.activityDays,
+    criteria.newFollowerDays,
+  ]);
+
+  const handleSegmentTypeChange = (type: AudienceSegmentType) => {
+    if (isReadOnly) return;
     setSegmentType(type);
     setCriteria(defaultCriteria(type));
   };
 
   const toggleUserType = (userType: AudienceUserTypeFilter) => {
     if (isReadOnly) return;
-    const option = USER_TYPE_FILTER_OPTIONS.find(
-      (item) => item.value === userType,
-    );
-    if (option?.comingSoon) {
-      toast.info("VIP levels will be configurable later");
-      return;
-    }
 
     const current = criteria.userTypes ?? [];
     const next = current.includes(userType)
@@ -147,16 +211,24 @@ export function AudienceBuilderContainer({
     setCriteria({ ...criteria, userTypes: next });
   };
 
+  const toggleUserTier = (userTier: AudienceUserTierFilter) => {
+    if (isReadOnly) return;
+
+    const current = criteria.userTiers ?? [];
+    const next = current.includes(userTier)
+      ? current.filter((item) => item !== userTier)
+      : [...current, userTier];
+
+    setCriteria({ ...criteria, userTiers: next });
+  };
+
   const validateForm = () => {
     if (!name.trim()) {
       toast.error("Audience name is required");
       return false;
     }
     if (segmentType === "user_type") {
-      const selected = (criteria.userTypes ?? []).filter(
-        (item) => item !== "VIP",
-      );
-      if (selected.length === 0) {
+      if ((criteria.userTypes ?? []).length === 0) {
         toast.error("Select at least one user type");
         return false;
       }
@@ -167,10 +239,6 @@ export function AudienceBuilderContainer({
     }
     if (segmentType === "new" && !criteria.newFollowerDays) {
       toast.error("Select a new follower window");
-      return false;
-    }
-    if (segmentType === "segment") {
-      toast.error("Custom segments are not available yet");
       return false;
     }
     return true;
@@ -326,17 +394,14 @@ export function AudienceBuilderContainer({
             <div className="grid gap-3">
               {AUDIENCE_SEGMENT_OPTIONS.map((option) => {
                 const isSelected = segmentType === option.value;
-                const isDisabled = Boolean(option.comingSoon) || isReadOnly;
 
                 return (
                   <label
                     key={option.value}
                     className={`flex gap-3 rounded-lg border p-4 transition-colors ${
-                      isDisabled && !isSelected
-                        ? "cursor-not-allowed opacity-60"
-                        : isReadOnly
-                          ? "cursor-default"
-                          : "cursor-pointer"
+                      isReadOnly
+                        ? "cursor-default"
+                        : "cursor-pointer"
                     } ${
                       isSelected
                         ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
@@ -350,16 +415,11 @@ export function AudienceBuilderContainer({
                       checked={isSelected}
                       onChange={() => handleSegmentTypeChange(option.value)}
                       className="mt-1"
-                      disabled={isDisabled && !isSelected}
+                      disabled={isReadOnly}
                     />
                     <span className="flex-1">
-                      <span className="flex items-center gap-2">
-                        <span className="block text-sm font-medium text-gray-900 dark:text-white">
-                          {option.label}
-                        </span>
-                        {option.comingSoon && (
-                          <Badge variant="secondary">Coming soon</Badge>
-                        )}
+                      <span className="block text-sm font-medium text-gray-900 dark:text-white">
+                        {option.label}
                       </span>
                       <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
                         {option.description}
@@ -371,59 +431,102 @@ export function AudienceBuilderContainer({
             </div>
 
             {segmentType === "user_type" && (
-              <div className="mt-5 space-y-3 border-t border-gray-200 pt-5 dark:border-gray-700">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  User types *
-                </p>
-                <div className="grid gap-3 md:grid-cols-3">
-                  {USER_TYPE_FILTER_OPTIONS.map((option) => {
-                    const checked =
-                      criteria.userTypes?.includes(option.value) ?? false;
-                    const disabled =
-                      Boolean(option.comingSoon) || isReadOnly;
+              <>
+                <div className="mt-5 space-y-3 border-t border-gray-200 pt-5 dark:border-gray-700">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    User types *
+                  </p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {USER_TYPE_FILTER_OPTIONS.map((option) => {
+                      const checked =
+                        criteria.userTypes?.includes(option.value) ?? false;
 
-                    return (
-                      <label
-                        key={option.value}
-                        className={`rounded-lg border p-4 transition-colors ${
-                          disabled && !checked
-                            ? "cursor-not-allowed opacity-60"
-                            : isReadOnly
+                      return (
+                        <label
+                          key={option.value}
+                          className={`rounded-lg border p-4 transition-colors ${
+                            isReadOnly
                               ? "cursor-default"
                               : "cursor-pointer"
-                        } ${
-                          checked
-                            ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
-                            : "border-gray-200 dark:border-gray-700"
-                        }`}
-                      >
-                        <span className="flex items-start gap-3">
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => toggleUserType(option.value)}
-                            className="mt-1"
-                            disabled={disabled && !checked}
-                          />
-                          <span>
-                            <span className="flex items-center gap-2">
+                          } ${
+                            checked
+                              ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
+                              : "border-gray-200 dark:border-gray-700"
+                          }`}
+                        >
+                          <span className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleUserType(option.value)}
+                              className="mt-1"
+                              disabled={isReadOnly}
+                            />
+                            <span>
                               <span className="text-sm font-medium text-gray-900 dark:text-white">
                                 {option.label}
                               </span>
-                              {option.comingSoon && (
-                                <Badge variant="secondary">Coming soon</Badge>
-                              )}
-                            </span>
-                            <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
-                              {option.description}
+                              <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+                                {option.description}
+                              </span>
                             </span>
                           </span>
-                        </span>
-                      </label>
-                    );
-                  })}
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+
+                <div className="mt-5 space-y-3 border-t border-gray-200 pt-5 dark:border-gray-700">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      User tiers
+                    </p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      Optional. Leave unselected to include all tiers.
+                    </p>
+                  </div>
+                  <div className="grid gap-3 md:grid-cols-3">
+                    {USER_TIER_FILTER_OPTIONS.map((option) => {
+                      const checked =
+                        criteria.userTiers?.includes(option.value) ?? false;
+
+                      return (
+                        <label
+                          key={option.value}
+                          className={`rounded-lg border p-4 transition-colors ${
+                            isReadOnly
+                              ? "cursor-default"
+                              : "cursor-pointer"
+                          } ${
+                            checked
+                              ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
+                              : "border-gray-200 dark:border-gray-700"
+                          }`}
+                        >
+                          <span className="flex items-start gap-3">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleUserTier(option.value)}
+                              className="mt-1"
+                              disabled={isReadOnly}
+                            />
+                            <span>
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                {option.label}
+                              </span>
+                              <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+                                {option.description}
+                              </span>
+                            </span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
             )}
 
             {segmentType === "active" && (
@@ -526,12 +629,19 @@ export function AudienceBuilderContainer({
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Estimated members
                 </p>
-                <p
-                  className="text-xl font-bold text-gray-900 dark:text-white"
-                  suppressHydrationWarning
-                >
-                  {displayCount.toLocaleString()}
-                </p>
+                {isEstimatingMembers && usesLiveEstimate ? (
+                  <p className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-white">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    —
+                  </p>
+                ) : (
+                  <p
+                    className="text-xl font-bold text-gray-900 dark:text-white"
+                    suppressHydrationWarning
+                  >
+                    {displayCount.toLocaleString()}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -549,16 +659,28 @@ export function AudienceBuilderContainer({
                 </dd>
               </div>
               {segmentType === "user_type" && (
-                <div className="flex items-start justify-between gap-4">
-                  <dt className="text-gray-500 dark:text-gray-400">
-                    User types
-                  </dt>
-                  <dd className="text-right font-medium text-gray-900 dark:text-white">
-                    {(criteria.userTypes ?? []).length > 0
-                      ? (criteria.userTypes ?? []).join(", ")
-                      : "—"}
-                  </dd>
-                </div>
+                <>
+                  <div className="flex items-start justify-between gap-4">
+                    <dt className="text-gray-500 dark:text-gray-400">
+                      User types
+                    </dt>
+                    <dd className="text-right font-medium text-gray-900 dark:text-white">
+                      {(criteria.userTypes ?? []).length > 0
+                        ? (criteria.userTypes ?? []).join(", ")
+                        : "—"}
+                    </dd>
+                  </div>
+                  <div className="flex items-start justify-between gap-4">
+                    <dt className="text-gray-500 dark:text-gray-400">
+                      User tiers
+                    </dt>
+                    <dd className="text-right font-medium text-gray-900 dark:text-white">
+                      {(criteria.userTiers ?? []).length > 0
+                        ? (criteria.userTiers ?? []).join(", ")
+                        : "All"}
+                    </dd>
+                  </div>
+                </>
               )}
               {segmentType === "active" && (
                 <div className="flex items-start justify-between gap-4">

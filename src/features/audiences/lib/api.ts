@@ -8,14 +8,16 @@ import {
 import {
   Audience,
   AudienceCriteria,
+  AudienceEstimate,
   AudienceSegmentType,
   CreateAudiencePayload,
   UpdateAudiencePayload,
 } from "../types";
+import { isUserTier } from "@/constants/user-tier";
 
 /**
  * Client-side estimate for form preview.
- * List/detail responses use server-calculated `memberCount`.
+ * Type `all` uses `fetchAudienceEstimate` (LINE Insight) instead.
  */
 export function estimateMemberCount(
   type: AudienceSegmentType,
@@ -23,13 +25,12 @@ export function estimateMemberCount(
 ): number {
   switch (type) {
     case "all":
-      return 45200;
+      return 0;
     case "user_type": {
       const selected = criteria.userTypes ?? [];
       let total = 0;
       if (selected.includes("Member")) total += 18200;
       if (selected.includes("Guest")) total += 22100;
-      if (selected.includes("VIP")) total += 1450;
       return total || 0;
     }
     case "active": {
@@ -63,6 +64,7 @@ export function buildAudienceCriteria(
         userTypes: (criteria.userTypes ?? []).filter(
           (item) => item === "Member" || item === "Guest",
         ),
+        userTiers: (criteria.userTiers ?? []).filter(isUserTier),
       };
     case "active":
       return { activityDays: criteria.activityDays };
@@ -71,6 +73,57 @@ export function buildAudienceCriteria(
     default:
       return {};
   }
+}
+
+export async function fetchAudienceEstimate(
+  type: AudienceSegmentType,
+  criteria?: AudienceCriteria,
+): Promise<AudienceEstimate> {
+  const params = new URLSearchParams({ type });
+
+  if (type === "user_type") {
+    for (const userType of criteria?.userTypes ?? []) {
+      params.append("userTypes", userType);
+    }
+    for (const userTier of criteria?.userTiers ?? []) {
+      params.append("userTiers", userTier);
+    }
+  }
+
+  if (type === "active" && criteria?.activityDays) {
+    params.set("activityDays", String(criteria.activityDays));
+  }
+
+  if (type === "new" && criteria?.newFollowerDays) {
+    params.set("newFollowerDays", String(criteria.newFollowerDays));
+  }
+
+  return dedupeAsync(
+    `audiences:estimate:${params.toString()}`,
+    async () => {
+      const response = await fetch(
+        `${API_ENDPOINTS.AUDIENCES.ESTIMATE}?${params.toString()}`,
+        {
+          headers: getAuthHeaders(),
+          cache: "no-store",
+        },
+      );
+
+      await assertOkResponse(response, "Failed to estimate audience members");
+
+      const payload = (await response.json()) as {
+        success?: boolean;
+        data?: AudienceEstimate;
+      };
+
+      if (!payload.success || !payload.data) {
+        throw new Error("Failed to estimate audience members");
+      }
+
+      return payload.data;
+    },
+    { ttlMs: REMOUNT_DEDUPE_TTL_MS },
+  );
 }
 
 export async function fetchAudiences(options?: {

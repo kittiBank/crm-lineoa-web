@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { LineUser, UserType, UserStatus, FilterOptions } from "../types";
+import { LineUser, UserType, UserStatus, UserTier, USER_TIERS, FilterOptions } from "../types";
 
 /**
  * Generate mock LINE user data
@@ -7,6 +7,7 @@ import { LineUser, UserType, UserStatus, FilterOptions } from "../types";
  */
 export function generateMockLineUsers(count: number = 50): LineUser[] {
   const userTypes: UserType[] = ["Member", "Guest"];
+  const userTiers: Array<UserTier | null> = [null, ...USER_TIERS];
   const statuses: UserStatus[] = ["Active", "Blocked", "Unfollowed"];
   const tagOptions = [
     "VIP",
@@ -31,6 +32,7 @@ export function generateMockLineUsers(count: number = 50): LineUser[] {
       displayName: faker.person.fullName(),
       avatar: faker.image.avatar(),
       userType: userTypes[Math.floor(Math.random() * userTypes.length)],
+      userTier: userTiers[Math.floor(Math.random() * userTiers.length)],
       status: statuses[Math.floor(Math.random() * statuses.length)],
       tags: [...new Set(selectedTags)], // Remove duplicates
       lastActive: faker.date.recent({ days: 30 }),

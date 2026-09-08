@@ -1,7 +1,7 @@
 import { API_ENDPOINTS } from "@/constants/api";
 import { getToken } from "@/lib/auth";
 import { dedupeAsync, REMOUNT_DEDUPE_TTL_MS } from "@/lib/dedupe-async";
-import { FilterOptions, LineUser } from "../types";
+import { FilterOptions, LineUser, UserTier, isUserTier } from "../types";
 
 export interface LineUsersResponse {
   data: LineUserApiItem[];
@@ -19,6 +19,7 @@ export interface LineUserApiItem {
   displayName: string;
   avatar?: string;
   userType: "Member" | "Guest";
+  userTier: UserTier | null;
   status: "Active" | "Blocked" | "Unfollowed";
   tags: string[];
   lastActive: string;
@@ -33,6 +34,7 @@ function mapApiUserToLineUser(user: LineUserApiItem): LineUser {
     displayName: user.displayName,
     avatar: user.avatar,
     userType: user.userType,
+    userTier: isUserTier(user.userTier) ? user.userTier : null,
     status: user.status,
     tags: user.tags,
     lastActive: new Date(user.lastActive),

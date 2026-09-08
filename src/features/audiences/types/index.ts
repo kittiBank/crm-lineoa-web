@@ -1,3 +1,11 @@
+import {
+  USER_TIER_DESCRIPTIONS,
+  USER_TIER_LABELS,
+  USER_TIERS,
+  UserTier,
+  isUserTier,
+} from "@/constants/user-tier";
+
 /**
  * Audience segment types for targeting LINE users
  */
@@ -9,13 +17,17 @@ export type AudienceSegmentType =
   | "segment";
 
 /**
- * LINE user type filters — VIP levels will be added later
+ * LINE user type filters
  */
-export type AudienceUserTypeFilter = "Member" | "Guest" | "VIP";
+export type AudienceUserTypeFilter = "Member" | "Guest";
+export type AudienceUserTierFilter = UserTier;
+export { UserTier, isUserTier };
 
 export interface AudienceCriteria {
   /** Selected user types when type = user_type */
   userTypes?: AudienceUserTypeFilter[];
+  /** Selected user tiers when type = user_type */
+  userTiers?: AudienceUserTierFilter[];
   /** Days of recent activity when type = active */
   activityDays?: number;
   /** Days since follow when type = new */
@@ -32,6 +44,12 @@ export interface Audience {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface AudienceEstimate {
+  type: AudienceSegmentType;
+  criteria: AudienceCriteria;
+  memberCount: number;
 }
 
 export interface CreateAudiencePayload {
@@ -54,7 +72,6 @@ export interface AudienceSegmentOption {
   value: AudienceSegmentType;
   label: string;
   description: string;
-  comingSoon?: boolean;
 }
 
 export const AUDIENCE_SEGMENT_OPTIONS: AudienceSegmentOption[] = [
@@ -66,7 +83,7 @@ export const AUDIENCE_SEGMENT_OPTIONS: AudienceSegmentOption[] = [
   {
     value: "user_type",
     label: "By User Type",
-    description: "Filter by Member, Guest, or VIP level",
+    description: "Filter by Member, Guest, and user tier",
   },
   {
     value: "active",
@@ -78,19 +95,12 @@ export const AUDIENCE_SEGMENT_OPTIONS: AudienceSegmentOption[] = [
     label: "New Followers",
     description: "Users who recently started following the OA",
   },
-  {
-    value: "segment",
-    label: "Custom Segment",
-    description: "Advanced rules and tags — coming later",
-    comingSoon: true,
-  },
 ];
 
 export const USER_TYPE_FILTER_OPTIONS: {
   value: AudienceUserTypeFilter;
   label: string;
   description: string;
-  comingSoon?: boolean;
 }[] = [
   {
     value: "Member",
@@ -102,13 +112,17 @@ export const USER_TYPE_FILTER_OPTIONS: {
     label: "Guest",
     description: "Followers who have not registered as members",
   },
-  {
-    value: "VIP",
-    label: "VIP",
-    description: "VIP tier levels will be configurable later",
-    comingSoon: true,
-  },
 ];
+
+export const USER_TIER_FILTER_OPTIONS: {
+  value: AudienceUserTierFilter;
+  label: string;
+  description: string;
+}[] = USER_TIERS.map((value) => ({
+  value,
+  label: USER_TIER_LABELS[value],
+  description: USER_TIER_DESCRIPTIONS[value],
+}));
 
 export const ACTIVITY_DAY_OPTIONS = [7, 14, 30, 90] as const;
 export const NEW_FOLLOWER_DAY_OPTIONS = [7, 14, 30] as const;
