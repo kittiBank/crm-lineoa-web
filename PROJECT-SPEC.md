@@ -733,7 +733,7 @@ This project should demonstrate the following skills:
 - [Done] หน้า Create Rich menu เพิ่มแบบ custom area วาดได้
 - [Done] หน้า Create Rich menu ให้เลือก layout น้อยลง แบบ Big, compact, Custom (พร้อม default grid ใต้ Big/Compact)
 - [Done] หน้า Create message เพิ่ม Default img / video / carousel (ไฟล์ใน `public/defaults`) + อัปโหลด video พร้อม thumbnail อัตโนมัติ
-- หน้า Create message เพิ่ม Merge Tag ข้อมูล linruser กับ flex msg ได้
+- [Done ]หน้า Create message เพิ่ม Merge Tag ข้อมูล linruser กับ flex msg ได้
 - หน้า Brodcast มีให้เลือก custome audience 
 
 - [Done] Sidebar ปิด Link prefetch เพื่อไม่โหลดหน้าเมนูอื่นล่วงหน้าบน prod
@@ -747,6 +747,7 @@ This project should demonstrate the following skills:
 - ปรับหน้า Dashboard ให้ filter ข้อมูลตาม date picker ได้
 - ทำ Switching rich menu ได้
 - [Done] ทำ Skeleton loading หน้า Dashboard
+- [Done] ทำ Skeleton loading หน้า Message template
 - เพิ่ม Skeleton loading แต่ละเมนู
 - เพิ่ม เมนูจัดการ Stock Ecom Liff
 - เพิ่ม เมนูจัดการ นัดหมาย Clinic Liff
@@ -775,6 +776,9 @@ This project should demonstrate the following skills:
 - หน้า Audience กด Recalculate / refresh member count ได้
 - หน้า View Audience ดูรายชื่อสมาชิกในกลุ่มได้
 - หน้า Create Audience บันทึกแล้วไปใช้เลือกเป็น TARGET ใน Broadcast ได้เลย
+- ทำระบบ Notification approve กระดิ่ง
+- ปรับ Navbar มีชื่อ user, role
+
 
 
 
