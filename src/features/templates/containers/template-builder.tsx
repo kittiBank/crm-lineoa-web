@@ -282,7 +282,7 @@ export function TemplateBuilderContainer({
           <p className="mt-2 text-gray-600 dark:text-gray-400">
             {isViewMode
               ? "Review template details and message preview"
-              : "Build LINE OA broadcast messages with live preview"}
+              : "Build LINE OA broadcast messages with live preview. Text and Flex messages support merge tags such as {lineUser} and {userTier}."}
           </p>
         </div>
       </div>

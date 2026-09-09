@@ -3,6 +3,7 @@
 import { Play, User } from "lucide-react";
 import { FlexMessagePreview } from "./flex-message-preview";
 import { TemplateMessageBlock } from "../types/builder";
+import { applyMergeTags } from "../lib/merge-tags";
 
 interface LineOaPreviewProps {
   messages: TemplateMessageBlock[];
@@ -50,7 +51,7 @@ function PreviewBubble({ message }: { message: TemplateMessageBlock }) {
     case "text":
       return (
         <div className="max-w-[85%] rounded-2xl rounded-tl-md bg-white px-4 py-3 text-sm leading-relaxed text-gray-900 shadow-sm">
-          {message.text || "Text message preview"}
+          {applyMergeTags(message.text) || "Text message preview"}
         </div>
       );
     case "image":
@@ -100,8 +101,8 @@ function PreviewBubble({ message }: { message: TemplateMessageBlock }) {
     case "flex":
       return (
         <FlexMessagePreview
-          rawJson={message.contentsJson}
-          altText={message.altText}
+          rawJson={applyMergeTags(message.contentsJson ?? "")}
+          altText={applyMergeTags(message.altText)}
         />
       );
     case "carousel":

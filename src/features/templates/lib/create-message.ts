@@ -96,7 +96,7 @@ export function createMessageBlock(
       return {
         id,
         type: "text",
-        text: "Hello from LINE OA!",
+        text: "สวัสดีคุณ {lineUser}",
       } satisfies TextMessageBlock;
     case "image":
       return {

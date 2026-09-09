@@ -6,3 +6,4 @@ export { MessageTypePicker } from "./message-type-picker";
 export { MessageBlockList } from "./message-block-list";
 export { MessageBlockEditor } from "./message-block-editor";
 export { LineOaPreview } from "./line-oa-preview";
+export { MergeTagPicker } from "./merge-tag-picker";

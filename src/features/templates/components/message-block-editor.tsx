@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/lib/hooks/useToast";
@@ -10,6 +10,8 @@ import {
 } from "../lib/create-message";
 import { uploadTemplateImage, uploadTemplateVideo } from "../lib/api";
 import { captureVideoThumbnail } from "../lib/video-thumbnail";
+import { insertTextAtCursor } from "../lib/merge-tags";
+import { MergeTagPicker } from "./merge-tag-picker";
 import {
   CarouselMessageBlock,
   FlexMessageBlock,
@@ -88,19 +90,36 @@ function TextEditor({
   onChange: (message: TemplateMessageBlock) => void;
   readOnly?: boolean;
 }) {
+  const textRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleInsertTag = (tag: string) => {
+    const { next, cursor } = insertTextAtCursor(
+      textRef.current,
+      message.text,
+      tag,
+    );
+    onChange({ ...message, text: next });
+    requestAnimationFrame(() => {
+      textRef.current?.focus();
+      textRef.current?.setSelectionRange(cursor, cursor);
+    });
+  };
+
   return (
     <fieldset disabled={readOnly} className="space-y-4 border-0 p-0">
       <Field label="Message text">
         <textarea
+          ref={textRef}
           rows={6}
           value={message.text}
           onChange={(event) =>
             onChange({ ...message, text: event.target.value })
           }
           className={`${inputClassName} resize-none`}
-          placeholder="Enter broadcast text..."
+          placeholder="สวัสดีคุณ {lineUser}"
         />
       </Field>
+      <MergeTagPicker disabled={readOnly} onInsert={handleInsertTag} />
     </fieldset>
   );
 }
@@ -337,22 +356,62 @@ function FlexEditor({
   onChange: (message: TemplateMessageBlock) => void;
   readOnly?: boolean;
 }) {
+  const altTextRef = useRef<HTMLInputElement>(null);
+  const jsonRef = useRef<HTMLTextAreaElement>(null);
+  const lastFocusedRef = useRef<"altText" | "json">("json");
+
+  const handleInsertTag = (tag: string) => {
+    if (lastFocusedRef.current === "altText") {
+      const { next, cursor } = insertTextAtCursor(
+        altTextRef.current,
+        message.altText,
+        tag,
+      );
+      onChange({ ...message, altText: next });
+      requestAnimationFrame(() => {
+        altTextRef.current?.focus();
+        altTextRef.current?.setSelectionRange(cursor, cursor);
+      });
+      return;
+    }
+
+    const currentJson = message.contentsJson ?? "";
+    const { next, cursor } = insertTextAtCursor(
+      jsonRef.current,
+      currentJson,
+      tag,
+    );
+    onChange({ ...message, contentsJson: next });
+    requestAnimationFrame(() => {
+      jsonRef.current?.focus();
+      jsonRef.current?.setSelectionRange(cursor, cursor);
+    });
+  };
+
   return (
     <fieldset disabled={readOnly} className="space-y-4 border-0 p-0">
       <Field label="Alt text">
         <input
+          ref={altTextRef}
           value={message.altText}
+          onFocus={() => {
+            lastFocusedRef.current = "altText";
+          }}
           onChange={(event) =>
             onChange({ ...message, altText: event.target.value })
           }
           className={inputClassName}
-          placeholder="Text shown when Flex content cannot be displayed"
+          placeholder="สวัสดีคุณ {lineUser}"
         />
       </Field>
       <Field label="Flex JSON">
         <textarea
+          ref={jsonRef}
           rows={20}
           value={message.contentsJson ?? ""}
+          onFocus={() => {
+            lastFocusedRef.current = "json";
+          }}
           onChange={(event) =>
             onChange({ ...message, contentsJson: event.target.value })
           }
@@ -361,6 +420,7 @@ function FlexEditor({
           spellCheck={false}
         />
       </Field>
+      <MergeTagPicker disabled={readOnly} onInsert={handleInsertTag} />
       <p className="text-xs text-gray-500 dark:text-gray-400">
         Paste JSON from the{" "}
         <a
@@ -371,7 +431,8 @@ function FlexEditor({
         >
           LINE Flex Message Simulator
         </a>
-        . JSON is validated when you save the template.
+        . Insert merge tags such as {"{lineUser}"} into text fields. JSON is
+        validated when you save the template.
       </p>
     </fieldset>
   );

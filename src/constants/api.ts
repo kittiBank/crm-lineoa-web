@@ -19,6 +19,7 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/api/v1/templates`,
     MEDIA: `${API_BASE_URL}/api/v1/templates/media`,
     MEDIA_VIDEO: `${API_BASE_URL}/api/v1/templates/media/video`,
+    MERGE_TAGS: `${API_BASE_URL}/api/v1/templates/merge-tags`,
     DETAIL: (id: string) => `${API_BASE_URL}/api/v1/templates/${id}`,
   },
   RICH_MENU: {

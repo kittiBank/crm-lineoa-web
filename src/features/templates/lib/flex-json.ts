@@ -21,7 +21,7 @@ const DEFAULT_FLEX_CONTENTS: FlexContents = {
     contents: [
       {
         type: "text",
-        text: "สวัสดีครับ",
+        text: "สวัสดีคุณ {lineUser}",
         weight: "bold",
         size: "xl",
       },
