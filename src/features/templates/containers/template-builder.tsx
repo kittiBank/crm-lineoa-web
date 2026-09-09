@@ -12,7 +12,10 @@ import {
   MessageBlockEditor,
   MessageBlockList,
   MessageTypePicker,
+  FieldError,
+  RequiredMark,
 } from "@/features/templates/components";
+import { errorInputClassName, MessageFieldErrors } from "@/features/templates/components/form-field";
 import {
   createTemplate,
   fetchTemplateById,
@@ -35,6 +38,17 @@ import {
 
 const inputClassName =
   "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white";
+
+type TemplateFormErrors = {
+  name?: string;
+  addMessage?: string;
+  messages?: string;
+  messageFields: Record<string, MessageFieldErrors>;
+};
+
+const emptyFormErrors = (): TemplateFormErrors => ({
+  messageFields: {},
+});
 
 interface TemplateBuilderContainerProps {
   templateId?: string;
@@ -62,6 +76,7 @@ export function TemplateBuilderContainer({
   const [isLoadingTemplate, setIsLoadingTemplate] = useState(
     Boolean(templateId),
   );
+  const [errors, setErrors] = useState<TemplateFormErrors>(emptyFormErrors);
 
   const selectedMessage = useMemo(
     () => messages.find((message) => message.id === selectedMessageId) ?? null,
@@ -94,9 +109,11 @@ export function TemplateBuilderContainer({
         setSelectedMessageId(normalizedMessages[0]?.id ?? null);
 
         if (normalizedMessages.length === 0) {
-          toast.error(
-            "This template has no valid message blocks. Please add messages and save again.",
-          );
+          setErrors({
+            ...emptyFormErrors(),
+            messages:
+              "This template has no valid message blocks. Please add messages and save again.",
+          });
         }
       } catch (error) {
         if (isCancelled) {
@@ -132,15 +149,21 @@ export function TemplateBuilderContainer({
 
   const handleAddMessage = (type: TemplateMessageType) => {
     if (messages.length >= MAX_TEMPLATE_MESSAGES) {
-      toast.error(
-        `A template can contain up to ${MAX_TEMPLATE_MESSAGES} messages`,
-      );
+      setErrors((current) => ({
+        ...current,
+        addMessage: `A template can contain up to ${MAX_TEMPLATE_MESSAGES} messages`,
+      }));
       return;
     }
 
     const nextMessage = createMessageBlock(type);
     setMessages((current) => [...current, nextMessage]);
     setSelectedMessageId(nextMessage.id);
+    setErrors((current) => ({
+      ...current,
+      addMessage: undefined,
+      messages: undefined,
+    }));
   };
 
   const handleUpdateMessage = (updatedMessage: TemplateMessageBlock) => {
@@ -149,6 +172,15 @@ export function TemplateBuilderContainer({
         message.id === updatedMessage.id ? updatedMessage : message,
       ),
     );
+    setErrors((current) => {
+      if (!current.messageFields[updatedMessage.id]) {
+        return current;
+      }
+
+      const messageFields = { ...current.messageFields };
+      delete messageFields[updatedMessage.id];
+      return { ...current, messageFields };
+    });
   };
 
   const handleMoveMessage = (id: string, direction: "up" | "down") => {
@@ -172,57 +204,82 @@ export function TemplateBuilderContainer({
   const handleRemoveMessage = (id: string) => {
     setMessages((current) => current.filter((message) => message.id !== id));
     setSelectedMessageId((current) => (current === id ? null : current));
+    setErrors((current) => {
+      const messageFields = { ...current.messageFields };
+      delete messageFields[id];
+      return { ...current, messageFields };
+    });
   };
 
   const validateForm = () => {
+    const nextErrors = emptyFormErrors();
+
     if (!name.trim()) {
-      toast.error("Template name is required");
-      return false;
+      nextErrors.name = "Template name is required";
     }
 
     if (messages.length === 0) {
-      toast.error("Add at least one message block");
-      return false;
+      nextErrors.messages = "Add at least one message block";
     }
 
     if (messages.length > MAX_TEMPLATE_MESSAGES) {
-      toast.error(
-        `A template can contain up to ${MAX_TEMPLATE_MESSAGES} messages`,
-      );
-      return false;
+      nextErrors.addMessage = `A template can contain up to ${MAX_TEMPLATE_MESSAGES} messages`;
     }
 
-    for (const [index, message] of messages.entries()) {
+    for (const message of messages) {
+      const fieldErrors: MessageFieldErrors = {};
+
+      if (message.type === "text" && !message.text.trim()) {
+        fieldErrors.text = "Message text is required";
+      }
+
+      if (message.type === "image" && !message.imageUrl.trim()) {
+        fieldErrors.imageUrl = "Image URL is required";
+      }
+
       if (message.type === "video" && !message.videoUrl.trim()) {
-        toast.error(`Video message ${index + 1}: Please upload a video`);
-        return false;
+        fieldErrors.videoUrl = "Please upload a video";
       }
 
-      if (message.type !== "flex") {
-        continue;
+      if (message.type === "carousel" && !message.altText.trim()) {
+        fieldErrors.altText = "Alt text is required";
       }
 
-      const parsed = parseFlexSimulatorJson(message.contentsJson ?? "");
-      if (!parsed.ok) {
-        toast.error(`Flex message ${index + 1}: ${parsed.error}`);
-        return false;
+      if (message.type === "flex") {
+        const parsed = parseFlexSimulatorJson(message.contentsJson ?? "");
+        if (!parsed.ok) {
+          fieldErrors.contentsJson = parsed.error;
+        }
+
+        const altText = parsed.ok
+          ? parsed.altText?.trim() || message.altText.trim()
+          : message.altText.trim();
+
+        if (!altText) {
+          fieldErrors.altText = "Alt text is required";
+        } else if (altText.length > 400) {
+          fieldErrors.altText = "Alt text must be 400 characters or fewer";
+        }
       }
 
-      const altText = parsed.altText?.trim() || message.altText.trim();
-      if (!altText) {
-        toast.error(`Flex message ${index + 1}: Alt text is required`);
-        return false;
-      }
-
-      if (altText.length > 400) {
-        toast.error(
-          `Flex message ${index + 1}: Alt text must be 400 characters or fewer`,
-        );
-        return false;
+      if (Object.keys(fieldErrors).length > 0) {
+        nextErrors.messageFields[message.id] = fieldErrors;
       }
     }
 
-    return true;
+    setErrors(nextErrors);
+
+    const firstInvalidId = Object.keys(nextErrors.messageFields)[0];
+    if (firstInvalidId) {
+      setSelectedMessageId(firstInvalidId);
+    }
+
+    return (
+      !nextErrors.name &&
+      !nextErrors.messages &&
+      !nextErrors.addMessage &&
+      Object.keys(nextErrors.messageFields).length === 0
+    );
   };
 
   const handleSubmit = async () => {
@@ -296,15 +353,22 @@ export function TemplateBuilderContainer({
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Template name *
+                  Template name <RequiredMark />
                 </label>
                 <Input
                   value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  className={inputClassName}
+                  onChange={(event) => {
+                    setName(event.target.value);
+                    if (errors.name) {
+                      setErrors((current) => ({ ...current, name: undefined }));
+                    }
+                  }}
+                  className={`${inputClassName} ${errors.name ? errorInputClassName : ""}`}
                   placeholder="Summer campaign message"
                   readOnly={isViewMode}
+                  aria-invalid={Boolean(errors.name)}
                 />
+                <FieldError message={errors.name} />
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -352,12 +416,13 @@ export function TemplateBuilderContainer({
                 onAdd={handleAddMessage}
                 disabled={messages.length >= MAX_TEMPLATE_MESSAGES}
               />
+              <FieldError message={errors.addMessage} />
             </section>
           )}
 
           <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-              Message blocks
+              Message blocks <RequiredMark />
             </h2>
             <MessageBlockList
               messages={messages}
@@ -367,7 +432,9 @@ export function TemplateBuilderContainer({
               onMoveDown={(id) => handleMoveMessage(id, "down")}
               onRemove={handleRemoveMessage}
               readOnly={isViewMode}
+              errorIds={Object.keys(errors.messageFields)}
             />
+            <FieldError message={errors.messages} />
           </section>
 
           <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -378,6 +445,11 @@ export function TemplateBuilderContainer({
               message={selectedMessage}
               onChange={handleUpdateMessage}
               readOnly={isViewMode}
+              errors={
+                selectedMessage
+                  ? errors.messageFields[selectedMessage.id]
+                  : undefined
+              }
             />
           </section>
         </div>

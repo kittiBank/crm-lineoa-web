@@ -13,6 +13,12 @@ import { captureVideoThumbnail } from "../lib/video-thumbnail";
 import { insertTextAtCursor } from "../lib/merge-tags";
 import { MergeTagPicker } from "./merge-tag-picker";
 import {
+  errorInputClassName,
+  FieldError,
+  MessageFieldErrors,
+  RequiredMark,
+} from "./form-field";
+import {
   CarouselMessageBlock,
   FlexMessageBlock,
   ImageMessageBlock,
@@ -24,16 +30,22 @@ import {
 const inputClassName =
   "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white";
 
+function inputClass(error?: string) {
+  return error ? `${inputClassName} ${errorInputClassName}` : inputClassName;
+}
+
 interface MessageBlockEditorProps {
   message: TemplateMessageBlock | null;
   onChange: (message: TemplateMessageBlock) => void;
   readOnly?: boolean;
+  errors?: MessageFieldErrors;
 }
 
 export function MessageBlockEditor({
   message,
   onChange,
   readOnly = false,
+  errors,
 }: MessageBlockEditorProps) {
   if (!message) {
     return (
@@ -46,7 +58,12 @@ export function MessageBlockEditor({
   switch (message.type) {
     case "text":
       return (
-        <TextEditor message={message} onChange={onChange} readOnly={readOnly} />
+        <TextEditor
+          message={message}
+          onChange={onChange}
+          readOnly={readOnly}
+          errors={errors}
+        />
       );
     case "image":
       return (
@@ -54,6 +71,7 @@ export function MessageBlockEditor({
           message={message}
           onChange={onChange}
           readOnly={readOnly}
+          errors={errors}
         />
       );
     case "video":
@@ -62,11 +80,17 @@ export function MessageBlockEditor({
           message={message}
           onChange={onChange}
           readOnly={readOnly}
+          errors={errors}
         />
       );
     case "flex":
       return (
-        <FlexEditor message={message} onChange={onChange} readOnly={readOnly} />
+        <FlexEditor
+          message={message}
+          onChange={onChange}
+          readOnly={readOnly}
+          errors={errors}
+        />
       );
     case "carousel":
       return (
@@ -74,6 +98,7 @@ export function MessageBlockEditor({
           message={message}
           onChange={onChange}
           readOnly={readOnly}
+          errors={errors}
         />
       );
     default:
@@ -85,10 +110,12 @@ function TextEditor({
   message,
   onChange,
   readOnly = false,
+  errors,
 }: {
   message: TextMessageBlock;
   onChange: (message: TemplateMessageBlock) => void;
   readOnly?: boolean;
+  errors?: MessageFieldErrors;
 }) {
   const textRef = useRef<HTMLTextAreaElement>(null);
 
@@ -107,7 +134,7 @@ function TextEditor({
 
   return (
     <fieldset disabled={readOnly} className="space-y-4 border-0 p-0">
-      <Field label="Message text">
+      <Field label="Message text" required error={errors?.text}>
         <textarea
           ref={textRef}
           rows={6}
@@ -115,8 +142,9 @@ function TextEditor({
           onChange={(event) =>
             onChange({ ...message, text: event.target.value })
           }
-          className={`${inputClassName} resize-none`}
+          className={`${inputClass(errors?.text)} resize-none`}
           placeholder="สวัสดีคุณ {lineUser}"
+          aria-invalid={Boolean(errors?.text)}
         />
       </Field>
       <MergeTagPicker disabled={readOnly} onInsert={handleInsertTag} />
@@ -128,10 +156,12 @@ function ImageEditor({
   message,
   onChange,
   readOnly = false,
+  errors,
 }: {
   message: ImageMessageBlock;
   onChange: (message: TemplateMessageBlock) => void;
   readOnly?: boolean;
+  errors?: MessageFieldErrors;
 }) {
   const [isUploading, setIsUploading] = useState(false);
   const toast = useToast();
@@ -172,15 +202,16 @@ function ImageEditor({
       disabled={readOnly || isUploading}
       className="space-y-4 border-0 p-0"
     >
-      <Field label="Image URL">
+      <Field label="Image URL" required error={errors?.imageUrl}>
         <input
           type="text"
           value={message.imageUrl}
           onChange={(event) =>
             onChange({ ...message, imageUrl: event.target.value })
           }
-          className={inputClassName}
+          className={inputClass(errors?.imageUrl)}
           placeholder="/defaults/template-preview.jpg"
+          aria-invalid={Boolean(errors?.imageUrl)}
         />
       </Field>
       {!readOnly && (
@@ -211,10 +242,12 @@ function VideoEditor({
   message,
   onChange,
   readOnly = false,
+  errors,
 }: {
   message: VideoMessageBlock;
   onChange: (message: TemplateMessageBlock) => void;
   readOnly?: boolean;
+  errors?: MessageFieldErrors;
 }) {
   const [isUploading, setIsUploading] = useState(false);
   const toast = useToast();
@@ -308,15 +341,16 @@ function VideoEditor({
       disabled={readOnly || isUploading}
       className="space-y-4 border-0 p-0"
     >
-      <Field label="Video URL">
+      <Field label="Video URL" required error={errors?.videoUrl}>
         <input
           type="url"
           value={message.videoUrl}
           onChange={(event) =>
             onChange({ ...message, videoUrl: event.target.value })
           }
-          className={inputClassName}
+          className={inputClass(errors?.videoUrl)}
           placeholder="https://example.com/video.mp4"
+          aria-invalid={Boolean(errors?.videoUrl)}
         />
       </Field>
       {!readOnly && (
@@ -351,10 +385,12 @@ function FlexEditor({
   message,
   onChange,
   readOnly = false,
+  errors,
 }: {
   message: FlexMessageBlock;
   onChange: (message: TemplateMessageBlock) => void;
   readOnly?: boolean;
+  errors?: MessageFieldErrors;
 }) {
   const altTextRef = useRef<HTMLInputElement>(null);
   const jsonRef = useRef<HTMLTextAreaElement>(null);
@@ -390,7 +426,7 @@ function FlexEditor({
 
   return (
     <fieldset disabled={readOnly} className="space-y-4 border-0 p-0">
-      <Field label="Alt text">
+      <Field label="Alt text" required error={errors?.altText}>
         <input
           ref={altTextRef}
           value={message.altText}
@@ -400,11 +436,12 @@ function FlexEditor({
           onChange={(event) =>
             onChange({ ...message, altText: event.target.value })
           }
-          className={inputClassName}
+          className={inputClass(errors?.altText)}
           placeholder="สวัสดีคุณ {lineUser}"
+          aria-invalid={Boolean(errors?.altText)}
         />
       </Field>
-      <Field label="Flex JSON">
+      <Field label="Flex JSON" required error={errors?.contentsJson}>
         <textarea
           ref={jsonRef}
           rows={20}
@@ -415,9 +452,10 @@ function FlexEditor({
           onChange={(event) =>
             onChange({ ...message, contentsJson: event.target.value })
           }
-          className={`${inputClassName} resize-y font-mono text-xs leading-5`}
+          className={`${inputClass(errors?.contentsJson)} resize-y font-mono text-xs leading-5`}
           placeholder='Paste a LINE Flex Simulator bubble, carousel, or full {"type":"flex",...} message'
           spellCheck={false}
+          aria-invalid={Boolean(errors?.contentsJson)}
         />
       </Field>
       <MergeTagPicker disabled={readOnly} onInsert={handleInsertTag} />
@@ -442,10 +480,12 @@ function CarouselEditor({
   message,
   onChange,
   readOnly = false,
+  errors,
 }: {
   message: CarouselMessageBlock;
   onChange: (message: TemplateMessageBlock) => void;
   readOnly?: boolean;
+  errors?: MessageFieldErrors;
 }) {
   const [uploadingColumnId, setUploadingColumnId] = useState<string | null>(
     null,
@@ -525,13 +565,14 @@ function CarouselEditor({
       disabled={readOnly || Boolean(uploadingColumnId)}
       className="space-y-4 border-0 p-0"
     >
-      <Field label="Alt text">
+      <Field label="Alt text" required error={errors?.altText}>
         <input
           value={message.altText}
           onChange={(event) =>
             onChange({ ...message, altText: event.target.value })
           }
-          className={inputClassName}
+          className={inputClass(errors?.altText)}
+          aria-invalid={Boolean(errors?.altText)}
         />
       </Field>
 
@@ -650,17 +691,28 @@ function Field({
   label,
   children,
   className,
+  required = false,
+  error,
 }: {
   label: string;
   children: React.ReactNode;
   className?: string;
+  required?: boolean;
+  error?: string;
 }) {
   return (
     <div className={className}>
       <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
         {label}
+        {required ? (
+          <>
+            {" "}
+            <RequiredMark />
+          </>
+        ) : null}
       </label>
       {children}
+      <FieldError message={error} />
     </div>
   );
 }

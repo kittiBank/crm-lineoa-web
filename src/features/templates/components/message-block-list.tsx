@@ -13,6 +13,7 @@ interface MessageBlockListProps {
   onMoveDown: (id: string) => void;
   onRemove: (id: string) => void;
   readOnly?: boolean;
+  errorIds?: string[];
 }
 
 export function MessageBlockList({
@@ -23,6 +24,7 @@ export function MessageBlockList({
   onMoveDown,
   onRemove,
   readOnly = false,
+  errorIds = [],
 }: MessageBlockListProps) {
   if (messages.length === 0) {
     return (
@@ -41,7 +43,9 @@ export function MessageBlockList({
             "flex items-center gap-2 rounded-xl border px-3 py-2 transition-colors",
             selectedId === message.id
               ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
-              : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800",
+              : errorIds.includes(message.id)
+                ? "border-red-500 bg-white dark:border-red-500 dark:bg-gray-800"
+                : "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800",
           )}
         >
           <button
