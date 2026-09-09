@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
@@ -10,6 +9,7 @@ import {
   TemplateTable,
   TemplateFilters,
   TemplatePagination,
+  TemplateListSkeleton,
 } from "@/features/templates/components";
 import {
   filterTemplatesByCategory,
@@ -154,10 +154,7 @@ export function TemplatesListContainer() {
       />
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-16 text-gray-500">
-          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          Loading templates...
-        </div>
+        <TemplateListSkeleton />
       ) : error ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
           {error}

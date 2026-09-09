@@ -2,6 +2,7 @@ export { TemplateHeader } from "./template-header";
 export { TemplateTable } from "./template-table";
 export { TemplateFilters } from "./template-filters";
 export { TemplatePagination } from "./template-pagination";
+export { TemplateListSkeleton } from "./template-list-skeleton";
 export { MessageTypePicker } from "./message-type-picker";
 export { MessageBlockList } from "./message-block-list";
 export { MessageBlockEditor } from "./message-block-editor";

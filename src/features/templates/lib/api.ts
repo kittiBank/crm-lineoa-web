@@ -8,23 +8,15 @@ import {
 import { getToken } from "@/lib/auth";
 import { CreateMessageTemplatePayload, MessageTemplate } from "../types";
 
-export async function fetchTemplates(options?: {
-  force?: boolean;
-}): Promise<MessageTemplate[]> {
-  return dedupeAsync(
-    "templates:list",
-    async () => {
-      const response = await fetch(API_ENDPOINTS.TEMPLATES.LIST, {
-        headers: getAuthHeaders(),
-        cache: "no-store",
-      });
+export async function fetchTemplates(): Promise<MessageTemplate[]> {
+  const response = await fetch(API_ENDPOINTS.TEMPLATES.LIST, {
+    headers: getAuthHeaders(),
+    cache: "no-store",
+  });
 
-      await assertOkResponse(response, "Failed to fetch templates");
+  await assertOkResponse(response, "Failed to fetch templates");
 
-      return response.json();
-    },
-    { ttlMs: REMOUNT_DEDUPE_TTL_MS, force: options?.force },
-  );
+  return response.json();
 }
 
 export async function uploadTemplateImage(
@@ -99,7 +91,6 @@ export async function createTemplate(
 
   await assertOkResponse(response, "Failed to create template");
 
-  invalidateDedupe("templates:list");
   return response.json();
 }
 
@@ -115,7 +106,6 @@ export async function updateTemplate(
 
   await assertOkResponse(response, "Failed to update template");
 
-  invalidateDedupe("templates:list");
   invalidateDedupe(`templates:${id}`);
   return response.json();
 }
@@ -127,6 +117,5 @@ export async function deleteTemplate(id: string): Promise<void> {
   });
 
   await assertOkResponse(response, "Failed to delete template");
-  invalidateDedupe("templates:list");
   invalidateDedupe(`templates:${id}`);
 }
