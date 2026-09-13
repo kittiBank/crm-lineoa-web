@@ -379,7 +379,8 @@ export function AudienceBuilderContainer({
 
   const breadcrumbItems = [
     { label: "Home", href: "/dashboard" },
-    { label: "Audience Management", href: "/audiences" },
+    { label: "Audience Management" },
+    { label: "Audience Segment", href: "/audiences" },
     {
       label: isViewMode ? "View" : isEditMode ? "Edit" : "Create",
       isActive: true,

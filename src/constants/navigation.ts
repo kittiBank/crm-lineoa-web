@@ -2,7 +2,22 @@
  * Navigation menu items for the application
  * Used in sidebar and mobile menu components
  */
-export const MENU_ITEMS = [
+
+export interface MenuChild {
+  id: string;
+  label: string;
+  href: string;
+}
+
+export interface MenuItem {
+  id: string;
+  label: string;
+  icon: string;
+  href?: string;
+  children?: MenuChild[];
+}
+
+export const MENU_ITEMS: MenuItem[] = [
   {
     id: "dashboard",
     label: "Dashboard",
@@ -36,8 +51,19 @@ export const MENU_ITEMS = [
   {
     id: "audiences",
     label: "Audience Management",
-    href: "/audiences",
     icon: "UsersRound",
+    children: [
+      {
+        id: "audience-segment",
+        label: "Audience Segment",
+        href: "/audiences",
+      },
+      {
+        id: "import-audience",
+        label: "Import Audience",
+        href: "/audiences/import",
+      },
+    ],
   },
   {
     id: "rich-menu",
@@ -59,6 +85,42 @@ export const MENU_ITEMS = [
   },
 ];
 
+function normalizePath(path: string): string {
+  return path.replace(/\/$/, "") || "/";
+}
+
+export function isMenuPathActive(pathname: string, href: string): boolean {
+  const current = normalizePath(pathname);
+  const target = normalizePath(href);
+  return current === target || current.startsWith(`${target}/`);
+}
+
+export function isMenuChildActive(
+  pathname: string,
+  href: string,
+  siblingHrefs: string[] = [],
+): boolean {
+  const current = normalizePath(pathname);
+  const target = normalizePath(href);
+
+  if (current === target) {
+    return true;
+  }
+
+  if (!current.startsWith(`${target}/`)) {
+    return false;
+  }
+
+  return !siblingHrefs.some((sibling) => {
+    const siblingPath = normalizePath(sibling);
+    if (siblingPath === target || !siblingPath.startsWith(`${target}/`)) {
+      return false;
+    }
+
+    return current === siblingPath || current.startsWith(`${siblingPath}/`);
+  });
+}
+
 /**
  * Breadcrumb configuration for routes
  * Maps route paths to breadcrumb labels
@@ -73,10 +135,11 @@ export const BREADCRUMB_MAP: Record<string, string[]> = {
   "/templates/[id]/edit": ["Message Templates", "Edit"],
   "/auto-message": ["Auto Message"],
   "/line-users": ["LINE Users"],
-  "/audiences": ["Audience Management"],
-  "/audiences/create": ["Audience Management", "Create"],
-  "/audiences/[id]/edit": ["Audience Management", "Edit"],
-  "/audiences/[id]/view": ["Audience Management", "View"],
+  "/audiences": ["Audience Management", "Audience Segment"],
+  "/audiences/import": ["Audience Management", "Import Audience"],
+  "/audiences/create": ["Audience Management", "Audience Segment", "Create"],
+  "/audiences/[id]/edit": ["Audience Management", "Audience Segment", "Edit"],
+  "/audiences/[id]/view": ["Audience Management", "Audience Segment", "View"],
   "/rich-menu": ["Rich Menu"],
   "/rich-menu/create": ["Rich Menu", "Create"],
   "/rich-menu/[id]/edit": ["Rich Menu", "Edit"],

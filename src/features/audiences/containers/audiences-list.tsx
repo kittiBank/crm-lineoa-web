@@ -132,7 +132,8 @@ export function AudiencesListContainer() {
 
   const breadcrumbItems = [
     { label: "Home", href: "/dashboard" },
-    { label: "Audience Management", isActive: true },
+    { label: "Audience Management", isActive: false },
+    { label: "Audience Segment", isActive: true },
   ];
 
   return (

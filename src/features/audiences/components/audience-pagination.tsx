@@ -5,6 +5,7 @@ interface PaginationProps {
   totalPages: number;
   totalItems: number;
   itemsPerPage: number;
+  itemLabel?: string;
   onPageChange: (page: number) => void;
   onItemsPerPageChange: (itemsPerPage: number) => void;
 }
@@ -17,6 +18,7 @@ export function AudiencePagination({
   totalPages,
   totalItems,
   itemsPerPage,
+  itemLabel = "audiences",
   onPageChange,
   onItemsPerPageChange,
 }: PaginationProps) {
@@ -75,7 +77,7 @@ export function AudiencePagination({
           </select>
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-          Showing {startItem}-{endItem} of {totalItems} audiences
+          Showing {startItem}-{endItem} of {totalItems} {itemLabel}
         </p>
       </div>
 
