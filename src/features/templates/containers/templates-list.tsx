@@ -136,6 +136,26 @@ export function TemplatesListContainer() {
     { label: "Message Templates", isActive: true },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="space-y-2" suppressHydrationWarning>
+        <Breadcrumbs items={breadcrumbItems} />
+        <TemplateListSkeleton />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-2">
+        <Breadcrumbs items={breadcrumbItems} />
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2" suppressHydrationWarning>
       <Breadcrumbs items={breadcrumbItems} />
@@ -153,38 +173,28 @@ export function TemplatesListContainer() {
         onClear={() => undefined}
       />
 
-      {isLoading ? (
-        <TemplateListSkeleton />
-      ) : error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
-          {error}
-        </div>
-      ) : (
-        <>
-          <div className="mt-6">
-            <TemplateTable
-              templates={paginatedTemplates}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              itemsPerPage={itemsPerPage}
-              onEdit={handleEdit}
-              onDelete={handleDeleteClick}
-              onView={handleView}
-              onPageChange={setCurrentPage}
-              onItemsPerPageChange={setItemsPerPage}
-            />
-          </div>
+      <div className="mt-6">
+        <TemplateTable
+          templates={paginatedTemplates}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          itemsPerPage={itemsPerPage}
+          onEdit={handleEdit}
+          onDelete={handleDeleteClick}
+          onView={handleView}
+          onPageChange={setCurrentPage}
+          onItemsPerPageChange={setItemsPerPage}
+        />
+      </div>
 
-          <TemplatePagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={filteredTemplates.length}
-            itemsPerPage={itemsPerPage}
-            onPageChange={setCurrentPage}
-            onItemsPerPageChange={setItemsPerPage}
-          />
-        </>
-      )}
+      <TemplatePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredTemplates.length}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+        onItemsPerPageChange={setItemsPerPage}
+      />
 
       <ConfirmDialog
         open={Boolean(templateToDelete)}

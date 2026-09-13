@@ -13,22 +13,30 @@ const TABLE_HEADERS = [
 export function TemplateListSkeleton() {
   return (
     <div className="space-y-2" aria-busy="true" aria-live="polite">
+      <div className="mb-2 flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-56 max-w-full" />
+          <Skeleton className="h-4 w-96 max-w-full" />
+        </div>
+        <Skeleton className="h-10 w-40 shrink-0" />
+      </div>
+
       <div className="mb-2 rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-          <div className="space-y-2 md:col-span-4">
-            <Skeleton className="h-4 w-24" />
+          <div className="md:col-span-4">
+            <Skeleton className="mb-2 h-5 w-24" />
             <Skeleton className="h-10 w-full" />
           </div>
-          <div className="space-y-2 md:col-span-3">
-            <Skeleton className="h-4 w-20" />
+          <div className="md:col-span-3">
+            <Skeleton className="mb-2 h-5 w-20" />
             <Skeleton className="h-10 w-full" />
           </div>
-          <div className="space-y-2 md:col-span-3">
-            <Skeleton className="h-4 w-16" />
+          <div className="md:col-span-3">
+            <Skeleton className="mb-2 h-5 w-16" />
             <Skeleton className="h-10 w-full" />
           </div>
-          <div className="space-y-2 md:col-span-2">
-            <Skeleton className="h-4 w-12" />
+          <div className="md:col-span-2">
+            <div className="mb-2 h-5" />
             <div className="flex gap-2">
               <Skeleton className="h-10 flex-1" />
               <Skeleton className="h-10 flex-1" />
@@ -45,7 +53,9 @@ export function TemplateListSkeleton() {
                 {TABLE_HEADERS.map((header) => (
                   <th
                     key={header}
-                    className="px-6 py-4 text-left text-xs font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300"
+                    className={`px-6 py-4 text-xs font-semibold tracking-wider text-gray-700 uppercase dark:text-gray-300 ${
+                      header === "Actions" ? "text-center" : "text-left"
+                    }`}
                   >
                     {header}
                   </th>
