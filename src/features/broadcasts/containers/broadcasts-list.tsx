@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
   BroadcastHeader,
+  BroadcastListSkeleton,
   SearchFilters,
   BroadcastTable,
   MetricsSection,
@@ -52,7 +52,6 @@ export function BroadcastsListContainer() {
   const [allBroadcasts, setAllBroadcasts] = useState<Broadcast[]>([]);
   const [metrics, setMetrics] = useState<MetricsData>(EMPTY_METRICS);
   const [quota, setQuota] = useState<MessageQuota | null>(null);
-  const [quotaLoading, setQuotaLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [broadcastToDelete, setBroadcastToDelete] = useState<Broadcast | null>(
@@ -65,33 +64,21 @@ export function BroadcastsListContainer() {
 
     const loadBroadcasts = async () => {
       setIsLoading(true);
-      setQuotaLoading(true);
       setError(null);
 
       try {
-        const [pageResult, quotaResult] = await Promise.allSettled([
+        const [pageData, nextQuota] = await Promise.all([
           loadBroadcastListPageData(),
-          fetchMessageQuota(),
+          fetchMessageQuota().catch(() => null),
         ]);
 
         if (isCancelled) {
           return;
         }
 
-        if (pageResult.status === "fulfilled") {
-          setAllBroadcasts(pageResult.value.broadcasts);
-          setMetrics(pageResult.value.metrics);
-        } else {
-          setError(
-            pageResult.reason instanceof Error
-              ? pageResult.reason.message
-              : "Failed to load broadcasts",
-          );
-        }
-
-        setQuota(
-          quotaResult.status === "fulfilled" ? quotaResult.value : null,
-        );
+        setAllBroadcasts(pageData.broadcasts);
+        setMetrics(pageData.metrics);
+        setQuota(nextQuota);
       } catch (err) {
         if (!isCancelled) {
           setError(
@@ -101,7 +88,6 @@ export function BroadcastsListContainer() {
       } finally {
         if (!isCancelled) {
           setIsLoading(false);
-          setQuotaLoading(false);
         }
       }
     };
@@ -265,9 +251,9 @@ export function BroadcastsListContainer() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16 text-gray-500">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        Loading broadcasts...
+      <div className="space-y-2" suppressHydrationWarning>
+        <Breadcrumbs items={breadcrumbItems} />
+        <BroadcastListSkeleton />
       </div>
     );
   }
@@ -288,7 +274,7 @@ export function BroadcastsListContainer() {
       <Breadcrumbs items={breadcrumbItems} />
       <BroadcastHeader />
 
-      <QuotaSection quota={quota} loading={quotaLoading} />
+      <QuotaSection quota={quota} />
 
       <SearchFilters filters={filters} onFilterChange={handleFilterChange} />
 

@@ -1,4 +1,5 @@
-import { CircleCheck, Gauge, Loader2, Send } from "lucide-react";
+import { CircleCheck, Gauge, Send } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { MetricCard } from "./metrics-section";
 import { MessageQuota } from "../types";
 
@@ -25,9 +26,24 @@ function formatCount(value: number | null, unlimited: boolean) {
 export function QuotaSection({ quota, loading = false }: QuotaSectionProps) {
   if (loading) {
     return (
-      <section className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-6 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        Loading message quota...
+      <section
+        className="grid grid-cols-1 gap-4 md:grid-cols-3"
+        aria-busy="true"
+        aria-live="polite"
+      >
+        {Array.from({ length: 3 }).map((_, index) => (
+          <div
+            key={index}
+            className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+          >
+            <div className="mb-3 flex items-start justify-between">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-5 w-5 rounded-md" />
+            </div>
+            <Skeleton className="mb-3 h-9 w-24" />
+            <Skeleton className="h-4 w-40" />
+          </div>
+        ))}
       </section>
     );
   }
