@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import { FormActionFooter } from "@/components/ui/form-footer";
 import { Input } from "@/components/ui/input";
@@ -15,6 +14,7 @@ import {
   updateAutoMessage,
 } from "@/features/auto-message/lib/api";
 import { KeywordTagInput } from "@/features/auto-message/components/keyword-tag-input";
+import { AutoMessageBuilderSkeleton } from "@/features/auto-message/components/auto-message-builder-skeleton";
 import {
   commitKeywordDraft,
   parseKeywords,
@@ -221,12 +221,7 @@ export function AutoMessageBuilderContainer({
   };
 
   if (isLoading || isLoadingOptions) {
-    return (
-      <div className="flex items-center justify-center py-16 text-gray-500">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        Loading auto message...
-      </div>
-    );
+    return <AutoMessageBuilderSkeleton />;
   }
 
   return (

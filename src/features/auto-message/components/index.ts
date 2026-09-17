@@ -3,3 +3,5 @@ export { AutoMessageFilters } from "./auto-message-filters";
 export { AutoMessageTable } from "./auto-message-table";
 export { AutoMessagePagination } from "./auto-message-pagination";
 export { KeywordTagInput } from "./keyword-tag-input";
+export { AutoMessageListSkeleton } from "./auto-message-list-skeleton";
+export { AutoMessageBuilderSkeleton } from "./auto-message-builder-skeleton";

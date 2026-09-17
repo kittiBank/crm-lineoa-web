@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
@@ -10,6 +9,7 @@ import {
   AutoMessageFilters,
   AutoMessageTable,
   AutoMessagePagination,
+  AutoMessageListSkeleton,
 } from "@/features/auto-message/components";
 import {
   deleteAutoMessage,
@@ -120,6 +120,15 @@ export function AutoMessageListContainer() {
     { label: "Auto Message", isActive: true },
   ];
 
+  if (isLoading) {
+    return (
+      <div className="space-y-2" suppressHydrationWarning>
+        <Breadcrumbs items={breadcrumbItems} />
+        <AutoMessageListSkeleton />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2" suppressHydrationWarning>
       <Breadcrumbs items={breadcrumbItems} />
@@ -134,12 +143,7 @@ export function AutoMessageListContainer() {
         onStatusChange={setSelectedStatus}
       />
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-16 text-gray-500">
-          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          Loading auto messages...
-        </div>
-      ) : error ? (
+      {error ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
           {error}
         </div>
