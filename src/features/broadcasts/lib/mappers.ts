@@ -52,6 +52,8 @@ export function mapBroadcastRecordToBroadcast(
       readRate: 0,
     },
     createdAt: new Date(record.createdAt),
+    scheduledFor: record.scheduledFor ? new Date(record.scheduledFor) : null,
+    sentAt: record.sentAt ? new Date(record.sentAt) : null,
   };
 }
 

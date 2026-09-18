@@ -1,4 +1,5 @@
 import { Broadcast, BroadcastStatus } from "../types";
+import { BROADCAST_STATUS_STYLES } from "../lib/status-styles";
 import { Edit2, Eye, Trash2 } from "lucide-react";
 
 interface BroadcastTableProps {
@@ -9,19 +10,9 @@ interface BroadcastTableProps {
 }
 
 function StatusBadge({ status }: { status: BroadcastStatus }) {
-  const statusStyles: Record<BroadcastStatus, string> = {
-    Sent: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400",
-    Scheduled:
-      "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400",
-    Draft: "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-400",
-    Failed: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400",
-    Processing:
-      "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
-  };
-
   return (
     <span
-      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${statusStyles[status]}`}
+      className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${BROADCAST_STATUS_STYLES[status]}`}
     >
       <span className="w-2 h-2 rounded-full bg-current mr-2" />
       {status}

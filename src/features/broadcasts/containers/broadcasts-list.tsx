@@ -9,6 +9,9 @@ import {
   BroadcastListSkeleton,
   SearchFilters,
   BroadcastTable,
+  BroadcastViewToggle,
+  BroadcastCalendar,
+  BroadcastSummarySheet,
   MetricsSection,
   QuotaSection,
   Pagination,
@@ -23,7 +26,13 @@ import {
   loadBroadcastListPageData,
 } from "@/features/broadcasts/lib/load-broadcast-list-data";
 import { filterBroadcasts } from "@/features/broadcasts/lib/mappers";
-import { Broadcast, FilterOptions, MessageQuota, MetricsData } from "@/features/broadcasts/types";
+import {
+  Broadcast,
+  BroadcastViewMode,
+  FilterOptions,
+  MessageQuota,
+  MetricsData,
+} from "@/features/broadcasts/types";
 import { useToast } from "@/lib/hooks/useToast";
 
 const EMPTY_METRICS: MetricsData = {
@@ -42,6 +51,7 @@ export function BroadcastsListContainer() {
   const router = useRouter();
   const toast = useToast();
 
+  const [viewMode, setViewMode] = useState<BroadcastViewMode>("list");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [filters, setFilters] = useState<FilterOptions>({
@@ -58,6 +68,9 @@ export function BroadcastsListContainer() {
     null,
   );
   const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedBroadcast, setSelectedBroadcast] = useState<Broadcast | null>(
+    null,
+  );
 
   useEffect(() => {
     let isCancelled = false;
@@ -209,6 +222,11 @@ export function BroadcastsListContainer() {
     router.push(`/broadcasts/${id}/view`);
   };
 
+  const handleViewFromSummary = (id: string) => {
+    setSelectedBroadcast(null);
+    handleView(id);
+  };
+
   const handleDeleteClick = (id: string) => {
     const broadcast = allBroadcasts.find((item) => item.id === id);
     if (
@@ -278,26 +296,37 @@ export function BroadcastsListContainer() {
 
       <SearchFilters filters={filters} onFilterChange={handleFilterChange} />
 
-      <div className="mt-6">
-        <BroadcastTable
-          broadcasts={paginatedBroadcasts}
-          onEdit={handleEdit}
-          onView={handleView}
-          onDelete={handleDeleteClick}
-        />
-      </div>
+      <BroadcastViewToggle value={viewMode} onValueChange={setViewMode} />
 
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalItems={filteredBroadcasts.length}
-        itemsPerPage={itemsPerPage}
-        onPageChange={handlePageChange}
-        onItemsPerPageChange={(newItemsPerPage) => {
-          setItemsPerPage(newItemsPerPage);
-          setCurrentPage(1);
-        }}
-      />
+      {viewMode === "list" ? (
+        <>
+          <div className="mt-6">
+            <BroadcastTable
+              broadcasts={paginatedBroadcasts}
+              onEdit={handleEdit}
+              onView={handleView}
+              onDelete={handleDeleteClick}
+            />
+          </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredBroadcasts.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={(newItemsPerPage) => {
+              setItemsPerPage(newItemsPerPage);
+              setCurrentPage(1);
+            }}
+          />
+        </>
+      ) : (
+        <BroadcastCalendar
+          broadcasts={filteredBroadcasts}
+          onSelectBroadcast={setSelectedBroadcast}
+        />
+      )}
 
       <MetricsSection
         totalSent={metrics.totalSent}
@@ -331,6 +360,16 @@ export function BroadcastsListContainer() {
         isLoading={isDeleting}
         onConfirm={handleConfirmDelete}
         showCloseButton={!isDeleting}
+      />
+
+      <BroadcastSummarySheet
+        broadcast={selectedBroadcast}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedBroadcast(null);
+          }
+        }}
+        onView={handleViewFromSummary}
       />
     </div>
   );
