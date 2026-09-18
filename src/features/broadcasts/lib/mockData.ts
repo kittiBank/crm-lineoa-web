@@ -15,22 +15,28 @@ export function generateMockBroadcasts(count: number = 10): Broadcast[] {
     "Special_Offer_01",
   ];
 
-  return Array.from({ length: count }, () => ({
-    id: faker.string.uuid(),
-    campaignName: faker.commerce.productName(),
-    targetAudience: `${faker.person.jobTitle()} Customers`,
-    audienceCount: faker.number.int({ min: 100, max: 50000 }),
-    template: {
+  return Array.from({ length: count }, () => {
+    const status = statuses[Math.floor(Math.random() * statuses.length)];
+
+    return {
       id: faker.string.uuid(),
-      name: templates[Math.floor(Math.random() * templates.length)],
-    },
-    status: statuses[Math.floor(Math.random() * statuses.length)],
-    performance: {
-      delivered: faker.number.int({ min: 50, max: 100 }),
-      readRate: faker.number.int({ min: 10, max: 100 }),
-    },
-    createdAt: faker.date.past({ years: 2 }),
-  }));
+      campaignName: faker.commerce.productName(),
+      targetAudience: `${faker.person.jobTitle()} Customers`,
+      audienceCount: faker.number.int({ min: 100, max: 50000 }),
+      template: {
+        id: faker.string.uuid(),
+        name: templates[Math.floor(Math.random() * templates.length)],
+      },
+      status,
+      performance: {
+        delivered: faker.number.int({ min: 50, max: 100 }),
+        readRate: faker.number.int({ min: 10, max: 100 }),
+      },
+      createdAt: faker.date.past({ years: 2 }),
+      scheduledFor: status === "Scheduled" ? faker.date.soon({ days: 14 }) : null,
+      sentAt: status === "Sent" ? faker.date.recent({ days: 30 }) : null,
+    };
+  });
 }
 
 /**

@@ -13,6 +13,8 @@ export type BroadcastAudienceType = "all" | "active" | "new";
 
 export type BroadcastSendMode = "now" | "schedule" | "draft";
 
+export type BroadcastViewMode = "list" | "calendar";
+
 export interface Broadcast {
   id: string;
   campaignName: string;
@@ -28,6 +30,8 @@ export interface Broadcast {
     readRate: number;
   };
   createdAt: Date;
+  scheduledFor: Date | null;
+  sentAt: Date | null;
 }
 
 export interface BroadcastRecord {
