@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/lib/hooks/useToast";
 import {
   AreaEditor,
+  ImageCropDialog,
   LayoutPicker,
   RichMenuCanvas,
 } from "@/features/rich-menu/components";
@@ -38,6 +39,10 @@ import {
 
 const inputClassName =
   "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white";
+
+// Sanity ceiling on the raw upload before cropping — the exported crop is
+// what actually needs to fit LINE's 1 MB rich menu image limit.
+const MAX_SOURCE_IMAGE_BYTES = 20 * 1024 * 1024;
 
 interface RichMenuBuilderContainerProps {
   menuId?: string;
@@ -89,6 +94,8 @@ export function RichMenuBuilderContainer({
   const [selectedAreaIndex, setSelectedAreaIndex] = useState(0);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [sourceUrl, setSourceUrl] = useState<string | null>(null);
+  const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingMenu, setIsLoadingMenu] = useState(Boolean(menuId));
 
@@ -173,6 +180,10 @@ export function RichMenuBuilderContainer({
   ];
 
   const handleLayoutChange = (nextLayoutId: string) => {
+    const nextLayout = getLayoutById(nextLayoutId);
+    const currentAspect = layout.size.width / layout.size.height;
+    const nextAspect = nextLayout.size.width / nextLayout.size.height;
+
     setLayoutId(nextLayoutId);
 
     if (nextLayoutId === "custom") {
@@ -188,6 +199,13 @@ export function RichMenuBuilderContainer({
     }
 
     setSelectedAreaIndex(0);
+
+    // The aspect ratio changed after an image was already cropped — reopen
+    // the cropper on the original source so the image can be refit instead
+    // of forcing a full re-upload.
+    if (sourceUrl && Math.abs(currentAspect - nextAspect) > 0.001) {
+      setIsCropDialogOpen(true);
+    }
   };
 
   const handleGridPresetChange = (nextPresetId: string) => {
@@ -198,6 +216,7 @@ export function RichMenuBuilderContainer({
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    event.target.value = "";
     if (!file) {
       return;
     }
@@ -207,13 +226,31 @@ export function RichMenuBuilderContainer({
       return;
     }
 
-    if (file.size > 1024 * 1024) {
-      toast.error("Image must be 1 MB or smaller");
+    if (file.size > MAX_SOURCE_IMAGE_BYTES) {
+      toast.error("Image must be 20 MB or smaller");
       return;
+    }
+
+    if (sourceUrl) {
+      URL.revokeObjectURL(sourceUrl);
+    }
+
+    setSourceUrl(URL.createObjectURL(file));
+    setIsCropDialogOpen(true);
+  };
+
+  const handleCropApply = (file: File) => {
+    if (imagePreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(imagePreview);
     }
 
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
+    setIsCropDialogOpen(false);
+  };
+
+  const handleCropCancel = () => {
+    setIsCropDialogOpen(false);
   };
 
   const updateArea = (index: number, nextArea: RichMenuAreaConfig) => {
@@ -507,8 +544,8 @@ export function RichMenuBuilderContainer({
                       Upload rich menu image
                     </p>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      PNG or JPEG, max 1 MB. Recommended {layout.size.width}×
-                      {layout.size.height}px
+                      PNG or JPEG. You&apos;ll crop it to exactly{" "}
+                      {layout.size.width}×{layout.size.height}px for LINE.
                     </p>
                   </>
                 )}
@@ -605,6 +642,15 @@ export function RichMenuBuilderContainer({
         createSaveLabel="Create Rich Menu"
         editSaveLabel="Save Changes"
         savingLabel={isEditMode ? "Saving..." : "Creating..."}
+      />
+
+      <ImageCropDialog
+        open={isCropDialogOpen}
+        imageSrc={sourceUrl}
+        targetSize={layout.size}
+        fileBaseName={name.trim() ? name.trim().toLowerCase().replace(/\s+/g, "-") : "rich-menu"}
+        onCancel={handleCropCancel}
+        onApply={handleCropApply}
       />
     </div>
   );
