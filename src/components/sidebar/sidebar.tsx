@@ -22,6 +22,7 @@ import {
   Menu,
   Settings,
   User,
+  Store,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -38,6 +39,7 @@ const iconMap: Record<string, React.ReactNode> = {
   Menu: <Menu className="h-[18px] w-[18px]" />,
   Settings: <Settings className="h-[18px] w-[18px]" />,
   User: <User className="h-[18px] w-[18px]" />,
+  Store: <Store className="h-[18px] w-[18px]" />,
 };
 
 function itemClassName(active: boolean, collapsed: boolean) {

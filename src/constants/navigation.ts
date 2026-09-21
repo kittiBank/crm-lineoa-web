@@ -72,6 +72,23 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: "Menu",
   },
   {
+    id: "liff-management",
+    label: "LIFF Management",
+    icon: "Store",
+    children: [
+      {
+        id: "products",
+        label: "Products",
+        href: "/products",
+      },
+      {
+        id: "orders",
+        label: "Orders",
+        href: "/orders",
+      },
+    ],
+  },
+  {
     id: "settings",
     label: "LINE OA Settings",
     href: "/settings",
@@ -143,6 +160,11 @@ export const BREADCRUMB_MAP: Record<string, string[]> = {
   "/rich-menu": ["Rich Menu"],
   "/rich-menu/create": ["Rich Menu", "Create"],
   "/rich-menu/[id]/edit": ["Rich Menu", "Edit"],
+  "/products": ["Products"],
+  "/products/create": ["Products", "Create"],
+  "/products/[id]/edit": ["Products", "Edit"],
+  "/orders": ["Orders"],
+  "/orders/[id]": ["Orders", "Detail"],
   "/settings": ["LINE OA Settings"],
   "/user-settings": ["User Settings"],
 };
