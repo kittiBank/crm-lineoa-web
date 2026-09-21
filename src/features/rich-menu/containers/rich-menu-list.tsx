@@ -5,7 +5,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
-import { RichMenuCard, RichMenuHeader, SearchFilters, DeleteRichMenuDialog } from "@/features/rich-menu/components";
+import {
+  RichMenuCard,
+  RichMenuHeader,
+  SearchFilters,
+  DeleteRichMenuDialog,
+  LiffShopLinkCard,
+} from "@/features/rich-menu/components";
 import {
   applyMemberRichMenu,
   deleteRichMenu,
@@ -137,6 +143,8 @@ export function RichMenuListContainer() {
       <Breadcrumbs items={breadcrumbItems} />
 
       <RichMenuHeader />
+
+      <LiffShopLinkCard />
 
       <SearchFilters filters={filters} onFilterChange={setFilters} />
 

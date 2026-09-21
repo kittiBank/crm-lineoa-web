@@ -6,3 +6,4 @@ export { RichMenuCard } from "./rich-menu-card";
 export { RichMenuHeader } from "./rich-menu-header";
 export { DeleteRichMenuDialog } from "./delete-rich-menu-dialog";
 export { ImageCropDialog } from "./image-crop-dialog";
+export { LiffShopLinkCard } from "./liff-shop-link-card";

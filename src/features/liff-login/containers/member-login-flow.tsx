@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
+import { consumePendingCheckoutRedirect } from "@/features/liff-shop/lib/checkout-redirect";
 import { PhoneStep } from "../components/phone-step";
 import { OtpStep } from "../components/otp-step";
 import { SuccessStep } from "../components/success-step";
@@ -18,6 +20,7 @@ function isValidPhone(value: string): boolean {
 }
 
 export function MemberLoginFlow() {
+  const router = useRouter();
   const [bootstrapping, setBootstrapping] = useState(true);
   const [session, setSession] = useState<LiffSession | null>(null);
   const [bootstrapError, setBootstrapError] = useState<string>();
@@ -162,6 +165,13 @@ export function MemberLoginFlow() {
         phone: normalizePhone(phone),
         otp,
       });
+
+      const resumePath = consumePendingCheckoutRedirect();
+      if (resumePath) {
+        router.push(resumePath);
+        return;
+      }
+
       setRichMenuLinked(result.richMenuLinked);
       setVerifiedPhone(result.phone || phone);
       setStep("success");
@@ -170,7 +180,7 @@ export function MemberLoginFlow() {
     } finally {
       setLoading(false);
     }
-  }, [otp, phone, session]);
+  }, [otp, phone, session, router]);
 
   const subtitle = useMemo(() => {
     if (!session) {

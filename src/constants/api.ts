@@ -55,5 +55,28 @@ export const API_ENDPOINTS = {
   MEMBER_LOGIN: {
     REQUEST_OTP: `${API_BASE_URL}/api/v1/member-login/otp/request`,
     VERIFY_OTP: `${API_BASE_URL}/api/v1/member-login/otp/verify`,
+    STATUS: (lineUserId: string) =>
+      `${API_BASE_URL}/api/v1/member-login/status?lineUserId=${encodeURIComponent(lineUserId)}`,
+  },
+  PRODUCTS: {
+    LIST: `${API_BASE_URL}/api/v1/products`,
+    ADMIN_LIST: `${API_BASE_URL}/api/v1/products/admin`,
+    ADMIN_DETAIL: (id: string) => `${API_BASE_URL}/api/v1/products/admin/${id}`,
+    CREATE: `${API_BASE_URL}/api/v1/products`,
+    MEDIA: `${API_BASE_URL}/api/v1/products/media`,
+    DETAIL: (id: string) => `${API_BASE_URL}/api/v1/products/${id}`,
+  },
+  ORDERS: {
+    CREATE: `${API_BASE_URL}/api/v1/orders`,
+    CONFIRM_PAYMENT: (id: string) =>
+      `${API_BASE_URL}/api/v1/orders/${id}/confirm-payment`,
+    HISTORY: (lineUserId: string) =>
+      `${API_BASE_URL}/api/v1/orders?lineUserId=${encodeURIComponent(lineUserId)}`,
+    DETAIL: (id: string, lineUserId: string) =>
+      `${API_BASE_URL}/api/v1/orders/${id}?lineUserId=${encodeURIComponent(lineUserId)}`,
+    ADMIN_LIST: `${API_BASE_URL}/api/v1/orders/admin`,
+    ADMIN_DETAIL: (id: string) => `${API_BASE_URL}/api/v1/orders/admin/${id}`,
+    ADMIN_UPDATE_STATUS: (id: string) =>
+      `${API_BASE_URL}/api/v1/orders/admin/${id}/status`,
   },
 } as const;
