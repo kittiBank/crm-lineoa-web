@@ -6,7 +6,8 @@ export type MessageTemplateType =
   | "video"
   | "flex"
   | "carousel"
-  | "multi";
+  | "multi"
+  | "imagemap";
 
 /**
  * Message Template types

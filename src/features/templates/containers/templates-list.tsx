@@ -70,18 +70,27 @@ export function TemplatesListContainer() {
     };
   }, []);
 
+  // Rich messages are MessageTemplate rows under the hood but get their own
+  // list/builder UI at /rich-message — keep them out of this generic list.
+  const nonRichMessageTemplates = useMemo(
+    () => templates.filter((item) => item.type !== "imagemap"),
+    [templates],
+  );
+
   const categories = useMemo(() => {
-    const unique = Array.from(new Set(templates.map((item) => item.category)));
+    const unique = Array.from(
+      new Set(nonRichMessageTemplates.map((item) => item.category)),
+    );
     return ["All", ...unique.sort()];
-  }, [templates]);
+  }, [nonRichMessageTemplates]);
 
   const filteredTemplates = useMemo(() => {
-    let result = [...templates];
+    let result = [...nonRichMessageTemplates];
     result = searchTemplates(result, searchQuery);
     result = filterTemplatesByCategory(result, selectedCategory);
     result = filterTemplatesByStatus(result, selectedStatus);
     return result;
-  }, [templates, searchQuery, selectedCategory, selectedStatus]);
+  }, [nonRichMessageTemplates, searchQuery, selectedCategory, selectedStatus]);
 
   const totalPages = Math.ceil(filteredTemplates.length / itemsPerPage);
 

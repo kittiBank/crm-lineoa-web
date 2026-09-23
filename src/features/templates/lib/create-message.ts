@@ -3,6 +3,7 @@ import {
   CarouselMessageBlock,
   FlexMessageBlock,
   ImageMessageBlock,
+  ImagemapMessageBlock,
   TemplateMessageBlock,
   TemplateMessageType,
   TextMessageBlock,
@@ -285,6 +286,14 @@ export function normalizeTemplateMessages(
           contents: savedContents,
           contentsJson: formatFlexContents(savedContents),
         } satisfies FlexMessageBlock;
+      }
+
+      if (message.type === "imagemap") {
+        return {
+          ...message,
+          id,
+          areas: Array.isArray(message.areas) ? message.areas : [],
+        } satisfies ImagemapMessageBlock;
       }
 
       return {

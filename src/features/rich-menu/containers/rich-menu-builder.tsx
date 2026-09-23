@@ -15,6 +15,7 @@ import {
   LayoutPicker,
   RichMenuCanvas,
 } from "@/features/rich-menu/components";
+import { errorInputClassName, FieldError } from "@/features/rich-menu/components/form-field";
 import {
   createRichMenu,
   deleteRichMenu,
@@ -30,6 +31,10 @@ import {
   normalizeAreasWithBounds,
   RICH_MENU_LAYOUTS,
 } from "@/features/rich-menu/lib/layouts";
+import {
+  computeAreaErrors,
+  computeBasicInfoErrors,
+} from "@/features/rich-menu/lib/validate";
 import {
   MENU_TYPE_OPTIONS,
   RichMenuAreaConfig,
@@ -98,6 +103,7 @@ export function RichMenuBuilderContainer({
   const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingMenu, setIsLoadingMenu] = useState(Boolean(menuId));
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   const layout = useMemo(() => getLayoutById(layoutId), [layoutId]);
   const gridPresets = useMemo(
@@ -108,6 +114,11 @@ export function RichMenuBuilderContainer({
   const [areas, setAreas] = useState<RichMenuAreaConfig[]>(() =>
     createInitialAreas("big", DEFAULT_GRID_PRESET_BY_SIZE.big),
   );
+
+  const fieldErrors = hasAttemptedSubmit
+    ? computeBasicInfoErrors(name, chatBarText, Boolean(imageFile || imagePreview))
+    : {};
+  const areaErrorsMap = hasAttemptedSubmit ? computeAreaErrors(areas) : {};
 
   useEffect(() => {
     if (!menuId) {
@@ -262,25 +273,7 @@ export function RichMenuBuilderContainer({
   };
 
   const validateForm = () => {
-    if (!name.trim()) {
-      toast.error("Menu name is required");
-      return false;
-    }
-
-    if (!chatBarText.trim()) {
-      toast.error("Chat bar text is required");
-      return false;
-    }
-
-    if (chatBarText.length > 14) {
-      toast.error("Chat bar text must be 14 characters or less");
-      return false;
-    }
-
-    if (!imageFile && !imagePreview) {
-      toast.error("Please upload a rich menu image");
-      return false;
-    }
+    setHasAttemptedSubmit(true);
 
     if (areas.length === 0) {
       toast.error("Draw at least one tap area on the preview");
@@ -292,22 +285,20 @@ export function RichMenuBuilderContainer({
       return false;
     }
 
+    const basicErrors = computeBasicInfoErrors(
+      name,
+      chatBarText,
+      Boolean(imageFile || imagePreview),
+    );
+    const areaErrors = computeAreaErrors(areas);
+
+    if (Object.keys(basicErrors).length > 0 || Object.keys(areaErrors).length > 0) {
+      toast.error("Please fix the highlighted fields");
+      return false;
+    }
+
     for (const [index, area] of areas.entries()) {
-      if (!area.label.trim()) {
-        toast.error(`Label is required for area ${index + 1}`);
-        return false;
-      }
-
-      if (area.actionType === "uri" && !area.uri?.trim()) {
-        toast.error(`URL is required for area ${index + 1}`);
-        return false;
-      }
-
-      if (
-        !area.bounds ||
-        area.bounds.width < 1 ||
-        area.bounds.height < 1
-      ) {
+      if (!area.bounds || area.bounds.width < 1 || area.bounds.height < 1) {
         toast.error(`Invalid bounds for area ${index + 1}`);
         return false;
       }
@@ -416,9 +407,15 @@ export function RichMenuBuilderContainer({
                 <Input
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  className={inputClassName}
+                  className={
+                    fieldErrors.name
+                      ? `${inputClassName} ${errorInputClassName}`
+                      : inputClassName
+                  }
                   readOnly={isViewMode}
+                  aria-invalid={Boolean(fieldErrors.name)}
                 />
+                <FieldError message={fieldErrors.name} />
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -428,9 +425,15 @@ export function RichMenuBuilderContainer({
                   value={chatBarText}
                   maxLength={14}
                   onChange={(event) => setChatBarText(event.target.value)}
-                  className={inputClassName}
+                  className={
+                    fieldErrors.chatBarText
+                      ? `${inputClassName} ${errorInputClassName}`
+                      : inputClassName
+                  }
                   readOnly={isViewMode}
+                  aria-invalid={Boolean(fieldErrors.chatBarText)}
                 />
+                <FieldError message={fieldErrors.chatBarText} />
               </div>
             </div>
 
@@ -523,7 +526,13 @@ export function RichMenuBuilderContainer({
                 )}
               </div>
             ) : (
-              <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 px-6 py-10 text-center transition-colors hover:border-blue-400 hover:bg-blue-50/40 dark:border-gray-600 dark:hover:border-blue-500 dark:hover:bg-blue-950/20">
+              <label
+                className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors hover:border-blue-400 hover:bg-blue-50/40 dark:hover:border-blue-500 dark:hover:bg-blue-950/20 ${
+                  fieldErrors.image
+                    ? "border-red-500 dark:border-red-500"
+                    : "border-gray-300 dark:border-gray-600"
+                }`}
+              >
                 {imagePreview ? (
                   <div className="space-y-3">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -561,6 +570,7 @@ export function RichMenuBuilderContainer({
                 </span>
               </label>
             )}
+            <FieldError message={fieldErrors.image} />
           </section>
 
           <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
@@ -592,6 +602,7 @@ export function RichMenuBuilderContainer({
                   updateArea(selectedAreaIndex, nextArea)
                 }
                 readOnly={isViewMode}
+                error={areaErrorsMap[selectedAreaIndex]}
               />
             ) : (
               <p className="rounded-lg border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
@@ -601,20 +612,27 @@ export function RichMenuBuilderContainer({
 
             {areas.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
-                {areas.map((area, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => setSelectedAreaIndex(index)}
-                    className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                      selectedAreaIndex === index
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200"
-                    }`}
-                  >
-                    {index + 1}. {area.label}
-                  </button>
-                ))}
+                {areas.map((area, index) => {
+                  const hasError = Boolean(areaErrorsMap[index]);
+
+                  return (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setSelectedAreaIndex(index)}
+                      className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                        selectedAreaIndex === index
+                          ? "bg-blue-600 text-white"
+                          : hasError
+                            ? "bg-red-50 text-red-600 ring-1 ring-inset ring-red-500 dark:bg-red-950/30 dark:text-red-400"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200"
+                      }`}
+                    >
+                      {index + 1}. {area.label}
+                      {hasError && selectedAreaIndex !== index ? " ⚠" : ""}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </section>
