@@ -105,6 +105,28 @@ function PreviewBubble({ message }: { message: TemplateMessageBlock }) {
           altText={applyMergeTags(message.altText)}
         />
       );
+    case "imagemap":
+      return (
+        <div className="max-w-[85%] overflow-hidden rounded-2xl rounded-tl-md bg-white shadow-sm">
+          {message.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={message.imageUrl}
+              alt="Rich message preview"
+              referrerPolicy="no-referrer"
+              className="max-h-56 w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-40 items-center justify-center bg-gray-100 text-sm text-gray-400">
+              Rich message preview
+            </div>
+          )}
+          <p className="px-3 py-2 text-[11px] text-gray-500">
+            {message.areas.length} tap{" "}
+            {message.areas.length === 1 ? "area" : "areas"} (not shown here)
+          </p>
+        </div>
+      );
     case "carousel":
       return (
         <div className="max-w-full">

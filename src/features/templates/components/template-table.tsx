@@ -25,12 +25,15 @@ function TypeBadge({ type }: { type: MessageTemplateType }) {
     carousel:
       "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400",
     multi: "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
+    imagemap: "bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400",
   };
 
   const label =
     type === "multi"
       ? "Multi"
-      : type.charAt(0).toUpperCase() + type.slice(1);
+      : type === "imagemap"
+        ? "Rich Message"
+        : type.charAt(0).toUpperCase() + type.slice(1);
 
   return (
     <span

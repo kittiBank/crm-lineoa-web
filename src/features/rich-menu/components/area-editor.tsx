@@ -7,12 +7,14 @@ import {
   RichMenuActionType,
   RichMenuAreaConfig,
 } from "../types";
+import { errorInputClassName, FieldError } from "./form-field";
 
 interface AreaEditorProps {
   areaIndex: number;
   area: RichMenuAreaConfig;
   onChange: (area: RichMenuAreaConfig) => void;
   readOnly?: boolean;
+  error?: { label?: string; uri?: string };
 }
 
 const inputClassName =
@@ -26,6 +28,7 @@ export function AreaEditor({
   area,
   onChange,
   readOnly = false,
+  error,
 }: AreaEditorProps) {
   const actionMeta = ACTION_TYPE_OPTIONS.find(
     (item) => item.value === area.actionType,
@@ -66,8 +69,14 @@ export function AreaEditor({
             onChange({ ...area, label: event.target.value })
           }
           placeholder="e.g. Register"
-          className={inputClassName}
+          className={
+            error?.label
+              ? `${inputClassName} ${errorInputClassName}`
+              : inputClassName
+          }
+          aria-invalid={Boolean(error?.label)}
         />
+        <FieldError message={error?.label} />
       </div>
 
       <div>
@@ -133,7 +142,7 @@ export function AreaEditor({
       {area.actionType === "uri" && (
         <div>
           <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-            URL
+            URL *
           </label>
           <Input
             value={area.uri || ""}
@@ -141,8 +150,19 @@ export function AreaEditor({
               onChange({ ...area, uri: event.target.value })
             }
             placeholder="https://example.com"
-            className={inputClassName}
+            className={
+              error?.uri
+                ? `${inputClassName} ${errorInputClassName}`
+                : inputClassName
+            }
+            aria-invalid={Boolean(error?.uri)}
           />
+          <FieldError message={error?.uri} />
+          {!error?.uri && (
+            <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              Must be a valid link starting with https://
+            </p>
+          )}
         </div>
       )}
 

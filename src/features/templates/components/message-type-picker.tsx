@@ -17,6 +17,9 @@ const iconMap = {
   video: Video,
   flex: LayoutTemplate,
   carousel: PanelsTopLeft,
+  // Rich messages are built via the dedicated /rich-message canvas, never
+  // added as a block here — kept only so this map stays exhaustive.
+  imagemap: Image,
 };
 
 interface MessageTypePickerProps {

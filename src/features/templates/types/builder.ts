@@ -3,7 +3,8 @@ export type TemplateMessageType =
   | "image"
   | "video"
   | "flex"
-  | "carousel";
+  | "carousel"
+  | "imagemap";
 
 export interface TemplateMessageBase {
   id: string;
@@ -63,12 +64,30 @@ export interface CarouselMessageBlock extends TemplateMessageBase {
   columns: CarouselColumnBlock[];
 }
 
+export interface ImagemapAreaBlock {
+  actionType: "message" | "uri";
+  text?: string;
+  uri?: string;
+  bounds: { x: number; y: number; width: number; height: number };
+}
+
+/** Rich Message — built and edited via the dedicated /rich-message canvas, not the generic block editor. */
+export interface ImagemapMessageBlock extends TemplateMessageBase {
+  type: "imagemap";
+  imageUrl: string;
+  altText: string;
+  baseUrl?: string;
+  baseSize: { width: number; height: number };
+  areas: ImagemapAreaBlock[];
+}
+
 export type TemplateMessageBlock =
   | TextMessageBlock
   | ImageMessageBlock
   | VideoMessageBlock
   | FlexMessageBlock
-  | CarouselMessageBlock;
+  | CarouselMessageBlock
+  | ImagemapMessageBlock;
 
 export interface TemplateBuilderForm {
   name: string;
