@@ -28,10 +28,18 @@ import {
   toDatetimeLocalValue,
 } from "@/features/broadcasts/lib/broadcast-form";
 import { clearBroadcastListDataCache } from "@/features/broadcasts/lib/load-broadcast-list-data";
+import { computeBroadcastFormErrors } from "@/features/broadcasts/lib/validate";
+import {
+  errorInputClassName,
+  FieldError,
+  RequiredMark,
+} from "@/features/broadcasts/components/form-field";
 import {
   BroadcastAudienceOption,
   BroadcastAudienceType,
+  BroadcastContentType,
   BroadcastSendMode,
+  CONTENT_TYPE_OPTIONS,
   SEND_MODE_OPTIONS,
 } from "@/features/broadcasts/types";
 
@@ -58,11 +66,15 @@ export function BroadcastBuilderContainer({
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [contentType, setContentType] =
+    useState<BroadcastContentType>("template");
+  const [hasInitContentType, setHasInitContentType] = useState(false);
   const [templateId, setTemplateId] = useState("");
   const [audienceType, setAudienceType] =
     useState<BroadcastAudienceType>("all");
   const [sendMode, setSendMode] = useState<BroadcastSendMode>("now");
   const [scheduledFor, setScheduledFor] = useState("");
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [audiences, setAudiences] = useState<BroadcastAudienceOption[]>([]);
@@ -87,6 +99,30 @@ export function BroadcastBuilderContainer({
     () => audiences.find((item) => item.value === audienceType) ?? null,
     [audiences, audienceType],
   );
+
+  const filteredTemplates = useMemo(
+    () =>
+      templates.filter((template) =>
+        contentType === "richMessage"
+          ? template.type === "imagemap"
+          : template.type !== "imagemap",
+      ),
+    [templates, contentType],
+  );
+
+  const contentTypeLabel =
+    CONTENT_TYPE_OPTIONS.find((option) => option.value === contentType)
+      ?.label ?? "message template";
+
+  const fieldErrors = hasAttemptedSubmit
+    ? computeBroadcastFormErrors({
+        title,
+        templateId,
+        sendMode,
+        scheduledFor,
+        contentTypeLabel,
+      })
+    : {};
 
   const pageTitle = isViewMode
     ? "View Broadcast"
@@ -143,8 +179,13 @@ export function BroadcastBuilderContainer({
         setTemplates(activeTemplates);
         setAudiences(audienceList);
 
-        if (!broadcastId && activeTemplates.length > 0) {
-          setTemplateId(activeTemplates[0].id);
+        if (!broadcastId) {
+          const defaultContentTemplates = activeTemplates.filter(
+            (template) => template.type !== "imagemap",
+          );
+          if (defaultContentTemplates.length > 0) {
+            setTemplateId(defaultContentTemplates[0].id);
+          }
         }
       } catch (error) {
         if (!isCancelled) {
@@ -217,6 +258,32 @@ export function BroadcastBuilderContainer({
   }, [broadcastId, isEditMode]);
 
   useEffect(() => {
+    if (!broadcastId || hasInitContentType) {
+      return;
+    }
+
+    if (!templateId || templates.length === 0) {
+      return;
+    }
+
+    const match = templates.find((template) => template.id === templateId);
+    if (match) {
+      setContentType(match.type === "imagemap" ? "richMessage" : "template");
+      setHasInitContentType(true);
+    }
+  }, [broadcastId, templateId, templates, hasInitContentType]);
+
+  const handleContentTypeChange = (next: BroadcastContentType) => {
+    setContentType(next);
+    const nextList = templates.filter((template) =>
+      next === "richMessage"
+        ? template.type === "imagemap"
+        : template.type !== "imagemap",
+    );
+    setTemplateId(nextList[0]?.id ?? "");
+  };
+
+  useEffect(() => {
     if (!templateId) {
       return;
     }
@@ -271,26 +338,19 @@ export function BroadcastBuilderContainer({
   ];
 
   const validateForm = () => {
-    if (!title.trim()) {
-      toast.error("Broadcast title is required");
+    setHasAttemptedSubmit(true);
+
+    const errors = computeBroadcastFormErrors({
+      title,
+      templateId,
+      sendMode,
+      scheduledFor,
+      contentTypeLabel,
+    });
+
+    if (Object.keys(errors).length > 0) {
+      toast.error("Please fix the highlighted fields");
       return false;
-    }
-
-    if (!templateId) {
-      toast.error("Please select a message template");
-      return false;
-    }
-
-    if (sendMode === "schedule") {
-      if (!scheduledFor) {
-        toast.error("Please choose a schedule date and time");
-        return false;
-      }
-
-      if (new Date(scheduledFor).getTime() <= Date.now()) {
-        toast.error("Schedule time must be in the future");
-        return false;
-      }
     }
 
     if (previewMessagesToShow.length === 0) {
@@ -401,16 +461,22 @@ export function BroadcastBuilderContainer({
             <div className="grid gap-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Broadcast title *
+                  Broadcast title <RequiredMark />
                 </label>
                 <Input
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
-                  className={fieldClassName}
+                  className={
+                    fieldErrors.title
+                      ? `${fieldClassName} ${errorInputClassName}`
+                      : fieldClassName
+                  }
                   placeholder="Summer sale announcement"
                   readOnly={isReadOnly}
                   disabled={isReadOnly}
+                  aria-invalid={Boolean(fieldErrors.title)}
                 />
+                <FieldError message={fieldErrors.title} />
               </div>
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -431,32 +497,86 @@ export function BroadcastBuilderContainer({
 
           <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-              Message template *
+              Content <RequiredMark />
             </h2>
             <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              Choose a template to send in this broadcast
+              Choose what to send in this broadcast
             </p>
-            {templates.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
-                No active templates found. Create a template first.
-              </div>
-            ) : (
-              <select
-                value={templateId}
-                onChange={(event) => setTemplateId(event.target.value)}
-                className={fieldClassName}
-                disabled={isReadOnly}
-              >
-                {templates.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {template.name} ({template.category})
-                  </option>
-                ))}
-              </select>
-            )}
+
+            <div className="grid gap-3 md:grid-cols-2">
+              {CONTENT_TYPE_OPTIONS.map((option) => (
+                <label
+                  key={option.value}
+                  className={`flex gap-3 rounded-lg border p-4 transition-colors ${
+                    isReadOnly ? "cursor-default" : "cursor-pointer"
+                  } ${
+                    contentType === option.value
+                      ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
+                      : "border-gray-200 dark:border-gray-700"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="contentType"
+                    value={option.value}
+                    checked={contentType === option.value}
+                    onChange={() => handleContentTypeChange(option.value)}
+                    className="mt-1"
+                    disabled={isReadOnly}
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-gray-900 dark:text-white">
+                      {option.label}
+                    </span>
+                    <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+                      {option.description}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            <div className="mt-4">
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {contentTypeLabel} <RequiredMark />
+              </label>
+              {filteredTemplates.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
+                  {contentType === "richMessage"
+                    ? "No active rich messages found. Create one first."
+                    : "No active message templates found. Create one first."}
+                </div>
+              ) : (
+                <>
+                  <select
+                    value={templateId}
+                    onChange={(event) => setTemplateId(event.target.value)}
+                    className={
+                      fieldErrors.templateId
+                        ? `${fieldClassName} ${errorInputClassName}`
+                        : fieldClassName
+                    }
+                    disabled={isReadOnly}
+                    aria-invalid={Boolean(fieldErrors.templateId)}
+                  >
+                    {filteredTemplates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name} ({template.category})
+                      </option>
+                    ))}
+                  </select>
+                  <FieldError message={fieldErrors.templateId} />
+                </>
+              )}
+            </div>
+
             {selectedTemplate && (
               <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <Badge variant="secondary">{selectedTemplate.type}</Badge>
+                <Badge variant="secondary">
+                  {selectedTemplate.type === "imagemap"
+                    ? "Rich Message"
+                    : selectedTemplate.type}
+                </Badge>
                 <span>{selectedTemplate.messages.length} message block(s)</span>
               </div>
             )}
@@ -464,7 +584,7 @@ export function BroadcastBuilderContainer({
 
           <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-              Audience *
+              Audience <RequiredMark />
             </h2>
             <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
               Select who should receive this broadcast
@@ -511,7 +631,7 @@ export function BroadcastBuilderContainer({
           {!isViewMode && (
             <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-                Send options *
+                Send options <RequiredMark />
               </h2>
               <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
                 Send immediately, schedule for later, or save as draft
@@ -549,14 +669,20 @@ export function BroadcastBuilderContainer({
               {sendMode === "schedule" && (
                 <div className="mt-4">
                   <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Schedule date & time *
+                    Schedule date & time <RequiredMark />
                   </label>
                   <Input
                     type="datetime-local"
                     value={scheduledFor}
                     onChange={(event) => setScheduledFor(event.target.value)}
-                    className={inputClassName}
+                    className={
+                      fieldErrors.scheduledFor
+                        ? `${inputClassName} ${errorInputClassName}`
+                        : inputClassName
+                    }
+                    aria-invalid={Boolean(fieldErrors.scheduledFor)}
                   />
+                  <FieldError message={fieldErrors.scheduledFor} />
                 </div>
               )}
             </section>

@@ -15,6 +15,25 @@ export type BroadcastSendMode = "now" | "schedule" | "draft";
 
 export type BroadcastViewMode = "list" | "calendar";
 
+export type BroadcastContentType = "template" | "richMessage";
+
+export const CONTENT_TYPE_OPTIONS: {
+  value: BroadcastContentType;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "template",
+    label: "Message Template",
+    description: "Text, image, video, flex, or carousel message",
+  },
+  {
+    value: "richMessage",
+    label: "Rich Message",
+    description: "A broadcast image with tappable link/message areas",
+  },
+];
+
 export interface Broadcast {
   id: string;
   campaignName: string;
