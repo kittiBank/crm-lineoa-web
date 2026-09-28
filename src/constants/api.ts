@@ -52,6 +52,17 @@ export const API_ENDPOINTS = {
     ESTIMATE: `${API_BASE_URL}/api/v1/audiences/estimate`,
     DETAIL: (id: string) => `${API_BASE_URL}/api/v1/audiences/${id}`,
   },
+  AUDIENCE_IMPORTS: {
+    JOBS: `${API_BASE_URL}/api/v1/audience-imports/jobs`,
+    JOB: (id: string) => `${API_BASE_URL}/api/v1/audience-imports/jobs/${id}`,
+    CONFIRM: (id: string) =>
+      `${API_BASE_URL}/api/v1/audience-imports/jobs/${id}/confirm`,
+    CANCEL: (id: string) =>
+      `${API_BASE_URL}/api/v1/audience-imports/jobs/${id}/cancel`,
+    RECORDS: `${API_BASE_URL}/api/v1/audience-imports/records`,
+    RECORD: (id: string) =>
+      `${API_BASE_URL}/api/v1/audience-imports/records/${id}`,
+  },
   MEMBER_LOGIN: {
     REQUEST_OTP: `${API_BASE_URL}/api/v1/member-login/otp/request`,
     VERIFY_OTP: `${API_BASE_URL}/api/v1/member-login/otp/verify`,

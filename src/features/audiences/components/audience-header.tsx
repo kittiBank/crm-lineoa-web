@@ -53,7 +53,8 @@ export function ImportAudienceHeader({
           Import Audience
         </h1>
         <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          Import an Excel file to map LINE users to Silver, Gold, or Platinum.
+          Import tel no with SILVER, GOLD, or PLATINUM tiers from an .xlsx or
+          .csv file. LINE users are matched by their verified tel no.
         </p>
       </div>
 
@@ -73,7 +74,7 @@ export function ImportAudienceHeader({
           className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Upload className="h-5 w-5" />
-          {isParsing ? "Reading file..." : "Import Excel"}
+          {isParsing ? "Uploading..." : "Import file"}
         </button>
       </div>
     </div>
