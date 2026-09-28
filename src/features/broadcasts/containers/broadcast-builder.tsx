@@ -40,6 +40,29 @@ const inputClassName =
 
 const readOnlyInputClassName = `${inputClassName} cursor-not-allowed bg-gray-50 dark:bg-gray-800/80`;
 
+type MessageSource = "template" | "rich-message";
+
+const MESSAGE_SOURCE_OPTIONS: {
+  value: MessageSource;
+  label: string;
+  description: string;
+}[] = [
+  {
+    value: "template",
+    label: "Message Template",
+    description: "Send a text, image, or card template",
+  },
+  {
+    value: "rich-message",
+    label: "Rich Message",
+    description: "Send a clickable image (imagemap)",
+  },
+];
+
+// Rich messages are stored as templates with type "imagemap".
+const isRichMessage = (template: MessageTemplate) =>
+  template.type === "imagemap";
+
 interface BroadcastBuilderContainerProps {
   broadcastId?: string;
   mode?: "create" | "edit" | "view";
@@ -58,6 +81,8 @@ export function BroadcastBuilderContainer({
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [messageSource, setMessageSource] =
+    useState<MessageSource>("template");
   const [templateId, setTemplateId] = useState("");
   const [audienceType, setAudienceType] =
     useState<BroadcastAudienceType>("all");
@@ -82,6 +107,28 @@ export function BroadcastBuilderContainer({
     () => templates.find((template) => template.id === templateId) ?? null,
     [templates, templateId],
   );
+
+  const templateOptions = useMemo(
+    () => templates.filter((template) => !isRichMessage(template)),
+    [templates],
+  );
+
+  const richMessageOptions = useMemo(
+    () => templates.filter(isRichMessage),
+    [templates],
+  );
+
+  const sourceOptions =
+    messageSource === "rich-message" ? richMessageOptions : templateOptions;
+  const sourceLabel =
+    messageSource === "rich-message" ? "rich message" : "message template";
+
+  const handleMessageSourceChange = (source: MessageSource) => {
+    setMessageSource(source);
+    const options =
+      source === "rich-message" ? richMessageOptions : templateOptions;
+    setTemplateId(options[0]?.id ?? "");
+  };
 
   const selectedAudience = useMemo(
     () => audiences.find((item) => item.value === audienceType) ?? null,
@@ -143,8 +190,11 @@ export function BroadcastBuilderContainer({
         setTemplates(activeTemplates);
         setAudiences(audienceList);
 
-        if (!broadcastId && activeTemplates.length > 0) {
-          setTemplateId(activeTemplates[0].id);
+        const firstTemplate = activeTemplates.find(
+          (template) => !isRichMessage(template),
+        );
+        if (!broadcastId && firstTemplate) {
+          setTemplateId(firstTemplate.id);
         }
       } catch (error) {
         if (!isCancelled) {
@@ -192,6 +242,9 @@ export function BroadcastBuilderContainer({
 
         setTitle(broadcast.name);
         setDescription(broadcast.description ?? "");
+        setMessageSource(
+          broadcast.template?.type === "imagemap" ? "rich-message" : "template",
+        );
         setTemplateId(broadcast.templateId ?? "");
         setAudienceType(broadcast.audienceType);
         setSendMode(mapBroadcastStatusToSendMode(broadcast.status));
@@ -277,7 +330,7 @@ export function BroadcastBuilderContainer({
     }
 
     if (!templateId) {
-      toast.error("Please select a message template");
+      toast.error(`Please select a ${sourceLabel}`);
       return false;
     }
 
@@ -294,7 +347,7 @@ export function BroadcastBuilderContainer({
     }
 
     if (previewMessagesToShow.length === 0) {
-      toast.error("Selected template has no messages to send");
+      toast.error(`Selected ${sourceLabel} has no messages to send`);
       return false;
     }
 
@@ -431,14 +484,49 @@ export function BroadcastBuilderContainer({
 
           <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-              Message template *
+              Message *
             </h2>
             <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              Choose a template to send in this broadcast
+              Choose a message template or rich message to send in this
+              broadcast
             </p>
-            {templates.length === 0 ? (
+            <div className="mb-4 grid gap-3 md:grid-cols-2">
+              {MESSAGE_SOURCE_OPTIONS.map((option) => (
+                <label
+                  key={option.value}
+                  className={`flex gap-3 rounded-lg border p-4 transition-colors ${
+                    isReadOnly ? "cursor-default" : "cursor-pointer"
+                  } ${
+                    messageSource === option.value
+                      ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
+                      : "border-gray-200 dark:border-gray-700"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="messageSource"
+                    value={option.value}
+                    checked={messageSource === option.value}
+                    onChange={() => handleMessageSourceChange(option.value)}
+                    className="mt-1"
+                    disabled={isReadOnly}
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-gray-900 dark:text-white">
+                      {option.label}
+                    </span>
+                    <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+                      {option.description}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+            {sourceOptions.length === 0 ? (
               <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
-                No active templates found. Create a template first.
+                {messageSource === "rich-message"
+                  ? "No active rich messages found. Create a rich message first."
+                  : "No active templates found. Create a template first."}
               </div>
             ) : (
               <select
@@ -447,14 +535,21 @@ export function BroadcastBuilderContainer({
                 className={fieldClassName}
                 disabled={isReadOnly}
               >
-                {templates.map((template) => (
+                {!templateId && (
+                  <option value="" disabled>
+                    Select a {sourceLabel}
+                  </option>
+                )}
+                {sourceOptions.map((template) => (
                   <option key={template.id} value={template.id}>
-                    {template.name} ({template.category})
+                    {messageSource === "rich-message"
+                      ? template.name
+                      : `${template.name} (${template.category})`}
                   </option>
                 ))}
               </select>
             )}
-            {selectedTemplate && (
+            {selectedTemplate && messageSource === "template" && (
               <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                 <Badge variant="secondary">{selectedTemplate.type}</Badge>
                 <span>{selectedTemplate.messages.length} message block(s)</span>
@@ -614,7 +709,11 @@ export function BroadcastBuilderContainer({
                 </dd>
               </div>
               <div className="flex items-start justify-between gap-4">
-                <dt className="text-gray-500 dark:text-gray-400">Template</dt>
+                <dt className="text-gray-500 dark:text-gray-400">
+                  {messageSource === "rich-message"
+                    ? "Rich message"
+                    : "Template"}
+                </dt>
                 <dd className="text-right font-medium text-gray-900 dark:text-white">
                   {selectedTemplate?.name ?? "—"}
                 </dd>
@@ -658,7 +757,7 @@ export function BroadcastBuilderContainer({
         cancelHref="/broadcasts"
         onSave={handleSubmit}
         isSubmitting={isSubmitting}
-        disabled={templates.length === 0}
+        disabled={sourceOptions.length === 0}
         createSaveLabel={saveLabel}
         editSaveLabel={saveLabel}
         savingLabel={savingLabel}
