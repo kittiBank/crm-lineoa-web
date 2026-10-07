@@ -39,6 +39,9 @@ export interface Order {
   lineUser?: OrderBuyer;
 }
 
+/** Admin status change result: the order plus whether the buyer got a LINE message. */
+export type OrderStatusUpdate = Order & { buyerNotified: boolean };
+
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   PENDING_PAYMENT: "Pending Payment",
   PAID: "Paid",
@@ -48,13 +51,15 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 };
 
 export const ADMIN_SETTABLE_STATUSES: OrderStatus[] = [
+  "PAID",
   "SHIPPED",
   "COMPLETED",
   "CANCELLED",
 ];
 
 export const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
-  PENDING_PAYMENT: [],
+  // Record a payment made outside the app, or drop an unpaid order.
+  PENDING_PAYMENT: ["PAID", "CANCELLED"],
   PAID: ["SHIPPED", "CANCELLED"],
   SHIPPED: ["COMPLETED", "CANCELLED"],
   COMPLETED: [],

@@ -2,13 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Package, Truck, XCircle } from "lucide-react";
+import { Banknote, Loader2, Package, Truck, XCircle } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { OrderStatusBadge } from "@/features/orders/components";
 import { fetchOrderById, updateOrderStatus } from "@/features/orders/lib/api";
-import { NEXT_STATUSES, Order, OrderStatus } from "@/features/orders/types";
+import {
+  NEXT_STATUSES,
+  ORDER_STATUS_LABELS,
+  Order,
+  OrderStatus,
+} from "@/features/orders/types";
 import { useToast } from "@/lib/hooks/useToast";
 
 interface OrderDetailProps {
@@ -67,9 +72,19 @@ export function OrderDetailContainer({ orderId }: OrderDetailProps) {
 
     setIsUpdating(true);
     try {
-      const updated = await updateOrderStatus(order.id, status);
+      const { buyerNotified, ...updated } = await updateOrderStatus(
+        order.id,
+        status,
+      );
       setOrder(updated);
-      toast.success(`Order marked as ${status.toLowerCase()}`);
+      const label = ORDER_STATUS_LABELS[status].toLowerCase();
+      if (buyerNotified) {
+        toast.success(`Order marked as ${label}. Buyer notified on LINE.`);
+      } else {
+        toast.warning(
+          `Order marked as ${label}, but the buyer could not be messaged on LINE.`,
+        );
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update order");
     } finally {
@@ -115,6 +130,16 @@ export function OrderDetailContainer({ orderId }: OrderDetailProps) {
 
         {availableTransitions.length > 0 && (
           <div className="flex gap-2">
+            {availableTransitions.includes("PAID") && (
+              <Button
+                onClick={() => setPendingStatus("PAID")}
+                disabled={isUpdating}
+                className="bg-blue-600 text-white hover:bg-blue-700"
+              >
+                <Banknote className="mr-2 h-4 w-4" />
+                Mark Paid
+              </Button>
+            )}
             {availableTransitions.includes("SHIPPED") && (
               <Button
                 onClick={() => applyStatus("SHIPPED")}
@@ -248,7 +273,11 @@ export function OrderDetailContainer({ orderId }: OrderDetailProps) {
             <span className="font-medium text-gray-900 dark:text-white">
               {order.orderNumber}
             </span>
-            ? This restocks its items and cannot be undone.
+            ?{" "}
+            {order.status === "PENDING_PAYMENT"
+              ? "It has not been paid, so no qty changes."
+              : "Its items' qty is added back to each product."}{" "}
+            The buyer gets a LINE message. This cannot be undone.
           </>
         }
         variant="destructive"
@@ -256,6 +285,33 @@ export function OrderDetailContainer({ orderId }: OrderDetailProps) {
         loadingLabel="Cancelling..."
         isLoading={isUpdating}
         onConfirm={() => applyStatus("CANCELLED")}
+        showCloseButton={!isUpdating}
+      />
+
+      <ConfirmDialog
+        open={pendingStatus === "PAID"}
+        onOpenChange={(open) => {
+          if (!open && !isUpdating) {
+            setPendingStatus(null);
+          }
+        }}
+        title="Mark as Paid"
+        description={
+          <>
+            Record payment for{" "}
+            <span className="font-medium text-gray-900 dark:text-white">
+              {order.orderNumber}
+            </span>{" "}
+            (฿{order.totalAmount.toLocaleString()})? Use this when the buyer
+            paid outside the app. Each item&apos;s qty is deducted from its
+            product and the buyer gets a LINE message.
+          </>
+        }
+        variant="default"
+        confirmLabel="Mark Paid"
+        loadingLabel="Saving..."
+        isLoading={isUpdating}
+        onConfirm={() => applyStatus("PAID")}
         showCloseButton={!isUpdating}
       />
     </div>
