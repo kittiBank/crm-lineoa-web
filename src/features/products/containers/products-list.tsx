@@ -1,45 +1,74 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Search } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { AudiencePagination } from "@/features/audiences/components/audience-pagination";
 import {
+  ProductFilters,
+  ProductFilterValues,
   ProductHeader,
   ProductTable,
-  ProductPagination,
 } from "@/features/products/components";
-import { deleteProduct, fetchProductsAdmin } from "@/features/products/lib/api";
+import {
+  deleteProduct,
+  fetchProductsAdmin,
+  updateProduct,
+} from "@/features/products/lib/api";
 import { Product } from "@/features/products/types";
 import { useToast } from "@/lib/hooks/useToast";
+
+const EMPTY_FILTERS: ProductFilterValues = { search: "", status: "" };
 
 export function ProductsListContainer() {
   const router = useRouter();
   const toast = useToast();
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const [filters, setFilters] = useState<ProductFilterValues>(EMPTY_FILTERS);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+
+  const [productToDeactivate, setProductToDeactivate] =
+    useState<Product | null>(null);
+  const [pendingProductId, setPendingProductId] = useState<string | null>(null);
 
   useEffect(() => {
     let isCancelled = false;
 
     const loadProducts = async () => {
       setIsLoading(true);
-      setError(null);
       try {
-        const data = await fetchProductsAdmin();
-        if (isCancelled) return;
-        setProducts(data);
-      } catch (err) {
+        const result = await fetchProductsAdmin({
+          page: currentPage,
+          limit: itemsPerPage,
+          search: filters.search,
+          status: filters.status || undefined,
+        });
+        if (isCancelled) {
+          return;
+        }
+
+        // A status change can empty the last page of a filtered list.
+        if (result.data.length === 0 && currentPage > 1) {
+          setCurrentPage(Math.max(1, result.meta.totalPages));
+          return;
+        }
+
+        setProducts(result.data);
+        setTotalItems(result.meta.total);
+        setTotalPages(Math.max(1, result.meta.totalPages));
+      } catch (error) {
         if (!isCancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load products");
+          toast.error(
+            error instanceof Error ? error.message : "Failed to load products",
+          );
         }
       } finally {
         if (!isCancelled) {
@@ -53,134 +82,118 @@ export function ProductsListContainer() {
     return () => {
       isCancelled = true;
     };
-  }, []);
+  }, [currentPage, itemsPerPage, filters, reloadKey]);
 
-  const filteredProducts = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return products;
-    return products.filter((product) =>
-      product.name.toLowerCase().includes(query),
-    );
-  }, [products, searchQuery]);
+  const reload = () => setReloadKey((key) => key + 1);
 
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / itemsPerPage));
-
-  useEffect(() => {
+  const handleSearch = (next: ProductFilterValues) => {
+    setFilters({ search: next.search.trim(), status: next.status });
     setCurrentPage(1);
-  }, [searchQuery]);
-
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredProducts.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredProducts, currentPage, itemsPerPage]);
-
-  const handleEdit = (id: string) => {
-    router.push(`/products/${id}/edit`);
   };
 
-  const handleDeleteClick = (id: string) => {
-    const product = products.find((item) => item.id === id);
-    if (product) {
-      setProductToDelete(product);
+  const handleConfirmDeactivate = async () => {
+    const product = productToDeactivate;
+    if (!product) {
+      return;
     }
-  };
 
-  const handleConfirmDelete = async () => {
-    if (!productToDelete) return;
-
-    setIsDeleting(true);
+    setPendingProductId(product.id);
     try {
-      await deleteProduct(productToDelete.id);
-      setProducts((current) =>
-        current.map((item) =>
-          item.id === productToDelete.id ? { ...item, isActive: false } : item,
-        ),
+      await deleteProduct(product.id);
+      toast.success(`"${product.name}" is hidden from the shop`);
+      setProductToDeactivate(null);
+      reload();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to deactivate product",
       );
-      setProductToDelete(null);
-      toast.success(`"${productToDelete.name}" deactivated successfully`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to deactivate product");
     } finally {
-      setIsDeleting(false);
+      setPendingProductId(null);
     }
   };
 
-  const breadcrumbItems = [
-    { label: "Home", href: "/dashboard" },
-    { label: "Products", isActive: true },
-  ];
+  const handleReactivate = async (product: Product) => {
+    setPendingProductId(product.id);
+    try {
+      await updateProduct(product.id, { isActive: true });
+      toast.success(`"${product.name}" is visible in the shop again`);
+      reload();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to reactivate product",
+      );
+    } finally {
+      setPendingProductId(null);
+    }
+  };
+
+  const isDeactivating =
+    productToDeactivate !== null && pendingProductId === productToDeactivate.id;
 
   return (
     <div className="space-y-2" suppressHydrationWarning>
-      <Breadcrumbs items={breadcrumbItems} />
+      <Breadcrumbs
+        items={[
+          { label: "Home", href: "/dashboard" },
+          { label: "LINE Shop" },
+          { label: "Products", isActive: true },
+        ]}
+      />
+
       <ProductHeader />
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 mb-2">
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search product name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-          />
-        </div>
+      <ProductFilters filters={filters} onSearch={handleSearch} />
+
+      <div className="mt-6">
+        <ProductTable
+          products={products}
+          startIndex={(currentPage - 1) * itemsPerPage}
+          isLoading={isLoading}
+          hasFilters={Boolean(filters.search || filters.status)}
+          pendingProductId={pendingProductId}
+          onEdit={(product) => router.push(`/products/${product.id}/edit`)}
+          onDeactivate={setProductToDeactivate}
+          onReactivate={(product) => void handleReactivate(product)}
+        />
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-16 text-gray-500">
-          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-          Loading products...
-        </div>
-      ) : error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">
-          {error}
-        </div>
-      ) : (
-        <>
-          <div className="mt-6">
-            <ProductTable
-              products={paginatedProducts}
-              onEdit={handleEdit}
-              onDelete={handleDeleteClick}
-            />
-          </div>
-
-          <ProductPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalItems={filteredProducts.length}
-            itemsPerPage={itemsPerPage}
-            onPageChange={setCurrentPage}
-            onItemsPerPageChange={setItemsPerPage}
-          />
-        </>
-      )}
+      <AudiencePagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        itemsPerPage={itemsPerPage}
+        itemLabel="products"
+        onPageChange={setCurrentPage}
+        onItemsPerPageChange={(nextItemsPerPage) => {
+          setItemsPerPage(nextItemsPerPage);
+          setCurrentPage(1);
+        }}
+      />
 
       <ConfirmDialog
-        open={Boolean(productToDelete)}
+        open={Boolean(productToDeactivate)}
         onOpenChange={(open) => {
-          if (!open && !isDeleting) {
-            setProductToDelete(null);
+          if (!open && !isDeactivating) {
+            setProductToDeactivate(null);
           }
         }}
         title="Deactivate Product"
         description={
           <>
-            Are you sure you want to deactivate{" "}
+            Hide{" "}
             <span className="font-medium text-gray-900 dark:text-white">
-              &quot;{productToDelete?.name}&quot;
-            </span>
-            ? It will be hidden from the shop but existing orders keep their data.
+              &quot;{productToDeactivate?.name}&quot;
+            </span>{" "}
+            from the LINE shop? Existing orders keep their data, and you can
+            reactivate it any time.
           </>
         }
         variant="destructive"
         confirmLabel="Deactivate"
         loadingLabel="Deactivating..."
-        isLoading={isDeleting}
-        onConfirm={handleConfirmDelete}
-        showCloseButton={!isDeleting}
+        isLoading={isDeactivating}
+        onConfirm={handleConfirmDeactivate}
+        showCloseButton={!isDeactivating}
       />
     </div>
   );

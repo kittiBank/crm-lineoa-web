@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ImageOff, Loader2, Upload } from "lucide-react";
+import { ImageOff, Loader2, Trash2, Upload } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import { FormActionFooter } from "@/components/ui/form-footer";
 import { Input } from "@/components/ui/input";
@@ -14,8 +14,44 @@ import {
   uploadProductImage,
 } from "@/features/products/lib/api";
 
+const MAX_NAME_LENGTH = 120;
+const MAX_DESCRIPTION_LENGTH = 1000;
+// products.price is DECIMAL(10, 2).
+const MAX_PRICE = 99_999_999.99;
+const MAX_QTY = 999_999;
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+
 const inputClassName =
   "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white";
+
+const errorInputClassName =
+  "border-red-500 focus:ring-red-500 dark:border-red-500";
+
+const labelClassName =
+  "mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300";
+
+type ProductFormErrors = {
+  image?: string;
+  name?: string;
+  price?: string;
+  stockQty?: string;
+};
+
+function RequiredMark() {
+  return <span className="text-red-500">*</span>;
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">{message}</p>
+  );
+}
+
+function fieldClassName(error?: string) {
+  return error ? `${inputClassName} ${errorInputClassName}` : inputClassName;
+}
 
 interface ProductBuilderProps {
   productId?: string;
@@ -34,6 +70,7 @@ export function ProductBuilderContainer({ productId }: ProductBuilderProps) {
   const [isActive, setIsActive] = useState(true);
   const [imageUrl, setImageUrl] = useState("");
   const [imagePreview, setImagePreview] = useState("");
+  const [errors, setErrors] = useState<ProductFormErrors>({});
 
   const [isLoading, setIsLoading] = useState(Boolean(productId));
   const [isUploading, setIsUploading] = useState(false);
@@ -80,34 +117,73 @@ export function ProductBuilderContainer({ productId }: ProductBuilderProps) {
     event.target.value = "";
     if (!file) return;
 
+    if (!IMAGE_TYPES.includes(file.type)) {
+      setFieldError("image", "Image must be JPG, PNG, GIF or WebP");
+      return;
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      setFieldError("image", "Image must be 10 MB or smaller");
+      return;
+    }
+
+    setFieldError("image", undefined);
     setIsUploading(true);
     try {
       const uploaded = await uploadProductImage(file);
       setImageUrl(uploaded.url);
       setImagePreview(uploaded.displayUrl);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to upload image");
+      setFieldError(
+        "image",
+        error instanceof Error ? error.message : "Failed to upload image",
+      );
     } finally {
       setIsUploading(false);
     }
   };
 
+  const setFieldError = (
+    field: keyof ProductFormErrors,
+    message: string | undefined,
+  ) => {
+    setErrors((prev) =>
+      prev[field] === message ? prev : { ...prev, [field]: message },
+    );
+  };
+
+  /** Checks every field so all errors show at once. */
   const validateForm = () => {
+    const nextErrors: ProductFormErrors = {};
+
     if (!name.trim()) {
-      toast.error("Product name is required");
-      return false;
+      nextErrors.name = "Product name is required";
     }
-    const priceNumber = Number(price);
-    if (!price || Number.isNaN(priceNumber) || priceNumber < 0) {
-      toast.error("Price must be a valid non-negative number");
-      return false;
+
+    const priceText = price.trim();
+    const priceNumber = Number(priceText);
+    if (!priceText) {
+      nextErrors.price = "Price is required";
+    } else if (Number.isNaN(priceNumber) || priceNumber < 0) {
+      nextErrors.price = "Price must be 0 or more";
+    } else if (!/^\d+(\.\d{1,2})?$/.test(priceText)) {
+      nextErrors.price = "Price can have at most 2 decimal places";
+    } else if (priceNumber > MAX_PRICE) {
+      nextErrors.price = "Price must be 99,999,999.99 or less";
     }
-    const stockNumber = Number(stockQty);
-    if (stockQty === "" || !Number.isInteger(stockNumber) || stockNumber < 0) {
-      toast.error("Stock quantity must be a valid non-negative whole number");
-      return false;
+
+    const qtyText = stockQty.trim();
+    const qtyNumber = Number(qtyText);
+    if (!qtyText) {
+      nextErrors.stockQty = "Qty for sale is required";
+    } else if (!Number.isInteger(qtyNumber) || qtyNumber < 0) {
+      nextErrors.stockQty = "Qty for sale must be a whole number, 0 or more";
+    } else if (qtyNumber > MAX_QTY) {
+      nextErrors.stockQty = "Qty for sale must be 999,999 or less";
     }
-    return true;
+
+    // Keep an image upload error; it is not re-checked here.
+    setErrors((prev) => ({ image: prev.image, ...nextErrors }));
+    return Object.keys(nextErrors).length === 0;
   };
 
   const handleSubmit = async () => {
@@ -120,7 +196,8 @@ export function ProductBuilderContainer({ productId }: ProductBuilderProps) {
         description: description.trim() || undefined,
         price: Number(price),
         stockQty: Number(stockQty),
-        imageUrl: imageUrl || undefined,
+        // Edit sends null to remove an image; create just omits it.
+        imageUrl: imageUrl || (isEditMode ? null : undefined),
         isActive,
       };
 
@@ -142,6 +219,7 @@ export function ProductBuilderContainer({ productId }: ProductBuilderProps) {
 
   const breadcrumbItems = [
     { label: "Home", href: "/dashboard" },
+    { label: "LINE Shop" },
     { label: "Products", href: "/products" },
     { label: isEditMode ? "Edit" : "Create", isActive: true },
   ];
@@ -165,8 +243,8 @@ export function ProductBuilderContainer({ productId }: ProductBuilderProps) {
         </h1>
         <p className="mt-2 text-gray-600 dark:text-gray-400">
           {isEditMode
-            ? "Update the details shown in your LIFF shop"
-            : "Add a new item to your LIFF shop catalog"}
+            ? "Update the details shown in your LINE shop"
+            : "Add a new item to your LINE shop"}
         </p>
       </div>
 
@@ -209,11 +287,30 @@ export function ProductBuilderContainer({ productId }: ProductBuilderProps) {
                 ) : (
                   <Upload className="h-4 w-4" />
                 )}
-                {isUploading ? "Uploading..." : "Upload Image"}
+                {isUploading
+                  ? "Uploading..."
+                  : imagePreview
+                    ? "Change Image"
+                    : "Upload Image"}
               </button>
+              {imagePreview && !isUploading ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageUrl("");
+                    setImagePreview("");
+                    setFieldError("image", undefined);
+                  }}
+                  className="ml-2 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Remove
+                </button>
+              ) : null}
               <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
                 JPG, PNG, GIF or WebP, up to 10 MB
               </p>
+              <FieldError message={errors.image} />
             </div>
           </div>
         </section>
@@ -224,61 +321,90 @@ export function ProductBuilderContainer({ productId }: ProductBuilderProps) {
           </h2>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Name *
+              <label htmlFor="product-name" className={labelClassName}>
+                Name <RequiredMark />
               </label>
               <Input
+                id="product-name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                className={inputClassName}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  setFieldError("name", undefined);
+                }}
+                maxLength={MAX_NAME_LENGTH}
+                className={fieldClassName(errors.name)}
                 placeholder="e.g. Cold Brew Coffee 500ml"
+                aria-invalid={Boolean(errors.name)}
               />
+              <FieldError message={errors.name} />
             </div>
             <div className="md:col-span-2">
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="product-description" className={labelClassName}>
                 Description
               </label>
               <textarea
+                id="product-description"
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                maxLength={MAX_DESCRIPTION_LENGTH}
                 className={`${inputClassName} resize-none`}
                 placeholder="Optional product description"
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Price (฿) *
+              <label htmlFor="product-price" className={labelClassName}>
+                Price (฿) <RequiredMark />
               </label>
               <Input
+                id="product-price"
                 type="number"
                 min={0}
                 step="0.01"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className={inputClassName}
+                onChange={(e) => {
+                  setPrice(e.target.value);
+                  setFieldError("price", undefined);
+                }}
+                className={fieldClassName(errors.price)}
                 placeholder="120.00"
+                aria-invalid={Boolean(errors.price)}
               />
+              <FieldError message={errors.price} />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Stock Quantity *
+              <label htmlFor="product-qty" className={labelClassName}>
+                Qty for Sale <RequiredMark />
               </label>
               <Input
+                id="product-qty"
                 type="number"
                 min={0}
                 step="1"
                 value={stockQty}
-                onChange={(e) => setStockQty(e.target.value)}
-                className={inputClassName}
+                onChange={(e) => {
+                  setStockQty(e.target.value);
+                  setFieldError("stockQty", undefined);
+                }}
+                className={fieldClassName(errors.stockQty)}
                 placeholder="50"
+                aria-invalid={Boolean(errors.stockQty)}
               />
+              {errors.stockQty ? (
+                <FieldError message={errors.stockQty} />
+              ) : (
+                <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                  Paid orders deduct from this. At 0 the shop shows it as out of
+                  stock.
+                </p>
+              )}
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="product-status" className={labelClassName}>
                 Status
               </label>
               <select
+                id="product-status"
                 value={isActive ? "active" : "inactive"}
                 onChange={(e) => setIsActive(e.target.value === "active")}
                 className={inputClassName}

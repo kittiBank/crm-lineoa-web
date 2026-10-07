@@ -80,6 +80,7 @@ export function OrderDetailContainer({ orderId }: OrderDetailProps) {
 
   const breadcrumbItems = [
     { label: "Home", href: "/dashboard" },
+    { label: "LINE Shop" },
     { label: "Orders", href: "/orders" },
     { label: order?.orderNumber ?? "Detail", isActive: true },
   ];

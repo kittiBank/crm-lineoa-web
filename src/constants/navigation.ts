@@ -83,8 +83,8 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: "Menu",
   },
   {
-    id: "liff-management",
-    label: "LIFF Management",
+    id: "line-shop",
+    label: "LINE Shop",
     icon: "Store",
     children: [
       {

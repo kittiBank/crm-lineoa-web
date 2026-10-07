@@ -72,6 +72,7 @@ export function OrdersListContainer() {
 
   const breadcrumbItems = [
     { label: "Home", href: "/dashboard" },
+    { label: "LINE Shop" },
     { label: "Orders", isActive: true },
   ];
 
