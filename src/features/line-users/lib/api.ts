@@ -21,6 +21,7 @@ export interface LineUserApiItem {
   avatar?: string;
   userType: "Member" | "Guest";
   userTier: UserTier | null;
+  assignedTier?: UserTier | null;
   phone?: string;
   status: "Active" | "Blocked" | "Unfollowed";
   tags: string[];
@@ -37,6 +38,7 @@ function mapApiUserToLineUser(user: LineUserApiItem): LineUser {
     avatar: user.avatar,
     userType: user.userType,
     userTier: isUserTier(user.userTier) ? user.userTier : null,
+    assignedTier: isUserTier(user.assignedTier) ? user.assignedTier : null,
     phone: user.phone,
     status: user.status,
     tags: user.tags,

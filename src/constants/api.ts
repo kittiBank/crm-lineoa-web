@@ -68,6 +68,8 @@ export const API_ENDPOINTS = {
     STATUS: (lineUserId: string) =>
       `${API_BASE_URL}/api/v1/member-login/status?lineUserId=${encodeURIComponent(lineUserId)}`,
   },
+  MEMBER_TIER: (lineUserId: string) =>
+    `${API_BASE_URL}/api/v1/member-tier?lineUserId=${encodeURIComponent(lineUserId)}`,
   PRODUCTS: {
     LIST: `${API_BASE_URL}/api/v1/products`,
     ADMIN_LIST: `${API_BASE_URL}/api/v1/products/admin`,

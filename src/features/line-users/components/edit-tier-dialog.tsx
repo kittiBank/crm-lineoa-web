@@ -64,16 +64,16 @@ function EditTierForm({
   onCancel: () => void;
   onSave: EditTierDialogProps["onSave"];
 }) {
-  const [userTier, setUserTier] = useState<UserTier | null>(user.userTier);
+  // Admins edit the assigned tier; the effective tier can be higher.
+  const [userTier, setUserTier] = useState<UserTier | null>(user.assignedTier);
 
   return (
     <>
       <DialogHeader>
         <DialogTitle>Edit User Tier</DialogTitle>
         <DialogDescription>
-          {user.phone
-            ? "The imported tier for this tel no is updated too, so it is not re-applied on the next OTP login."
-            : "This user has no verified tel no, so only the LINE user is updated."}
+          This tier is a minimum: spend in the last 12 months can raise the user
+          above it (Silver ฿1,000+, Gold ฿5,000+, Platinum ฿10,000+).
         </DialogDescription>
       </DialogHeader>
 
@@ -100,11 +100,19 @@ function EditTierForm({
           </div>
         ) : null}
         <div>
+          <span className="mb-1.5 block font-medium text-gray-700 dark:text-gray-300">
+            Current Tier
+          </span>
+          <span className="text-gray-900 dark:text-white">
+            {user.userTier ?? "No tier"}
+          </span>
+        </div>
+        <div>
           <label
             htmlFor="line-user-tier"
             className="mb-1.5 block font-medium text-gray-700 dark:text-gray-300"
           >
-            User Tier
+            Assigned Tier
           </label>
           <select
             id="line-user-tier"
@@ -119,7 +127,7 @@ function EditTierForm({
             disabled={isSaving}
             className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
           >
-            <option value={NO_TIER}>No tier</option>
+            <option value={NO_TIER}>None (spend only)</option>
             {USER_TIERS.map((tier) => (
               <option key={tier} value={tier}>
                 {tier}
@@ -135,7 +143,7 @@ function EditTierForm({
         </Button>
         <Button
           onClick={() => onSave(user, userTier)}
-          disabled={isSaving || user.userTier === userTier}
+          disabled={isSaving || user.assignedTier === userTier}
         >
           {isSaving ? (
             <>

@@ -5,7 +5,7 @@ import {
   invalidateDedupe,
   REMOUNT_DEDUPE_TTL_MS,
 } from "@/lib/dedupe-async";
-import { Order, OrderStatus } from "../types";
+import { Order, OrderStatus, OrderStatusUpdate } from "../types";
 
 export async function fetchOrdersAdmin(options?: {
   status?: OrderStatus | "all";
@@ -53,7 +53,7 @@ export async function fetchOrderById(id: string): Promise<Order> {
 export async function updateOrderStatus(
   id: string,
   status: OrderStatus,
-): Promise<Order> {
+): Promise<OrderStatusUpdate> {
   const response = await fetch(API_ENDPOINTS.ORDERS.ADMIN_UPDATE_STATUS(id), {
     method: "PATCH",
     headers: getAuthHeaders(),

@@ -18,7 +18,10 @@ export interface LineUser {
   displayName: string;
   avatar?: string;
   userType: UserType;
+  /** Effective tier: the higher of assignedTier and the 12-month spend tier. */
   userTier: UserTier | null;
+  /** Tier set by an admin (import or edit); a minimum. */
+  assignedTier: UserTier | null;
   /** Verified tel no (Members only). */
   phone?: string;
   status: UserStatus;

@@ -33,6 +33,7 @@ export function generateMockLineUsers(count: number = 50): LineUser[] {
       avatar: faker.image.avatar(),
       userType: userTypes[Math.floor(Math.random() * userTypes.length)],
       userTier: userTiers[Math.floor(Math.random() * userTiers.length)],
+      assignedTier: null,
       status: statuses[Math.floor(Math.random() * statuses.length)],
       tags: [...new Set(selectedTags)], // Remove duplicates
       lastActive: faker.date.recent({ days: 30 }),
