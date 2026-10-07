@@ -8,7 +8,7 @@ interface ProductHeaderProps {
 
 export function ProductHeader({
   title = "Products",
-  description = "Manage the catalog shown in your LIFF shop",
+  description = "Manage the items, price, qty for sale, and pictures shown in your LINE shop",
 }: ProductHeaderProps) {
   return (
     <div className="flex items-start justify-between mb-2">

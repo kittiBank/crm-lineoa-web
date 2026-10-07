@@ -9,27 +9,34 @@ import {
 import {
   CreateProductPayload,
   Product,
+  ProductListResponse,
+  ProductQuery,
   UpdateProductPayload,
   UploadedProductImage,
 } from "../types";
 
-export async function fetchProductsAdmin(options?: {
-  force?: boolean;
-}): Promise<Product[]> {
-  return dedupeAsync(
-    "products:admin:list",
-    async () => {
-      const response = await fetch(API_ENDPOINTS.PRODUCTS.ADMIN_LIST, {
-        headers: getAuthHeaders(),
-        cache: "no-store",
-      });
+export async function fetchProductsAdmin(
+  query: ProductQuery,
+): Promise<ProductListResponse> {
+  const params = new URLSearchParams({
+    page: String(query.page),
+    limit: String(query.limit),
+  });
+  if (query.search?.trim()) {
+    params.set("search", query.search.trim());
+  }
+  if (query.status) {
+    params.set("status", query.status);
+  }
 
-      await assertOkResponse(response, "Failed to fetch products");
+  const response = await fetch(`${API_ENDPOINTS.PRODUCTS.ADMIN_LIST}?${params}`, {
+    headers: getAuthHeaders(),
+    cache: "no-store",
+  });
 
-      return response.json();
-    },
-    { ttlMs: REMOUNT_DEDUPE_TTL_MS, force: options?.force },
-  );
+  await assertOkResponse(response, "Failed to fetch products");
+
+  return response.json();
 }
 
 export async function fetchProductById(id: string): Promise<Product> {
@@ -82,7 +89,6 @@ export async function createProduct(
 
   await assertOkResponse(response, "Failed to create product");
 
-  invalidateDedupe("products:admin:list");
   return response.json();
 }
 
@@ -98,7 +104,6 @@ export async function updateProduct(
 
   await assertOkResponse(response, "Failed to update product");
 
-  invalidateDedupe("products:admin:list");
   invalidateDedupe(`products:${id}`);
   return response.json();
 }
@@ -110,6 +115,5 @@ export async function deleteProduct(id: string): Promise<void> {
   });
 
   await assertOkResponse(response, "Failed to deactivate product");
-  invalidateDedupe("products:admin:list");
   invalidateDedupe(`products:${id}`);
 }

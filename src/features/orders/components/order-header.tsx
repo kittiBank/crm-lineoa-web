@@ -5,7 +5,7 @@ interface OrderHeaderProps {
 
 export function OrderHeader({
   title = "Orders",
-  description = "Track and fulfil orders placed through your LIFF shop",
+  description = "Track and fulfil orders placed through your LINE shop",
 }: OrderHeaderProps) {
   return (
     <div className="mb-2">
