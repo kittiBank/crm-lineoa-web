@@ -10,7 +10,7 @@ import {
   RichMenuHeader,
   SearchFilters,
   DeleteRichMenuDialog,
-  LiffShopLinkCard,
+  LiffLinksCard,
 } from "@/features/rich-menu/components";
 import {
   applyMemberRichMenu,
@@ -144,7 +144,7 @@ export function RichMenuListContainer() {
 
       <RichMenuHeader />
 
-      <LiffShopLinkCard />
+      <LiffLinksCard />
 
       <SearchFilters filters={filters} onFilterChange={setFilters} />
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Receipt, ShoppingCart } from "lucide-react";
+import { CreditCard, Receipt, ShoppingCart } from "lucide-react";
 import { getCart, getCartCount, onCartUpdated } from "../lib/cart";
 
 export function ShopHeader() {
@@ -26,6 +26,13 @@ export function ShopHeader() {
       </Link>
 
       <div className="flex items-center gap-1">
+        <Link
+          href="/liff/member"
+          aria-label="Member card"
+          className="rounded-full p-2 text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+        >
+          <CreditCard className="h-5 w-5" />
+        </Link>
         <Link
           href="/liff/shop/orders"
           aria-label="Order history"

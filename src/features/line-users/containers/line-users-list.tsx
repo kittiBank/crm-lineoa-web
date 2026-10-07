@@ -97,7 +97,9 @@ export function LineUsersListContainer() {
         current.map((item) => (item.id === updated.id ? updated : item)),
       );
       toast.success(
-        `${updated.displayName} is now ${updated.userTier ?? "without a tier"}`,
+        `${updated.displayName} is now ${updated.userTier ?? "without a tier"}${
+          updated.userTier !== userTier ? " (from spend)" : ""
+        }`,
       );
       setEditTierUser(null);
     } catch (err) {
