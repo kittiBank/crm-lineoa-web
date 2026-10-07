@@ -5,21 +5,18 @@ import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import { AudiencePagination } from "@/features/audiences/components/audience-pagination";
 import { ImportAudienceHeader } from "@/features/audiences/components/audience-header";
 import { ImportAudienceFilters } from "@/features/audiences/components/import-audience-filters";
-import { ImportAudienceTable } from "@/features/audiences/components/import-audience-table";
+import { ImportJobTable } from "@/features/audiences/components/import-job-table";
 import {
-  DeleteImportedAudienceDialog,
-  EditImportedAudienceDialog,
-  ViewImportedAudienceDialog,
-} from "@/features/audiences/components/imported-audience-dialogs";
+  DeleteImportJobDialog,
+  ViewImportJobDialog,
+} from "@/features/audiences/components/import-job-dialogs";
 import { ImportSummaryDialog } from "@/features/audiences/components/import-summary-dialog";
 import { useToast } from "@/lib/hooks/useToast";
 import {
-  cancelAudienceImportJob,
-  confirmAudienceImportJob,
-  deleteImportedAudience,
+  deleteAudienceImportJob,
+  downloadAudienceImportResult,
   fetchAudienceImportJob,
-  fetchImportedAudiences,
-  updateImportedAudienceTier,
+  fetchAudienceImportJobs,
   uploadAudienceImportFile,
 } from "@/features/audiences/lib/audience-import-api";
 import {
@@ -27,56 +24,51 @@ import {
   checkAudienceImportFile,
   downloadAudienceImportTemplate,
 } from "@/features/audiences/lib/audience-import-template";
-import {
-  AUDIENCE_IMPORT_PENDING_STATUSES,
-  AudienceImportJob,
-  ImportTier,
-  ImportedAudienceRecord,
-} from "@/features/audiences/types/audience-import";
+import { AudienceImportJob } from "@/features/audiences/types/audience-import";
 
 const IMPORT_POLL_INTERVAL_MS = 1000;
+const LIST_POLL_INTERVAL_MS = 3000;
 
 export function ImportAudiencesListContainer() {
   const toast = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [records, setRecords] = useState<ImportedAudienceRecord[]>([]);
+  const [jobs, setJobs] = useState<AudienceImportJob[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
+  // Background refreshes (polling) skip the loading state.
+  const silentReloadRef = useRef(false);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const [viewRecord, setViewRecord] = useState<ImportedAudienceRecord | null>(
-    null,
-  );
-  const [editRecord, setEditRecord] = useState<ImportedAudienceRecord | null>(
-    null,
-  );
-  const [deleteRecord, setDeleteRecord] =
-    useState<ImportedAudienceRecord | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [viewJob, setViewJob] = useState<AudienceImportJob | null>(null);
+  const [deleteJob, setDeleteJob] = useState<AudienceImportJob | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [downloadingJobId, setDownloadingJobId] = useState<string | null>(null);
 
   const [importJob, setImportJob] = useState<AudienceImportJob | null>(null);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [uploadingFileName, setUploadingFileName] = useState<string | null>(
     null,
   );
   const [pollError, setPollError] = useState<string | null>(null);
   const [pollAttempt, setPollAttempt] = useState(0);
-  const [isConfirming, setIsConfirming] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
     let isCancelled = false;
+    const isSilent = silentReloadRef.current;
+    silentReloadRef.current = false;
 
-    const loadRecords = async () => {
-      setIsLoading(true);
+    const loadJobs = async () => {
+      if (!isSilent) {
+        setIsLoading(true);
+      }
       try {
-        const result = await fetchImportedAudiences({
+        const result = await fetchAudienceImportJobs({
           page: currentPage,
           limit: itemsPerPage,
           search: searchQuery,
@@ -91,15 +83,15 @@ export function ImportAudiencesListContainer() {
           return;
         }
 
-        setRecords(result.data);
+        setJobs(result.data);
         setTotalItems(result.meta.total);
         setTotalPages(Math.max(1, result.meta.totalPages));
       } catch (error) {
-        if (!isCancelled) {
+        if (!isCancelled && !isSilent) {
           toast.error(
             error instanceof Error
               ? error.message
-              : "Failed to load imported audiences",
+              : "Failed to load import history",
           );
         }
       } finally {
@@ -109,7 +101,7 @@ export function ImportAudiencesListContainer() {
       }
     };
 
-    loadRecords();
+    loadJobs();
 
     return () => {
       isCancelled = true;
@@ -118,18 +110,29 @@ export function ImportAudiencesListContainer() {
 
   const reload = () => setReloadKey((key) => key + 1);
 
-  const closeImport = () => {
-    setImportJob(null);
-    setPollError(null);
-  };
+  // Keep processing rows in the list up to date.
+  const hasProcessingJob = jobs.some((job) => job.result === "PROCESSING");
+  useEffect(() => {
+    if (!hasProcessingJob) {
+      return;
+    }
 
-  // Poll the job while the worker validates or commits it. Re-runs on every
-  // job update, so each tick schedules the next one.
+    const timer = setTimeout(() => {
+      silentReloadRef.current = true;
+      reload();
+    }, LIST_POLL_INTERVAL_MS);
+
+    return () => clearTimeout(timer);
+  }, [hasProcessingJob, jobs]);
+
+  // Poll the uploaded job while the dialog is open. Re-runs on every job
+  // update, so each tick schedules the next one.
   useEffect(() => {
     if (
+      !isImportDialogOpen ||
       !importJob ||
       pollError ||
-      !AUDIENCE_IMPORT_PENDING_STATUSES.includes(importJob.status)
+      importJob.result !== "PROCESSING"
     ) {
       return;
     }
@@ -142,17 +145,10 @@ export function ImportAudiencesListContainer() {
           return;
         }
 
-        if (next.status === "COMPLETED") {
-          toast.success(
-            `Imported ${next.validRows.toLocaleString()} record(s) from ${next.fileName}`,
-          );
-          closeImport();
-          setCurrentPage(1);
-          reload();
-          return;
-        }
-
         setImportJob(next);
+        if (next.result !== "PROCESSING") {
+          reload();
+        }
       } catch (error) {
         if (!isCancelled) {
           setPollError(
@@ -168,11 +164,17 @@ export function ImportAudiencesListContainer() {
       isCancelled = true;
       clearTimeout(timer);
     };
-  }, [importJob, pollError, pollAttempt]);
+  }, [isImportDialogOpen, importJob, pollError, pollAttempt]);
 
   const handleSearchChange = (query: string) => {
     setSearchQuery(query.trim());
     setCurrentPage(1);
+  };
+
+  const closeImportDialog = () => {
+    setIsImportDialogOpen(false);
+    setImportJob(null);
+    setPollError(null);
   };
 
   const handleFiles = async (fileList: FileList | null) => {
@@ -191,102 +193,57 @@ export function ImportAudiencesListContainer() {
     }
 
     setPollError(null);
+    setImportJob(null);
     setUploadingFileName(file.name);
+    setIsImportDialogOpen(true);
     try {
       setImportJob(await uploadAudienceImportFile(file));
+      setCurrentPage(1);
+      reload();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to upload import file",
       );
+      setIsImportDialogOpen(false);
     } finally {
       setUploadingFileName(null);
     }
   };
 
-  const handleConfirmImport = async () => {
-    if (!importJob) {
-      return;
-    }
-
-    setIsConfirming(true);
+  const handleDownload = async (job: AudienceImportJob) => {
+    setDownloadingJobId(job.id);
     try {
-      setImportJob(await confirmAudienceImportJob(importJob.id));
+      await downloadAudienceImportResult(job);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to confirm import",
+        error instanceof Error
+          ? error.message
+          : "Failed to download import result",
       );
     } finally {
-      setIsConfirming(false);
+      setDownloadingJobId(null);
     }
   };
 
-  // Close the dialog; a job that could still be committed is cancelled so its
-  // staged rows are cleaned up.
-  const handleDismissImport = async () => {
-    const job = importJob;
-    if (!job || (job.status !== "VALIDATING" && job.status !== "VALIDATED")) {
-      closeImport();
-      return;
-    }
-
-    setIsCancelling(true);
-    try {
-      await cancelAudienceImportJob(job.id);
-      if (job.errorRows === 0) {
-        toast.success("Import cancelled. Nothing was imported.");
-      }
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to cancel import",
-      );
-    } finally {
-      setIsCancelling(false);
-      closeImport();
-    }
-  };
-
-  const handleEditFromView = (record: ImportedAudienceRecord) => {
-    setViewRecord(null);
-    setEditRecord(record);
-  };
-
-  const handleSaveTier = async (
-    record: ImportedAudienceRecord,
-    userTier: ImportTier,
-  ) => {
-    setIsSaving(true);
-    try {
-      const updated = await updateImportedAudienceTier(record.id, userTier);
-      setRecords((current) =>
-        current.map((item) => (item.id === updated.id ? updated : item)),
-      );
-      toast.success(`${updated.phone} is now ${updated.userTier}`);
-      setEditRecord(null);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update user tier",
-      );
-    } finally {
-      setIsSaving(false);
-    }
+  const handleViewDetails = (job: AudienceImportJob) => {
+    closeImportDialog();
+    setViewJob(job);
   };
 
   const handleDelete = async () => {
-    if (!deleteRecord) {
+    if (!deleteJob) {
       return;
     }
 
     setIsDeleting(true);
     try {
-      await deleteImportedAudience(deleteRecord.id);
-      toast.success(`${deleteRecord.phone} deleted`);
-      setDeleteRecord(null);
+      await deleteAudienceImportJob(deleteJob.id);
+      toast.success(`${deleteJob.fileName} deleted`);
+      setDeleteJob(null);
       reload();
     } catch (error) {
       toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to delete imported audience",
+        error instanceof Error ? error.message : "Failed to delete import",
       );
     } finally {
       setIsDeleting(false);
@@ -323,14 +280,15 @@ export function ImportAudiencesListContainer() {
       />
 
       <div className="mt-6">
-        <ImportAudienceTable
-          records={records}
+        <ImportJobTable
+          jobs={jobs}
           startIndex={(currentPage - 1) * itemsPerPage}
           isLoading={isLoading}
           hasSearch={searchQuery.length > 0}
-          onView={setViewRecord}
-          onEdit={setEditRecord}
-          onDelete={setDeleteRecord}
+          downloadingJobId={downloadingJobId}
+          onDownload={(job) => void handleDownload(job)}
+          onView={setViewJob}
+          onDelete={setDeleteJob}
         />
       </div>
 
@@ -339,7 +297,7 @@ export function ImportAudiencesListContainer() {
         totalPages={totalPages}
         totalItems={totalItems}
         itemsPerPage={itemsPerPage}
-        itemLabel="records"
+        itemLabel="imports"
         onPageChange={setCurrentPage}
         onItemsPerPageChange={(nextItemsPerPage) => {
           setItemsPerPage(nextItemsPerPage);
@@ -347,38 +305,32 @@ export function ImportAudiencesListContainer() {
         }}
       />
 
-      <ViewImportedAudienceDialog
-        record={viewRecord}
-        onOpenChange={(open) => !open && setViewRecord(null)}
-        onEdit={handleEditFromView}
-      />
-
-      <EditImportedAudienceDialog
-        record={editRecord}
-        isSaving={isSaving}
-        onOpenChange={(open) => !open && setEditRecord(null)}
-        onSave={handleSaveTier}
+      <ViewImportJobDialog
+        job={viewJob}
+        isDownloading={viewJob !== null && downloadingJobId === viewJob.id}
+        onOpenChange={(open) => !open && setViewJob(null)}
+        onDownload={(job) => void handleDownload(job)}
       />
 
       <ImportSummaryDialog
-        open={Boolean(uploadingFileName) || Boolean(importJob)}
+        open={isImportDialogOpen}
         uploadingFileName={uploadingFileName}
         job={importJob}
         pollError={pollError}
-        isConfirming={isConfirming}
-        isCancelling={isCancelling}
-        onConfirm={handleConfirmImport}
-        onDismiss={handleDismissImport}
+        isDownloading={importJob !== null && downloadingJobId === importJob.id}
+        onClose={closeImportDialog}
         onRetryPoll={() => {
           setPollError(null);
           setPollAttempt((attempt) => attempt + 1);
         }}
+        onDownload={(job) => void handleDownload(job)}
+        onViewDetails={handleViewDetails}
       />
 
-      <DeleteImportedAudienceDialog
-        record={deleteRecord}
+      <DeleteImportJobDialog
+        job={deleteJob}
         isDeleting={isDeleting}
-        onOpenChange={(open) => !open && !isDeleting && setDeleteRecord(null)}
+        onOpenChange={(open) => !open && !isDeleting && setDeleteJob(null)}
         onConfirm={handleDelete}
       />
     </div>

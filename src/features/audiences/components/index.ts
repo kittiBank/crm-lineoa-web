@@ -3,11 +3,9 @@ export { AudienceTable } from "./audience-table";
 export { AudienceFilters } from "./audience-filters";
 export { AudiencePagination } from "./audience-pagination";
 export { ImportAudienceFilters } from "./import-audience-filters";
-export { ImportAudienceTable } from "./import-audience-table";
-export { ImportTierBadge } from "./import-tier-badge";
+export { ImportJobTable, ImportStatusBadge } from "./import-job-table";
 export { ImportSummaryDialog } from "./import-summary-dialog";
 export {
-  DeleteImportedAudienceDialog,
-  EditImportedAudienceDialog,
-  ViewImportedAudienceDialog,
-} from "./imported-audience-dialogs";
+  DeleteImportJobDialog,
+  ViewImportJobDialog,
+} from "./import-job-dialogs";
