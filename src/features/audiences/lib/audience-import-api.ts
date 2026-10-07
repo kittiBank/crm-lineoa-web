@@ -2,15 +2,15 @@ import { API_ENDPOINTS } from "@/constants/api";
 import { assertOkResponse, getAuthHeaders } from "@/lib/api-client";
 import {
   AudienceImportJob,
-  ImportTier,
-  ImportedAudienceListResponse,
-  ImportedAudienceQuery,
-  ImportedAudienceRecord,
+  AudienceImportJobQuery,
+  AudienceImportRow,
+  AudienceImportRowQuery,
+  PaginatedResponse,
 } from "../types/audience-import";
 
-export async function fetchImportedAudiences(
-  query: ImportedAudienceQuery,
-): Promise<ImportedAudienceListResponse> {
+export async function fetchAudienceImportJobs(
+  query: AudienceImportJobQuery,
+): Promise<PaginatedResponse<AudienceImportJob>> {
   const params = new URLSearchParams({
     page: String(query.page),
     limit: String(query.limit),
@@ -20,50 +20,85 @@ export async function fetchImportedAudiences(
   }
 
   const response = await fetch(
-    `${API_ENDPOINTS.AUDIENCE_IMPORTS.RECORDS}?${params}`,
+    `${API_ENDPOINTS.AUDIENCE_IMPORTS.JOBS}?${params}`,
     { headers: getAuthHeaders(), cache: "no-store" },
   );
 
-  await assertOkResponse(response, "Failed to fetch imported audiences");
+  await assertOkResponse(response, "Failed to fetch import history");
 
   return response.json();
 }
 
-export async function fetchImportedAudience(
+export async function fetchAudienceImportJob(
   id: string,
-): Promise<ImportedAudienceRecord> {
-  const response = await fetch(API_ENDPOINTS.AUDIENCE_IMPORTS.RECORD(id), {
+): Promise<AudienceImportJob> {
+  const response = await fetch(API_ENDPOINTS.AUDIENCE_IMPORTS.JOB(id), {
     headers: getAuthHeaders(),
     cache: "no-store",
   });
 
-  await assertOkResponse(response, "Failed to fetch imported audience");
+  await assertOkResponse(response, "Failed to fetch import status");
 
   return response.json();
 }
 
-export async function updateImportedAudienceTier(
+export async function fetchAudienceImportRows(
   id: string,
-  userTier: ImportTier,
-): Promise<ImportedAudienceRecord> {
-  const response = await fetch(API_ENDPOINTS.AUDIENCE_IMPORTS.RECORD(id), {
-    method: "PATCH",
+  query: AudienceImportRowQuery,
+): Promise<PaginatedResponse<AudienceImportRow>> {
+  const params = new URLSearchParams({
+    page: String(query.page),
+    limit: String(query.limit),
+  });
+  if (query.status) {
+    params.set("status", query.status);
+  }
+
+  const response = await fetch(
+    `${API_ENDPOINTS.AUDIENCE_IMPORTS.ROWS(id)}?${params}`,
+    { headers: getAuthHeaders(), cache: "no-store" },
+  );
+
+  await assertOkResponse(response, "Failed to fetch import rows");
+
+  return response.json();
+}
+
+/** "members.csv" -> "members-result.xlsx" (matches the API's file name). */
+export function toResultFileName(fileName: string): string {
+  const base = fileName.replace(/\.[^.]+$/, "") || "audience-import";
+  return `${base}-result.xlsx`;
+}
+
+/** Downloads the result .xlsx (every row with status and error note). */
+export async function downloadAudienceImportResult(
+  job: Pick<AudienceImportJob, "id" | "fileName">,
+): Promise<void> {
+  const response = await fetch(API_ENDPOINTS.AUDIENCE_IMPORTS.RESULT(job.id), {
     headers: getAuthHeaders(),
-    body: JSON.stringify({ userTier }),
+    cache: "no-store",
   });
 
-  await assertOkResponse(response, "Failed to update user tier");
+  await assertOkResponse(response, "Failed to download import result");
 
-  return response.json();
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = toResultFileName(job.fileName);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
-export async function deleteImportedAudience(id: string): Promise<void> {
-  const response = await fetch(API_ENDPOINTS.AUDIENCE_IMPORTS.RECORD(id), {
+/** Deletes the import log only; tiers it applied are kept. */
+export async function deleteAudienceImportJob(id: string): Promise<void> {
+  const response = await fetch(API_ENDPOINTS.AUDIENCE_IMPORTS.JOB(id), {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
 
-  await assertOkResponse(response, "Failed to delete imported audience");
+  await assertOkResponse(response, "Failed to delete import");
 }
 
 /** Uploads the file and returns the job (status VALIDATING) to poll. */
@@ -84,45 +119,6 @@ export async function uploadAudienceImportFile(
   });
 
   await assertOkResponse(response, "Failed to upload import file");
-
-  return response.json();
-}
-
-export async function fetchAudienceImportJob(
-  id: string,
-): Promise<AudienceImportJob> {
-  const response = await fetch(API_ENDPOINTS.AUDIENCE_IMPORTS.JOB(id), {
-    headers: getAuthHeaders(),
-    cache: "no-store",
-  });
-
-  await assertOkResponse(response, "Failed to fetch import status");
-
-  return response.json();
-}
-
-export async function confirmAudienceImportJob(
-  id: string,
-): Promise<AudienceImportJob> {
-  const response = await fetch(API_ENDPOINTS.AUDIENCE_IMPORTS.CONFIRM(id), {
-    method: "POST",
-    headers: getAuthHeaders(),
-  });
-
-  await assertOkResponse(response, "Failed to confirm import");
-
-  return response.json();
-}
-
-export async function cancelAudienceImportJob(
-  id: string,
-): Promise<AudienceImportJob> {
-  const response = await fetch(API_ENDPOINTS.AUDIENCE_IMPORTS.CANCEL(id), {
-    method: "POST",
-    headers: getAuthHeaders(),
-  });
-
-  await assertOkResponse(response, "Failed to cancel import");
 
   return response.json();
 }

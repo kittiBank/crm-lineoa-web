@@ -19,6 +19,8 @@ export interface LineUser {
   avatar?: string;
   userType: UserType;
   userTier: UserTier | null;
+  /** Verified tel no (Members only). */
+  phone?: string;
   status: UserStatus;
   tags: string[];
   lastActive: Date;

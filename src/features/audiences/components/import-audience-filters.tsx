@@ -6,15 +6,15 @@ interface ImportAudienceFiltersProps {
   onSearchChange: (query: string) => void;
 }
 
-/** Search imported records by tel no only (full number or partial digits). */
+/** Search the import history by file name (partial, case-insensitive). */
 export function ImportAudienceFilters({
   searchQuery,
   onSearchChange,
 }: ImportAudienceFiltersProps) {
-  const [telNoInput, setTelNoInput] = useState(searchQuery);
+  const [fileNameInput, setFileNameInput] = useState(searchQuery);
 
   const handleClear = () => {
-    setTelNoInput("");
+    setFileNameInput("");
     onSearchChange("");
   };
 
@@ -26,20 +26,19 @@ export function ImportAudienceFilters({
             htmlFor="import-audience-search"
             className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
           >
-            Search Tel No
+            Search File Name
           </label>
           <div className="relative">
             <Search className="absolute top-3 left-3 h-5 w-5 text-gray-400" />
             <input
               id="import-audience-search"
               type="search"
-              inputMode="tel"
-              placeholder="e.g. 0812345678 or 5678"
-              value={telNoInput}
-              onChange={(event) => setTelNoInput(event.target.value)}
+              placeholder="e.g. members-2026"
+              value={fileNameInput}
+              onChange={(event) => setFileNameInput(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
-                  onSearchChange(telNoInput);
+                  onSearchChange(fileNameInput);
                 }
               }}
               className="w-full rounded-lg border border-gray-300 bg-white py-2 pr-4 pl-10 text-gray-900 placeholder-gray-500 transition-all focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
@@ -55,14 +54,14 @@ export function ImportAudienceFilters({
             <button
               type="button"
               onClick={handleClear}
-              disabled={!telNoInput && !searchQuery}
+              disabled={!fileNameInput && !searchQuery}
               className="h-10 flex-1 rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
             >
               Clear
             </button>
             <button
               type="button"
-              onClick={() => onSearchChange(telNoInput)}
+              onClick={() => onSearchChange(fileNameInput)}
               className="h-10 flex-1 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 active:scale-95"
             >
               Search

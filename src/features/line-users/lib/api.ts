@@ -1,4 +1,5 @@
 import { API_ENDPOINTS } from "@/constants/api";
+import { assertOkResponse, getAuthHeaders } from "@/lib/api-client";
 import { getToken } from "@/lib/auth";
 import { dedupeAsync, REMOUNT_DEDUPE_TTL_MS } from "@/lib/dedupe-async";
 import { FilterOptions, LineUser, UserTier, isUserTier } from "../types";
@@ -20,6 +21,7 @@ export interface LineUserApiItem {
   avatar?: string;
   userType: "Member" | "Guest";
   userTier: UserTier | null;
+  phone?: string;
   status: "Active" | "Blocked" | "Unfollowed";
   tags: string[];
   lastActive: string;
@@ -35,6 +37,7 @@ function mapApiUserToLineUser(user: LineUserApiItem): LineUser {
     avatar: user.avatar,
     userType: user.userType,
     userTier: isUserTier(user.userTier) ? user.userTier : null,
+    phone: user.phone,
     status: user.status,
     tags: user.tags,
     lastActive: new Date(user.lastActive),
@@ -94,4 +97,23 @@ export async function fetchLineUsers(
     },
     { ttlMs: REMOUNT_DEDUPE_TTL_MS, force: options?.force },
   );
+}
+
+/**
+ * Sets or clears a LINE user's tier. The API also syncs the imported tier for
+ * the user's verified tel no.
+ */
+export async function updateLineUserTier(
+  id: string,
+  userTier: UserTier | null,
+): Promise<LineUser> {
+  const response = await fetch(API_ENDPOINTS.LINE.USER_TIER(id), {
+    method: "PATCH",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ userTier }),
+  });
+
+  await assertOkResponse(response, "Failed to update user tier");
+
+  return mapApiUserToLineUser(await response.json());
 }

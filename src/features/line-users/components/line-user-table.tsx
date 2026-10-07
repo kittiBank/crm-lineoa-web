@@ -1,12 +1,13 @@
 "use client";
 
 import { LineUser, UserStatus, UserTier } from "../types";
-import { Eye, MoreVertical } from "lucide-react";
+import { Eye, MoreVertical, Pencil } from "lucide-react";
 
 interface LineUserTableProps {
   users: LineUser[];
   startIndex?: number;
   onView?: (id: string) => void;
+  onEditTier?: (user: LineUser) => void;
   onMore?: (id: string) => void;
 }
 
@@ -87,6 +88,7 @@ export function LineUserTable({
   users,
   startIndex = 0,
   onView,
+  onEditTier,
   onMore,
 }: LineUserTableProps) {
   return (
@@ -213,6 +215,16 @@ export function LineUserTable({
                       >
                         <Eye className="w-4 h-4" />
                       </button>
+                      {onEditTier && (
+                        <button
+                          onClick={() => onEditTier(user)}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                          title="Edit user tier"
+                          aria-label={`Edit tier of ${user.displayName}`}
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      )}
                       <button
                         onClick={() => onMore?.(user.id)}
                         className="inline-flex items-center gap-1 px-2 py-1 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"

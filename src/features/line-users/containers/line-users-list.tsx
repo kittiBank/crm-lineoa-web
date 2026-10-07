@@ -3,20 +3,27 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import {
+  EditTierDialog,
   LineUserHeader,
   SearchFilters,
   LineUserTable,
   Pagination,
 } from "@/features/line-users/components";
-import { fetchLineUsers } from "@/features/line-users/lib/api";
+import {
+  fetchLineUsers,
+  updateLineUserTier,
+} from "@/features/line-users/lib/api";
 import {
   DEFAULT_FILTER_OPTIONS,
   FilterOptions,
   LineUser,
+  UserTier,
 } from "@/features/line-users/types";
+import { useToast } from "@/lib/hooks/useToast";
 import { Loader2 } from "lucide-react";
 
 export function LineUsersListContainer() {
+  const toast = useToast();
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [filters, setFilters] = useState<FilterOptions>(DEFAULT_FILTER_OPTIONS);
@@ -26,6 +33,8 @@ export function LineUsersListContainer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
+  const [editTierUser, setEditTierUser] = useState<LineUser | null>(null);
+  const [isSavingTier, setIsSavingTier] = useState(false);
 
   const loadUsers = useCallback(
     async (force = false) => {
@@ -80,6 +89,26 @@ export function LineUsersListContainer() {
     setCurrentPage(1);
   };
 
+  const handleSaveTier = async (user: LineUser, userTier: UserTier | null) => {
+    setIsSavingTier(true);
+    try {
+      const updated = await updateLineUserTier(user.id, userTier);
+      setUsers((current) =>
+        current.map((item) => (item.id === updated.id ? updated : item)),
+      );
+      toast.success(
+        `${updated.displayName} is now ${updated.userTier ?? "without a tier"}`,
+      );
+      setEditTierUser(null);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update user tier",
+      );
+    } finally {
+      setIsSavingTier(false);
+    }
+  };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -121,6 +150,7 @@ export function LineUsersListContainer() {
               users={users}
               startIndex={startIndex}
               onView={(id) => console.log("View user:", id)}
+              onEditTier={setEditTierUser}
               onMore={(id) => console.log("More options for user:", id)}
             />
           </div>
@@ -138,6 +168,13 @@ export function LineUsersListContainer() {
           />
         </>
       )}
+
+      <EditTierDialog
+        user={editTierUser}
+        isSaving={isSavingTier}
+        onOpenChange={(open) => !open && setEditTierUser(null)}
+        onSave={handleSaveTier}
+      />
     </div>
   );
 }

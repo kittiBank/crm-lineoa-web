@@ -13,6 +13,8 @@ export const API_ENDPOINTS = {
     ACCOUNT: `${API_BASE_URL}/api/v1/line/account`,
     MESSAGE_QUOTA: `${API_BASE_URL}/api/v1/line/message-quota`,
     USERS: `${API_BASE_URL}/api/v1/line/users`,
+    USER_TIER: (id: string) =>
+      `${API_BASE_URL}/api/v1/line/users/${id}/tier`,
   },
   TEMPLATES: {
     LIST: `${API_BASE_URL}/api/v1/templates`,
@@ -55,13 +57,10 @@ export const API_ENDPOINTS = {
   AUDIENCE_IMPORTS: {
     JOBS: `${API_BASE_URL}/api/v1/audience-imports/jobs`,
     JOB: (id: string) => `${API_BASE_URL}/api/v1/audience-imports/jobs/${id}`,
-    CONFIRM: (id: string) =>
-      `${API_BASE_URL}/api/v1/audience-imports/jobs/${id}/confirm`,
-    CANCEL: (id: string) =>
-      `${API_BASE_URL}/api/v1/audience-imports/jobs/${id}/cancel`,
-    RECORDS: `${API_BASE_URL}/api/v1/audience-imports/records`,
-    RECORD: (id: string) =>
-      `${API_BASE_URL}/api/v1/audience-imports/records/${id}`,
+    ROWS: (id: string) =>
+      `${API_BASE_URL}/api/v1/audience-imports/jobs/${id}/rows`,
+    RESULT: (id: string) =>
+      `${API_BASE_URL}/api/v1/audience-imports/jobs/${id}/result`,
   },
   MEMBER_LOGIN: {
     REQUEST_OTP: `${API_BASE_URL}/api/v1/member-login/otp/request`,
