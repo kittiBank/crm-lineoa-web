@@ -39,6 +39,14 @@ export const API_ENDPOINTS = {
     STATS: `${API_BASE_URL}/api/v1/broadcasts/stats`,
     DETAIL: (id: string) => `${API_BASE_URL}/api/v1/broadcasts/${id}`,
     SEND: (id: string) => `${API_BASE_URL}/api/v1/broadcasts/${id}/send`,
+    TRACKING: (id: string) =>
+      `${API_BASE_URL}/api/v1/broadcasts/${id}/tracking`,
+    TRACKING_RECIPIENTS: (id: string, query: string) =>
+      `${API_BASE_URL}/api/v1/broadcasts/${id}/tracking/recipients?${query}`,
+    TRACKING_SYNC: (id: string) =>
+      `${API_BASE_URL}/api/v1/broadcasts/${id}/tracking/sync`,
+    /** Public — called from the LIFF tracked-link redirect page. */
+    TRACKING_CLICK: `${API_BASE_URL}/api/v1/tracking/clicks`,
   },
   AUTO_MESSAGES: {
     LIST: `${API_BASE_URL}/api/v1/auto-messages`,
