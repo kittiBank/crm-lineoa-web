@@ -7,6 +7,10 @@ interface PaginationProps {
   itemsPerPage: number;
   onPageChange: (page: number) => void;
   onItemsPerPageChange?: (itemsPerPage: number) => void;
+  /** Noun in "Showing 1-10 of N {itemLabel}". */
+  itemLabel?: string;
+  /** "card" stands alone below a table; "embedded" sits inside its section. */
+  variant?: "card" | "embedded";
 }
 
 /**
@@ -20,6 +24,8 @@ export function Pagination({
   itemsPerPage,
   onPageChange,
   onItemsPerPageChange,
+  itemLabel = "broadcasts",
+  variant = "card",
 }: PaginationProps) {
   // Calculate the range of items being displayed
   const startItem = (currentPage - 1) * itemsPerPage + 1;
@@ -60,7 +66,13 @@ export function Pagination({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className="mt-3 px-6 py-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex items-center justify-between gap-4">
+    <div
+      className={`flex items-center justify-between gap-4 px-6 py-4 ${
+        variant === "card"
+          ? "mt-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+          : "flex-wrap border-t border-gray-200 dark:border-gray-700"
+      }`}
+    >
       {/* Left side - Items per page selector and info */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
@@ -78,7 +90,7 @@ export function Pagination({
           </select>
         </div>
         <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-nowrap">
-          Showing {startItem}-{endItem} of {totalItems} broadcasts
+          Showing {startItem}-{endItem} of {totalItems} {itemLabel}
         </p>
       </div>
 

@@ -102,11 +102,9 @@ export async function exportTrackingRecipients(
       "LINE User ID": row.lineUserId ?? "",
       "User Type": row.userType ?? "",
       "User Tier": row.userTier ?? "",
-      Delivery: row.deliveryStatus,
       Clicks: row.clickCount,
       "First Click": formatExportDate(row.firstClickedAt),
       "Last Click": formatExportDate(row.lastClickedAt),
-      Error: row.errorMessage ?? "",
     })),
   );
   const workbook = XLSX.utils.book_new();

@@ -1,7 +1,6 @@
 import { Download, Loader2, Search } from "lucide-react";
 import { Pagination } from "../pagination";
 import {
-  BroadcastTrackingRecipient,
   BroadcastTrackingRecipientsResponse,
   TrackingRecipientFilter,
 } from "../../types/tracking";
@@ -10,7 +9,6 @@ const FILTERS: { value: TrackingRecipientFilter; label: string }[] = [
   { value: "all", label: "All reached" },
   { value: "clicked", label: "Clicked" },
   { value: "not_clicked", label: "Not clicked" },
-  { value: "failed", label: "Failed" },
 ];
 
 const headerClassName =
@@ -25,29 +23,6 @@ function formatDateTime(value: string | null): string {
     month: "short",
     day: "numeric",
   })} ${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
-}
-
-function DeliveryBadge({
-  recipient,
-}: {
-  recipient: BroadcastTrackingRecipient;
-}) {
-  if (recipient.deliveryStatus === "failed") {
-    return (
-      <span
-        title={recipient.errorMessage ?? undefined}
-        className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700 dark:bg-red-900/30 dark:text-red-400"
-      >
-        Failed
-      </span>
-    );
-  }
-
-  return (
-    <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400">
-      Reached
-    </span>
-  );
 }
 
 interface TrackingRecipientsTableProps {
@@ -153,7 +128,6 @@ export function TrackingRecipientsTable({
               <th className={`${headerClassName} w-16`}>No.</th>
               <th className={headerClassName}>LINE user</th>
               <th className={headerClassName}>Type / Tier</th>
-              <th className={headerClassName}>Delivery</th>
               <th className={`${headerClassName} text-right`}>Clicks</th>
               <th className={headerClassName}>First click</th>
               <th className={headerClassName}>Last click</th>
@@ -195,9 +169,6 @@ export function TrackingRecipientsTable({
                     {row.userType ?? "—"}
                     {row.userTier ? ` · ${row.userTier}` : ""}
                   </td>
-                  <td className="px-4 py-3">
-                    <DeliveryBadge recipient={row} />
-                  </td>
                   <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
                     {row.clickCount > 0 ? row.clickCount.toLocaleString() : "—"}
                   </td>
@@ -212,7 +183,7 @@ export function TrackingRecipientsTable({
             ) : (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={6}
                   className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
                 >
                   {isLoading ? "Loading recipients..." : "No recipients match"}
@@ -224,16 +195,16 @@ export function TrackingRecipientsTable({
       </div>
 
       {meta && meta.total > 0 ? (
-        <div className="border-t border-gray-200 px-4 py-3 dark:border-gray-700">
-          <Pagination
-            currentPage={meta.page}
-            totalPages={Math.max(meta.totalPages, 1)}
-            totalItems={meta.total}
-            itemsPerPage={meta.limit}
-            onPageChange={onPageChange}
-            onItemsPerPageChange={onPageSizeChange}
-          />
-        </div>
+        <Pagination
+          variant="embedded"
+          itemLabel="recipients"
+          currentPage={meta.page}
+          totalPages={Math.max(meta.totalPages, 1)}
+          totalItems={meta.total}
+          itemsPerPage={meta.limit}
+          onPageChange={onPageChange}
+          onItemsPerPageChange={onPageSizeChange}
+        />
       ) : null}
     </section>
   );

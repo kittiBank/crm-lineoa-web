@@ -1,7 +1,7 @@
 export type TrackingWindowState = "active" | "closed" | "unavailable";
 
-export type TrackingRecipientFilter =
-  "all" | "clicked" | "not_clicked" | "failed";
+/** Recipients are only LINE users the broadcast reached (delivery succeeded). */
+export type TrackingRecipientFilter = "all" | "clicked" | "not_clicked";
 
 export interface BroadcastTrackingLink {
   id: string;
@@ -55,8 +55,6 @@ export interface BroadcastTrackingRecipient {
   pictureUrl: string | null;
   userType: string | null;
   userTier: string | null;
-  deliveryStatus: "sent" | "failed" | "pending";
-  errorMessage: string | null;
   clickCount: number;
   firstClickedAt: string | null;
   lastClickedAt: string | null;

@@ -67,9 +67,9 @@ const isRichMessage = (template: MessageTemplate) =>
 
 type ViewTab = "details" | "performance";
 
-// Match the broadcasts list view toggle.
-const ACTIVE_TAB_CLASSES =
-  "data-active:bg-blue-600 data-active:text-white dark:data-active:border-transparent dark:data-active:bg-blue-600 dark:data-active:text-white";
+// Match the broadcasts list view toggle, one size up for the page-level tabs.
+const VIEW_TAB_CLASSES =
+  "px-4 has-data-[icon=inline-start]:pl-3 data-active:bg-blue-600 data-active:text-white dark:data-active:border-transparent dark:data-active:bg-blue-600 dark:data-active:text-white";
 
 interface BroadcastBuilderContainerProps {
   broadcastId?: string;
@@ -468,12 +468,12 @@ export function BroadcastBuilderContainer({
             value={viewTab}
             onValueChange={(next) => setViewTab(next as ViewTab)}
           >
-            <TabsList>
-              <TabsTrigger value="details" className={ACTIVE_TAB_CLASSES}>
+            <TabsList className="p-1 group-data-horizontal/tabs:h-10">
+              <TabsTrigger value="details" className={VIEW_TAB_CLASSES}>
                 <FileText data-icon="inline-start" />
                 Details
               </TabsTrigger>
-              <TabsTrigger value="performance" className={ACTIVE_TAB_CLASSES}>
+              <TabsTrigger value="performance" className={VIEW_TAB_CLASSES}>
                 <BarChart3 data-icon="inline-start" />
                 Performance
               </TabsTrigger>
