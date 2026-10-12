@@ -2,11 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { BarChart3, FileText, Loader2 } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import { FormActionFooter } from "@/components/ui/form-footer";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/lib/hooks/useToast";
 import { LineOaPreview } from "@/features/templates/components";
 import {
@@ -28,6 +29,7 @@ import {
   toDatetimeLocalValue,
 } from "@/features/broadcasts/lib/broadcast-form";
 import { clearBroadcastListDataCache } from "@/features/broadcasts/lib/load-broadcast-list-data";
+import { BroadcastPerformance } from "@/features/broadcasts/containers/broadcast-performance";
 import {
   BroadcastAudienceOption,
   BroadcastAudienceType,
@@ -63,6 +65,12 @@ const MESSAGE_SOURCE_OPTIONS: {
 const isRichMessage = (template: MessageTemplate) =>
   template.type === "imagemap";
 
+type ViewTab = "details" | "performance";
+
+// Match the broadcasts list view toggle.
+const ACTIVE_TAB_CLASSES =
+  "data-active:bg-blue-600 data-active:text-white dark:data-active:border-transparent dark:data-active:bg-blue-600 dark:data-active:text-white";
+
 interface BroadcastBuilderContainerProps {
   broadcastId?: string;
   mode?: "create" | "edit" | "view";
@@ -88,6 +96,8 @@ export function BroadcastBuilderContainer({
     useState<BroadcastAudienceType>("all");
   const [sendMode, setSendMode] = useState<BroadcastSendMode>("now");
   const [scheduledFor, setScheduledFor] = useState("");
+  const [sentAt, setSentAt] = useState<string | null>(null);
+  const [viewTab, setViewTab] = useState<ViewTab>("details");
 
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [audiences, setAudiences] = useState<BroadcastAudienceOption[]>([]);
@@ -249,6 +259,11 @@ export function BroadcastBuilderContainer({
         setAudienceType(broadcast.audienceType);
         setSendMode(mapBroadcastStatusToSendMode(broadcast.status));
         setScheduledFor(toDatetimeLocalValue(broadcast.scheduledFor));
+        setSentAt(
+          broadcast.status === "completed" || broadcast.status === "failed"
+            ? broadcast.sentAt
+            : null,
+        );
       } catch (error) {
         if (!isCancelled) {
           setLoadError(
@@ -431,203 +446,110 @@ export function BroadcastBuilderContainer({
   }
 
   const fieldClassName = isReadOnly ? readOnlyInputClassName : inputClassName;
+  const showPerformance = isViewMode && Boolean(broadcastId) && Boolean(sentAt);
 
   return (
     <div className="space-y-6">
       <Breadcrumbs items={breadcrumbItems} />
 
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          {pageTitle}
-        </h1>
-        <p className="mt-2 text-gray-600 dark:text-gray-400">
-          {pageDescription}
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            {pageTitle}
+          </h1>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+            {showPerformance && sentAt
+              ? `Sent ${new Date(sentAt).toLocaleString("en-GB")}`
+              : pageDescription}
+          </p>
+        </div>
+        {showPerformance && (
+          <Tabs
+            value={viewTab}
+            onValueChange={(next) => setViewTab(next as ViewTab)}
+          >
+            <TabsList>
+              <TabsTrigger value="details" className={ACTIVE_TAB_CLASSES}>
+                <FileText data-icon="inline-start" />
+                Details
+              </TabsTrigger>
+              <TabsTrigger value="performance" className={ACTIVE_TAB_CLASSES}>
+                <BarChart3 data-icon="inline-start" />
+                Performance
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-        <div className="space-y-6">
-          <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-              Broadcast details
-            </h2>
-            <div className="grid gap-4">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Broadcast title *
-                </label>
-                <Input
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  className={fieldClassName}
-                  placeholder="Summer sale announcement"
-                  readOnly={isReadOnly}
-                  disabled={isReadOnly}
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Description
-                </label>
-                <textarea
-                  rows={3}
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  className={`${fieldClassName} resize-none`}
-                  placeholder="Optional notes about this broadcast"
-                  readOnly={isReadOnly}
-                  disabled={isReadOnly}
-                />
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-              Message *
-            </h2>
-            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              Choose a message template or rich message to send in this
-              broadcast
-            </p>
-            <div className="mb-4 grid gap-3 md:grid-cols-2">
-              {MESSAGE_SOURCE_OPTIONS.map((option) => (
-                <label
-                  key={option.value}
-                  className={`flex gap-3 rounded-lg border p-4 transition-colors ${
-                    isReadOnly ? "cursor-default" : "cursor-pointer"
-                  } ${
-                    messageSource === option.value
-                      ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
-                      : "border-gray-200 dark:border-gray-700"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="messageSource"
-                    value={option.value}
-                    checked={messageSource === option.value}
-                    onChange={() => handleMessageSourceChange(option.value)}
-                    className="mt-1"
+      {showPerformance && viewTab === "performance" && broadcastId ? (
+        <BroadcastPerformance broadcastId={broadcastId} broadcastName={title} />
+      ) : (
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+          <div className="space-y-6">
+            <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+                Broadcast details
+              </h2>
+              <div className="grid gap-4">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Broadcast title *
+                  </label>
+                  <Input
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                    className={fieldClassName}
+                    placeholder="Summer sale announcement"
+                    readOnly={isReadOnly}
                     disabled={isReadOnly}
                   />
-                  <span>
-                    <span className="block text-sm font-medium text-gray-900 dark:text-white">
-                      {option.label}
-                    </span>
-                    <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
-                      {option.description}
-                    </span>
-                  </span>
-                </label>
-              ))}
-            </div>
-            {sourceOptions.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
-                {messageSource === "rich-message"
-                  ? "No active rich messages found. Create a rich message first."
-                  : "No active templates found. Create a template first."}
-              </div>
-            ) : (
-              <select
-                value={templateId}
-                onChange={(event) => setTemplateId(event.target.value)}
-                className={fieldClassName}
-                disabled={isReadOnly}
-              >
-                {!templateId && (
-                  <option value="" disabled>
-                    Select a {sourceLabel}
-                  </option>
-                )}
-                {sourceOptions.map((template) => (
-                  <option key={template.id} value={template.id}>
-                    {messageSource === "rich-message"
-                      ? template.name
-                      : `${template.name} (${template.category})`}
-                  </option>
-                ))}
-              </select>
-            )}
-            {selectedTemplate && messageSource === "template" && (
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <Badge variant="secondary">{selectedTemplate.type}</Badge>
-                <span>{selectedTemplate.messages.length} message block(s)</span>
-              </div>
-            )}
-          </section>
-
-          <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-              Audience *
-            </h2>
-            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              Select who should receive this broadcast
-            </p>
-            <div className="grid gap-3">
-              {audiences.map((option) => (
-                <label
-                  key={option.value}
-                  className={`flex gap-3 rounded-lg border p-4 transition-colors ${
-                    isReadOnly ? "cursor-default" : "cursor-pointer"
-                  } ${
-                    audienceType === option.value
-                      ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
-                      : "border-gray-200 dark:border-gray-700"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="audienceType"
-                    value={option.value}
-                    checked={audienceType === option.value}
-                    onChange={() => setAudienceType(option.value)}
-                    className="mt-1"
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Description
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={description}
+                    onChange={(event) => setDescription(event.target.value)}
+                    className={`${fieldClassName} resize-none`}
+                    placeholder="Optional notes about this broadcast"
+                    readOnly={isReadOnly}
                     disabled={isReadOnly}
                   />
-                  <span className="flex-1">
-                    <span className="flex items-center justify-between gap-2">
-                      <span className="block text-sm font-medium text-gray-900 dark:text-white">
-                        {option.label}
-                      </span>
-                      <Badge variant="outline">
-                        {option.count.toLocaleString()} users
-                      </Badge>
-                    </span>
-                    <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
-                      {option.description}
-                    </span>
-                  </span>
-                </label>
-              ))}
-            </div>
-          </section>
+                </div>
+              </div>
+            </section>
 
-          {!isViewMode && (
             <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-                Send options *
+                Message *
               </h2>
               <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                Send immediately, schedule for later, or save as draft
+                Choose a message template or rich message to send in this
+                broadcast
               </p>
-              <div className="grid gap-3 md:grid-cols-3">
-                {SEND_MODE_OPTIONS.map((option) => (
+              <div className="mb-4 grid gap-3 md:grid-cols-2">
+                {MESSAGE_SOURCE_OPTIONS.map((option) => (
                   <label
                     key={option.value}
-                    className={`flex cursor-pointer gap-3 rounded-lg border p-4 transition-colors ${
-                      sendMode === option.value
+                    className={`flex gap-3 rounded-lg border p-4 transition-colors ${
+                      isReadOnly ? "cursor-default" : "cursor-pointer"
+                    } ${
+                      messageSource === option.value
                         ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
                         : "border-gray-200 dark:border-gray-700"
                     }`}
                   >
                     <input
                       type="radio"
-                      name="sendMode"
+                      name="messageSource"
                       value={option.value}
-                      checked={sendMode === option.value}
-                      onChange={() => setSendMode(option.value)}
+                      checked={messageSource === option.value}
+                      onChange={() => handleMessageSourceChange(option.value)}
                       className="mt-1"
+                      disabled={isReadOnly}
                     />
                     <span>
                       <span className="block text-sm font-medium text-gray-900 dark:text-white">
@@ -640,31 +562,204 @@ export function BroadcastBuilderContainer({
                   </label>
                 ))}
               </div>
-
-              {sendMode === "schedule" && (
-                <div className="mt-4">
-                  <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Schedule date & time *
-                  </label>
-                  <Input
-                    type="datetime-local"
-                    value={scheduledFor}
-                    onChange={(event) => setScheduledFor(event.target.value)}
-                    className={inputClassName}
-                  />
+              {sourceOptions.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
+                  {messageSource === "rich-message"
+                    ? "No active rich messages found. Create a rich message first."
+                    : "No active templates found. Create a template first."}
+                </div>
+              ) : (
+                <select
+                  value={templateId}
+                  onChange={(event) => setTemplateId(event.target.value)}
+                  className={fieldClassName}
+                  disabled={isReadOnly}
+                >
+                  {!templateId && (
+                    <option value="" disabled>
+                      Select a {sourceLabel}
+                    </option>
+                  )}
+                  {sourceOptions.map((template) => (
+                    <option key={template.id} value={template.id}>
+                      {messageSource === "rich-message"
+                        ? template.name
+                        : `${template.name} (${template.category})`}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {selectedTemplate && messageSource === "template" && (
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                  <Badge variant="secondary">{selectedTemplate.type}</Badge>
+                  <span>{selectedTemplate.messages.length} message block(s)</span>
                 </div>
               )}
             </section>
-          )}
 
-          {isViewMode && (
             <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
               <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-                Send options
+                Audience *
               </h2>
+              <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                Select who should receive this broadcast
+              </p>
+              <div className="grid gap-3">
+                {audiences.map((option) => (
+                  <label
+                    key={option.value}
+                    className={`flex gap-3 rounded-lg border p-4 transition-colors ${
+                      isReadOnly ? "cursor-default" : "cursor-pointer"
+                    } ${
+                      audienceType === option.value
+                        ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
+                        : "border-gray-200 dark:border-gray-700"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="audienceType"
+                      value={option.value}
+                      checked={audienceType === option.value}
+                      onChange={() => setAudienceType(option.value)}
+                      className="mt-1"
+                      disabled={isReadOnly}
+                    />
+                    <span className="flex-1">
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="block text-sm font-medium text-gray-900 dark:text-white">
+                          {option.label}
+                        </span>
+                        <Badge variant="outline">
+                          {option.count.toLocaleString()} users
+                        </Badge>
+                      </span>
+                      <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+                        {option.description}
+                      </span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </section>
+
+            {!isViewMode && (
+              <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
+                  Send options *
+                </h2>
+                <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                  Send immediately, schedule for later, or save as draft
+                </p>
+                <div className="grid gap-3 md:grid-cols-3">
+                  {SEND_MODE_OPTIONS.map((option) => (
+                    <label
+                      key={option.value}
+                      className={`flex cursor-pointer gap-3 rounded-lg border p-4 transition-colors ${
+                        sendMode === option.value
+                          ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/20"
+                          : "border-gray-200 dark:border-gray-700"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="sendMode"
+                        value={option.value}
+                        checked={sendMode === option.value}
+                        onChange={() => setSendMode(option.value)}
+                        className="mt-1"
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-gray-900 dark:text-white">
+                          {option.label}
+                        </span>
+                        <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+                          {option.description}
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+
+                {sendMode === "schedule" && (
+                  <div className="mt-4">
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Schedule date & time *
+                    </label>
+                    <Input
+                      type="datetime-local"
+                      value={scheduledFor}
+                      onChange={(event) => setScheduledFor(event.target.value)}
+                      className={inputClassName}
+                    />
+                  </div>
+                )}
+              </section>
+            )}
+
+            {isViewMode && (
+              <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
+                  Send options
+                </h2>
+                <dl className="space-y-3 text-sm">
+                  <div className="flex items-start justify-between gap-4">
+                    <dt className="text-gray-500 dark:text-gray-400">Mode</dt>
+                    <dd className="text-right font-medium text-gray-900 dark:text-white">
+                      {
+                        SEND_MODE_OPTIONS.find((item) => item.value === sendMode)
+                          ?.label
+                      }
+                    </dd>
+                  </div>
+                  {sendMode === "schedule" && scheduledFor && (
+                    <div className="flex items-start justify-between gap-4">
+                      <dt className="text-gray-500 dark:text-gray-400">
+                        Scheduled for
+                      </dt>
+                      <dd className="text-right font-medium text-gray-900 dark:text-white">
+                        {new Date(scheduledFor).toLocaleString()}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </section>
+            )}
+          </div>
+
+          <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
+            <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
+                Broadcast summary
+              </h2>
+              <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                Review your settings before sending
+              </p>
               <dl className="space-y-3 text-sm">
                 <div className="flex items-start justify-between gap-4">
-                  <dt className="text-gray-500 dark:text-gray-400">Mode</dt>
+                  <dt className="text-gray-500 dark:text-gray-400">Audience</dt>
+                  <dd className="text-right font-medium text-gray-900 dark:text-white">
+                    {selectedAudience?.label ?? "—"}
+                  </dd>
+                </div>
+                <div className="flex items-start justify-between gap-4">
+                  <dt className="text-gray-500 dark:text-gray-400">Recipients</dt>
+                  <dd className="text-right font-medium text-gray-900 dark:text-white">
+                    {selectedAudience?.count.toLocaleString() ?? "0"}
+                  </dd>
+                </div>
+                <div className="flex items-start justify-between gap-4">
+                  <dt className="text-gray-500 dark:text-gray-400">
+                    {messageSource === "rich-message"
+                      ? "Rich message"
+                      : "Template"}
+                  </dt>
+                  <dd className="text-right font-medium text-gray-900 dark:text-white">
+                    {selectedTemplate?.name ?? "—"}
+                  </dd>
+                </div>
+                <div className="flex items-start justify-between gap-4">
+                  <dt className="text-gray-500 dark:text-gray-400">Send mode</dt>
                   <dd className="text-right font-medium text-gray-900 dark:text-white">
                     {
                       SEND_MODE_OPTIONS.find((item) => item.value === sendMode)
@@ -672,85 +767,31 @@ export function BroadcastBuilderContainer({
                     }
                   </dd>
                 </div>
-                {sendMode === "schedule" && scheduledFor && (
-                  <div className="flex items-start justify-between gap-4">
-                    <dt className="text-gray-500 dark:text-gray-400">
-                      Scheduled for
-                    </dt>
-                    <dd className="text-right font-medium text-gray-900 dark:text-white">
-                      {new Date(scheduledFor).toLocaleString()}
-                    </dd>
-                  </div>
-                )}
               </dl>
             </section>
-          )}
-        </div>
 
-        <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">
-          <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-              Broadcast summary
-            </h2>
-            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              Review your settings before sending
-            </p>
-            <dl className="space-y-3 text-sm">
-              <div className="flex items-start justify-between gap-4">
-                <dt className="text-gray-500 dark:text-gray-400">Audience</dt>
-                <dd className="text-right font-medium text-gray-900 dark:text-white">
-                  {selectedAudience?.label ?? "—"}
-                </dd>
-              </div>
-              <div className="flex items-start justify-between gap-4">
-                <dt className="text-gray-500 dark:text-gray-400">Recipients</dt>
-                <dd className="text-right font-medium text-gray-900 dark:text-white">
-                  {selectedAudience?.count.toLocaleString() ?? "0"}
-                </dd>
-              </div>
-              <div className="flex items-start justify-between gap-4">
-                <dt className="text-gray-500 dark:text-gray-400">
-                  {messageSource === "rich-message"
-                    ? "Rich message"
-                    : "Template"}
-                </dt>
-                <dd className="text-right font-medium text-gray-900 dark:text-white">
-                  {selectedTemplate?.name ?? "—"}
-                </dd>
-              </div>
-              <div className="flex items-start justify-between gap-4">
-                <dt className="text-gray-500 dark:text-gray-400">Send mode</dt>
-                <dd className="text-right font-medium text-gray-900 dark:text-white">
-                  {
-                    SEND_MODE_OPTIONS.find((item) => item.value === sendMode)
-                      ?.label
-                  }
-                </dd>
-              </div>
-            </dl>
-          </section>
-
-          <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-              LINE OA Preview
-            </h2>
-            <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
-              See how messages will appear before sending
-            </p>
-            {isLoadingPreview ? (
-              <div className="flex items-center justify-center py-16 text-gray-500">
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Loading preview...
-              </div>
-            ) : (
-              <LineOaPreview
-                messages={previewMessagesToShow}
-                templateName={selectedTemplate?.name ?? title}
-              />
-            )}
-          </section>
+            <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <h2 className="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
+                LINE OA Preview
+              </h2>
+              <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
+                See how messages will appear before sending
+              </p>
+              {isLoadingPreview ? (
+                <div className="flex items-center justify-center py-16 text-gray-500">
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Loading preview...
+                </div>
+              ) : (
+                <LineOaPreview
+                  messages={previewMessagesToShow}
+                  templateName={selectedTemplate?.name ?? title}
+                />
+              )}
+            </section>
+          </div>
         </div>
-      </div>
+      )}
 
       <FormActionFooter
         mode={isViewMode ? "view" : isEditMode ? "edit" : "create"}
