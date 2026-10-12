@@ -173,6 +173,9 @@ export function BroadcastPerformance({
 
   const { tracking, insight } = summary;
   const canSync = tracking.state !== "unavailable" && !insight?.isFinal;
+  const hasLinkClicks = summary.links.some(
+    (link) => link.totalClicks > 0 || (link.lineClicks ?? 0) > 0,
+  );
 
   return (
     <div className="space-y-6">
@@ -227,7 +230,7 @@ export function BroadcastPerformance({
         </p>
       </div>
 
-      <TrackingLinksTable links={summary.links} />
+      {hasLinkClicks ? <TrackingLinksTable links={summary.links} /> : null}
 
       {recipientsState.error ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300">
