@@ -5,7 +5,11 @@ export type TrackingRecipientFilter = "all" | "clicked" | "not_clicked";
 
 export interface BroadcastTrackingLink {
   id: string;
-  url: string;
+  /** `uri` = tracked link; `message` = area/button that sends text (webhook). */
+  actionType: "uri" | "message";
+  url: string | null;
+  /** Text a message action sends, e.g. "Buy now". */
+  text: string | null;
   label: string | null;
   source: string;
   position: number;
@@ -27,8 +31,12 @@ export interface BroadcastTrackingSummary {
   metrics: {
     reach: number;
     failed: number;
-    /** Unique impressions from LINE Insight; null when hidden or not synced. */
+    /** max(LINE unique impressions, unique clickers); null when neither exists. */
     read: number | null;
+    /** Raw LINE Insight unique impressions (null when hidden / not synced). */
+    lineRead: number | null;
+    /** True when read is the unique-clicker count (above LINE's number). */
+    readFromClicks: boolean;
     readRate: number | null;
     uniqueClicks: number;
     totalClicks: number;
@@ -44,6 +52,8 @@ export interface BroadcastTrackingSummary {
     syncError: string | null;
     syncedAt: string;
   } | null;
+  /** Whether LINE Insight returned per-link click numbers at all. */
+  hasLineLinkStats: boolean;
   links: BroadcastTrackingLink[];
 }
 

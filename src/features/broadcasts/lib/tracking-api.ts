@@ -24,22 +24,6 @@ export async function fetchBroadcastTracking(
   return response.json();
 }
 
-export async function syncBroadcastTracking(
-  broadcastId: string,
-): Promise<BroadcastTrackingSummary> {
-  const response = await fetch(
-    API_ENDPOINTS.BROADCASTS.TRACKING_SYNC(broadcastId),
-    {
-      method: "POST",
-      headers: getAuthHeaders(),
-    },
-  );
-
-  await assertOkResponse(response, "Failed to refresh LINE Insight");
-
-  return response.json();
-}
-
 export async function fetchTrackingRecipients(
   broadcastId: string,
   query: TrackingRecipientsQuery,

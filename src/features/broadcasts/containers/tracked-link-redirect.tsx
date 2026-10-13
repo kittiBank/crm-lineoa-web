@@ -43,10 +43,22 @@ async function resolveIdentity(): Promise<LiffIdentity> {
       return {};
     }
 
-    return {
-      idToken: liff.getIDToken() ?? undefined,
-      lineUserId: liff.getDecodedIDToken()?.sub,
-    };
+    // The ID token only exists when the LIFF app has the `openid` scope;
+    // otherwise fall back to the context / profile like the other LIFF pages.
+    const idToken = liff.getIDToken() ?? undefined;
+    const lineUserId =
+      liff.getDecodedIDToken()?.sub ??
+      liff.getContext()?.userId ??
+      (await withTimeout(
+        liff
+          .getProfile()
+          .then((profile) => profile.userId)
+          .catch(() => null),
+        LIFF_INIT_TIMEOUT_MS,
+      )) ??
+      undefined;
+
+    return { idToken, lineUserId };
   } catch {
     return {};
   }
