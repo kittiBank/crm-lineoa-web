@@ -13,13 +13,19 @@ const LOGIN_RETRY_AFTER_MS = 60_000;
 type LiffIdentity = { idToken?: string; lineUserId?: string };
 
 /**
- * LINE opens /?liff.state=/liff/r/{id} and our root page redirects before
- * liff.init() runs there, which drops the LIFF credentials. Inside LINE a
- * login round-trip is silent, so re-authenticate once (same as /liff/login).
+ * Fallback for when the LIFF credentials did not survive the entry redirect
+ * (see LiffEntryRedirect). Inside LINE a login round-trip is silent, so
+ * re-authenticate once (same as /liff/login).
  * Returns true when the page is navigating away to LINE login.
  */
+function isInLineApp(): boolean {
+  // isInClient() can read false when the LIFF context was lost, so also
+  // check the LINE in-app browser user agent ("... Line/14.x.x").
+  return liff.isInClient() || /\bLine\//i.test(navigator.userAgent);
+}
+
 function startSilentLogin(linkId: string): boolean {
-  if (!liff.isInClient()) {
+  if (!isInLineApp()) {
     return false;
   }
 
