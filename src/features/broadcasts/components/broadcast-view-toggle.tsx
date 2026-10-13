@@ -9,9 +9,10 @@ interface BroadcastViewToggleProps {
   onValueChange: (value: BroadcastViewMode) => void;
 }
 
-// Match the SearchFilters "Search" button color for the active tab.
+// Match the SearchFilters "Search" button color for the active tab, sized like
+// the broadcast view page's Details / Performance tabs.
 const ACTIVE_TAB_CLASSES =
-  "data-active:bg-blue-600 data-active:text-white dark:data-active:border-transparent dark:data-active:bg-blue-600 dark:data-active:text-white";
+  "px-4 has-data-[icon=inline-start]:pl-3 data-active:bg-blue-600 data-active:text-white dark:data-active:border-transparent dark:data-active:bg-blue-600 dark:data-active:text-white";
 
 /**
  * Switches the broadcasts page between the table list and the calendar view.
@@ -26,7 +27,7 @@ export function BroadcastViewToggle({
         value={value}
         onValueChange={(next) => onValueChange(next as BroadcastViewMode)}
       >
-        <TabsList>
+        <TabsList className="p-1 group-data-horizontal/tabs:h-10">
           <TabsTrigger value="list" className={ACTIVE_TAB_CLASSES}>
             <LayoutList data-icon="inline-start" />
             List

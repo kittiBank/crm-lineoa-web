@@ -1,4 +1,9 @@
 import { TrendingUp, BarChart3, Clock } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface MetricsCardProps {
   title: string;
@@ -8,6 +13,8 @@ interface MetricsCardProps {
   footer?: string;
   footerEnd?: string;
   icon?: React.ReactNode;
+  /** Shown in a hover tooltip on a filled "i" next to the title. */
+  info?: React.ReactNode;
   trend?: {
     value: number;
     isPositive: boolean;
@@ -30,6 +37,7 @@ export function MetricCard({
   footer,
   footerEnd,
   icon,
+  info,
   trend,
   progress,
 }: MetricsCardProps) {
@@ -43,10 +51,21 @@ export function MetricCard({
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
       {/* Header with icon */}
       <div className="flex items-start justify-between mb-3">
-        <div>
+        <div className="flex items-center gap-1.5">
           <p className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">
             {title}
           </p>
+          {info ? (
+            <Tooltip>
+              <TooltipTrigger
+                aria-label={`About ${title}`}
+                className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gray-400 text-[10px] font-bold leading-none text-white hover:bg-blue-600 focus-visible:outline-2 focus-visible:outline-blue-500 dark:bg-gray-500 dark:hover:bg-blue-500"
+              >
+                i
+              </TooltipTrigger>
+              <TooltipContent>{info}</TooltipContent>
+            </Tooltip>
+          ) : null}
         </div>
         {icon && <div className="text-blue-600 dark:text-blue-400">{icon}</div>}
       </div>

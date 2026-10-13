@@ -1,6 +1,11 @@
 import { Download, Loader2, Search } from "lucide-react";
 import { Pagination } from "../pagination";
 import {
+  UserTierBadge,
+  UserTypeBadge,
+} from "@/features/line-users/components/line-user-table";
+import { UserTier } from "@/features/line-users/types";
+import {
   BroadcastTrackingRecipientsResponse,
   TrackingRecipientFilter,
 } from "../../types/tracking";
@@ -127,7 +132,8 @@ export function TrackingRecipientsTable({
             <tr>
               <th className={`${headerClassName} w-16`}>No.</th>
               <th className={headerClassName}>LINE user</th>
-              <th className={headerClassName}>Type / Tier</th>
+              <th className={headerClassName}>Type</th>
+              <th className={headerClassName}>Tier</th>
               <th className={`${headerClassName} text-right`}>Clicks</th>
               <th className={headerClassName}>First click</th>
               <th className={headerClassName}>Last click</th>
@@ -165,9 +171,17 @@ export function TrackingRecipientsTable({
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                    {row.userType ?? "—"}
-                    {row.userTier ? ` · ${row.userTier}` : ""}
+                  <td className="px-4 py-3">
+                    {row.userType ? (
+                      <UserTypeBadge userType={row.userType} />
+                    ) : (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        —
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <UserTierBadge userTier={row.userTier as UserTier | null} />
                   </td>
                   <td className="px-4 py-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
                     {row.clickCount > 0 ? row.clickCount.toLocaleString() : "—"}
@@ -183,7 +197,7 @@ export function TrackingRecipientsTable({
             ) : (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400"
                 >
                   {isLoading ? "Loading recipients..." : "No recipients match"}

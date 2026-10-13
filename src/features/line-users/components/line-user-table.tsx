@@ -44,7 +44,7 @@ function StatusBadge({ status }: { status: UserStatus }) {
   );
 }
 
-function UserTypeBadge({ userType }: { userType: string }) {
+export function UserTypeBadge({ userType }: { userType: string }) {
   const typeStyles: Record<string, string> = {
     Member: "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300",
     Guest: "bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300",
@@ -59,7 +59,7 @@ function UserTypeBadge({ userType }: { userType: string }) {
   );
 }
 
-function UserTierBadge({ userTier }: { userTier: UserTier | null }) {
+export function UserTierBadge({ userTier }: { userTier: UserTier | null }) {
   if (!userTier) {
     return (
       <span className="text-xs text-gray-500 dark:text-gray-400">—</span>

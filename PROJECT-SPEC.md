@@ -729,57 +729,55 @@ This project should demonstrate the following skills:
 - [Done] หน้า Create New Audience เพิ่ม Section preview result ใช้ filter ข้อมูลตามที่เลือก (live estimate + cached member count)
 - [Done] หน้า Create New Audience เพิ่ม filter User Tier (Silver / Gold / Platinum) คู่กับ User Type
 - [Done] หน้า LINE Users เพิ่มคอลัมน์ User Tier (Silver / Gold / Platinum)
-- หน้า Create Rich menu เพิ่ม Validate ไฟล์ภาพ png, jpg ขนาดไฟล์ และ size ตามที่ line กำหนดเท่านั้น
+- [Done] หน้า Create Rich menu เพิ่ม Validate ไฟล์ภาพ png, jpg ขนาดไฟล์ และ size ตามที่ line กำหนดเท่านั้น
 - [Done] หน้า Create Rich menu เพิ่มแบบ custom area วาดได้
 - [Done] หน้า Create Rich menu ให้เลือก layout น้อยลง แบบ Big, compact, Custom (พร้อม default grid ใต้ Big/Compact)
 - [Done] หน้า Create message เพิ่ม Default img / video / carousel (ไฟล์ใน `public/defaults`) + อัปโหลด video พร้อม thumbnail อัตโนมัติ
 - [Done]หน้า Create message เพิ่ม Merge Tag ข้อมูล linruser กับ flex msg ได้
-- หน้า Brodcast มีให้เลือก custome audience 
-
 - [Done] Sidebar ปิด Link prefetch เพื่อไม่โหลดหน้าเมนูอื่นล่วงหน้าบน prod
-- refc โหลดแต่ละหน้าให้ fetch api ไม่เบิ้ลกัน
-- ทำ Chahing เพิ่ในแต่ละเมนู จะได้โหลดไวขึ้น
-- หน้า Brodcast เพิ่ม TARGET specific audience แบบ ddl (ต้องไปสร้าง audienct มาก่อน)
-- ทำ User tracking reach, read
-- ทำ Import user ใช้ทำ audience group map user ระบบกับ line ได้ เช่น VIP 
+- // หน้า Brodcast เพิ่ม TARGET specific audience แบบ ddl (ต้องไปสร้าง audienct มาก่อน)
+- [Done] ทำ User tracking reach, read
+- [Done] ทำ Import user ใช้ทำ audience group map user ระบบกับ line ได้ เช่น VIP 
 - [Done] ทำ LINE OA Settings ให้ดึงข้อมูลจาก DB มาถ้ามี Disabled ui ไว้เปลี่ยน concection และ test connected ได้
-- ทำ User Settings ให้มี defualt password และส่งเมลล์ไปให้ user เปลี่ยน password เอง
-- ปรับหน้า Dashboard ให้ filter ข้อมูลตาม date picker ได้
-- ทำ Switching rich menu ได้
+- // ทำ User Settings ให้มี defualt password และส่งเมลล์ไปให้ user เปลี่ยน password เอง
+- [Done] ปรับหน้า Dashboard ให้ filter ข้อมูลตาม date picker ได้
+- ปรับหน้า Dashboard design ใหม่ให้ดูข้อมูลได้หลากหลายมากขึ้น เช่น block user, tier, Sale, Brodcast tracking
 - [Done] ทำ Skeleton loading หน้า Dashboard
 - [Done] ทำ Skeleton loading หน้า Message template
 - [Done] ทำ Skeleton loading หน้า Brodcast
-- เพิ่ม Skeleton loading แต่ละเมนู
-- เพิ่ม เมนูจัดการ Stock Ecom Liff
-- เพิ่ม เมนูจัดการ นัดหมาย Clinic Liff
-- เพิ่ม Import user ใช้ Map กับ Line เพื่อจัดกลุ่ม Audience
-- ทำ Tag เพิ่มจาก Liff Ecom ว่าใครคือลูกค้าใหม่, ซื้อซ้ำ x ครั้ง
-- เปลี่ยน Toast ใช้ของ Sandui
-- เพิ่ม Export excel ได้หลัง Brodcast แล้ว
-
-- เพิ่มหน้าจัดการ Liff Content เช่น หน้า Ecom จัด layout ต่างๆ มี live preview เอา url ไปใส่ rich menu ได้
-- เพิ่มการทำระบบ Coupoun สะสมแต้มจาก LineOA
-- เพิ่มหน้า Brodcast planner แบบ Calendar view คล่าวๆ
-
-- เพิ่ม Unit test 
-- เพิ่ม E2E Test
-- เปลี่ยนเมนู จาก line user เป็น Customer Management กด View popup ดูข้อมูลละเอียดได้เพิ่ม เช่น Customer Info เบอร์, Mail, Address, ประวัติการสั่งซื้อ
-- Inbox chat 1:1 assign agent ได้ให้คนนั้นตอบ Chat history Status: Open / Pending / Closed
-- ทำ Noti แจ้งเตือนผูกกับ user ตอบแชทได้, แจ้งเตือน message จากไลน์\
-- เพิ่มเมนู Automation workflow เช่น User เพิ่มเพื่อน > ส่งข้อความ welcome > รอ 1 วัน > ส่ง Promotion
-- เพิ่มเมนู Liff builder จัดการหน้า Ecom สินค้าได้
-- เพิ่มเมนู Liff builder จัดการหน้า Contents
-- เพิ่มเมนู Liff builder จัดการหน้า นัดหมายได้
-- เพิ่ม Animation frammer ui
-
-- หน้า LINE Users เพิ่ม filter ตาม User Tier
-- หน้า Create Audience preview แสดงรายชื่อ user ตัวอย่างที่ตรง filter
-- หน้า Audience กด Recalculate / refresh member count ได้
-- หน้า View Audience ดูรายชื่อสมาชิกในกลุ่มได้
-- หน้า Create Audience บันทึกแล้วไปใช้เลือกเป็น TARGET ใน Broadcast ได้เลย
-- ทำระบบ Notification approve กระดิ่ง
+- [Done] เพิ่ม เมนูจัดการ Stock Ecom Liff
+- [Done] เพิ่ม Import user ใช้ Map กับ Line เพื่อจัดกลุ่ม Audience
+- // ทำ Tag เพิ่มจาก Liff Ecom ว่าใครคือลูกค้าใหม่, ซื้อซ้ำ x ครั้ง
+- [Done] เพิ่ม Export excel ได้หลัง Brodcast แล้ว
+- [Done] เพิ่มหน้าจัดการ Liff Content เช่น หน้า Ecom จัด layout ต่างๆ มี live preview เอา url ไปใส่ rich menu ได้
+- ทำ Switching rich menu ได้
+- // เพิ่มการทำระบบ Coupoun สะสมแต้มจาก LineOA
+- [Done]เพิ่มหน้า Brodcast planner แบบ Calendar view คล่าวๆ
+- [Done] เพิ่ม Unit test 
+- [Done] เพิ่ม E2E Test
+- //หน้า Brodcast มีให้เลือก custome audience 
+- // Inbox chat 1:1 assign agent ได้ให้คนนั้นตอบ Chat history Status: Open / Pending / Closed
+- ทำ Noti แจ้งเตือนผูกกับ user ตอบแชทได้, แจ้งเตือน message จากไลน์
+- [Done] เพิ่มเมนู Liff builder จัดการหน้า Ecom สินค้าได้
+- [Done] หน้า LINE Users เพิ่ม filter ตาม User Tier
+- // หน้า Create Audience preview แสดงรายชื่อ user ตัวอย่างที่ตรง filter
 - ปรับ Navbar มีชื่อ user, role
 
+<!-- ทำทีหลัง -->
+- เปลี่ยน Toast ใช้ของ Sandui
+- เพิ่ม Skeleton loading แต่ละเมนู
+- เพิ่ม Animation frammer ui
+- refc โหลดแต่ละหน้าให้ fetch api ไม่เบิ้ลกัน
+- ทำ Chahing เพิ่ในแต่ละเมนู จะได้โหลดไวขึ้น
+- เพิ่มเมนู Automation workflow เช่น User เพิ่มเพื่อน > ส่งข้อความ welcome > รอ 1 วัน > ส่ง Promotion
 
 
+<!-- ข้ามไม่ทำ -->
+- เมนูจัดการ นัดหมาย Clinic Liff
+- เปลี่ยนเมนู จาก line user เป็น Customer Management กด View popup ดูข้อมูลละเอียดได้เพิ่ม เช่น Customer Info เบอร์, Mail, Address, ประวัติการสั่งซื้อ
+- เพิ่มเมนู Liff builder จัดการหน้า Contents
+- เพิ่มเมนู Liff builder จัดการหน้า นัดหมายได้
+- หน้า Audience กด Recalculate / refresh member count ได้
+- หน้า View Audience ดูรายชื่อสมาชิกในกลุ่มได้
+- ทำระบบ Notification approve กระดิ่ง
 
