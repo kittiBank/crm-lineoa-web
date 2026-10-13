@@ -1,4 +1,4 @@
-import { ExternalLink, MessageSquareText } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { BroadcastTrackingLink } from "../../types/tracking";
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -21,12 +21,9 @@ export function hasLinkClicks(link: BroadcastTrackingLink): boolean {
 function ActionCell({ link }: { link: BroadcastTrackingLink }) {
   if (link.actionType === "message") {
     return (
-      <div className="flex min-w-0 items-center gap-2">
-        <MessageSquareText className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
-        <span className="truncate text-sm font-medium text-gray-900 dark:text-white">
-          &ldquo;{link.text}&rdquo;
-        </span>
-      </div>
+      <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+        &ldquo;{link.text}&rdquo;
+      </p>
     );
   }
 

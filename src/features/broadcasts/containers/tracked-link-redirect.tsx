@@ -5,9 +5,41 @@ import liff from "@line/liff";
 import { Loader2 } from "lucide-react";
 import { recordTrackedClick } from "../lib/tracked-link";
 
-const LIFF_INIT_TIMEOUT_MS = 5000;
+const LIFF_INIT_TIMEOUT_MS = 10000;
+/** One silent login attempt per link per minute — never loop on failure. */
+const LOGIN_ATTEMPT_KEY = "liff-r-login";
+const LOGIN_RETRY_AFTER_MS = 60_000;
 
 type LiffIdentity = { idToken?: string; lineUserId?: string };
+
+/**
+ * LINE opens /?liff.state=/liff/r/{id} and our root page redirects before
+ * liff.init() runs there, which drops the LIFF credentials. Inside LINE a
+ * login round-trip is silent, so re-authenticate once (same as /liff/login).
+ * Returns true when the page is navigating away to LINE login.
+ */
+function startSilentLogin(linkId: string): boolean {
+  if (!liff.isInClient()) {
+    return false;
+  }
+
+  const key = `${LOGIN_ATTEMPT_KEY}:${linkId}`;
+  try {
+    const lastAttempt = Number(sessionStorage.getItem(key) ?? 0);
+    if (Date.now() - lastAttempt < LOGIN_RETRY_AFTER_MS) {
+      return false;
+    }
+    sessionStorage.setItem(key, String(Date.now()));
+  } catch {
+    // Without storage we can't guard against a loop — record anonymously.
+    return false;
+  }
+
+  liff.login({
+    redirectUri: `${window.location.origin}${window.location.pathname}`,
+  });
+  return true;
+}
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
   return Promise.race([
@@ -17,11 +49,12 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
 }
 
 /**
- * Identifies the LINE user without forcing a login: inside LINE the user is
- * always logged in; in an external browser the click is recorded anonymously.
+ * Identifies the LINE user: inside LINE via LIFF (silently logging in again if
+ * needed); in an external browser the click is recorded anonymously.
  * `?lineUserId=` works as a local-test shortcut, like the other LIFF pages.
+ * Resolves to null when the page is redirecting to LINE login.
  */
-async function resolveIdentity(): Promise<LiffIdentity> {
+async function resolveIdentity(linkId: string): Promise<LiffIdentity | null> {
   const mockLineUserId =
     new URLSearchParams(window.location.search).get("lineUserId")?.trim() ||
     process.env.NEXT_PUBLIC_LIFF_MOCK_USER_ID?.trim();
@@ -39,8 +72,12 @@ async function resolveIdentity(): Promise<LiffIdentity> {
       liff.init({ liffId }).then(() => true),
       LIFF_INIT_TIMEOUT_MS,
     );
-    if (!ready || !liff.isLoggedIn()) {
+    if (!ready) {
       return {};
+    }
+
+    if (!liff.isLoggedIn()) {
+      return startSilentLogin(linkId) ? null : {};
     }
 
     // The ID token only exists when the LIFF app has the `openid` scope;
@@ -80,7 +117,11 @@ export function TrackedLinkRedirect({ linkId }: TrackedLinkRedirectProps) {
     startedRef.current = true;
 
     const run = async () => {
-      const identity = await resolveIdentity();
+      const identity = await resolveIdentity(linkId);
+      if (!identity) {
+        // Navigating to LINE login; this page reloads with credentials.
+        return;
+      }
       const url = await recordTrackedClick({ linkId, ...identity });
 
       if (url) {
