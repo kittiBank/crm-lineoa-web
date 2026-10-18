@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BarChart3, FileText, Loader2 } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
@@ -17,6 +18,8 @@ import {
 import { normalizeTemplateMessages } from "@/features/templates/lib/create-message";
 import { TemplateMessageBlock } from "@/features/templates/types/builder";
 import { MessageTemplate } from "@/features/templates/types";
+import { fetchAudiences } from "@/features/audiences/lib/api";
+import { Audience } from "@/features/audiences/types";
 import {
   createBroadcast,
   fetchBroadcastAudiences,
@@ -33,6 +36,7 @@ import { BroadcastPerformance } from "@/features/broadcasts/containers/broadcast
 import {
   BroadcastAudienceOption,
   BroadcastAudienceType,
+  BroadcastRecord,
   BroadcastSendMode,
   SEND_MODE_OPTIONS,
 } from "@/features/broadcasts/types";
@@ -65,6 +69,12 @@ const MESSAGE_SOURCE_OPTIONS: {
 const isRichMessage = (template: MessageTemplate) =>
   template.type === "imagemap";
 
+const CUSTOM_AUDIENCE_OPTION = {
+  value: "custom" as const,
+  label: "Custom Audience",
+  description: "Send to a saved audience you created",
+};
+
 type ViewTab = "details" | "performance";
 
 // Match the broadcasts list view toggle, one size up for the page-level tabs.
@@ -94,6 +104,11 @@ export function BroadcastBuilderContainer({
   const [templateId, setTemplateId] = useState("");
   const [audienceType, setAudienceType] =
     useState<BroadcastAudienceType>("all");
+  const [customAudienceId, setCustomAudienceId] = useState("");
+  // Audience saved on the broadcast; kept so view mode can show it even
+  // after it was deactivated and dropped from the active list.
+  const [savedAudience, setSavedAudience] =
+    useState<BroadcastRecord["audience"]>(null);
   const [sendMode, setSendMode] = useState<BroadcastSendMode>("now");
   const [scheduledFor, setScheduledFor] = useState("");
   const [sentAt, setSentAt] = useState<string | null>(null);
@@ -101,6 +116,7 @@ export function BroadcastBuilderContainer({
 
   const [templates, setTemplates] = useState<MessageTemplate[]>([]);
   const [audiences, setAudiences] = useState<BroadcastAudienceOption[]>([]);
+  const [customAudiences, setCustomAudiences] = useState<Audience[]>([]);
   const [previewMessages, setPreviewMessages] = useState<
     TemplateMessageBlock[]
   >([]);
@@ -140,10 +156,26 @@ export function BroadcastBuilderContainer({
     setTemplateId(options[0]?.id ?? "");
   };
 
-  const selectedAudience = useMemo(
-    () => audiences.find((item) => item.value === audienceType) ?? null,
-    [audiences, audienceType],
-  );
+  const selectedAudience = useMemo(() => {
+    if (audienceType !== "custom") {
+      return audiences.find((item) => item.value === audienceType) ?? null;
+    }
+
+    const audience =
+      customAudiences.find((item) => item.id === customAudienceId) ??
+      (savedAudience?.id === customAudienceId ? savedAudience : null);
+
+    return audience
+      ? { label: audience.name, count: audience.memberCount }
+      : null;
+  }, [audiences, audienceType, customAudiences, customAudienceId, savedAudience]);
+
+  const handleAudienceTypeChange = (type: BroadcastAudienceType) => {
+    setAudienceType(type);
+    if (type === "custom" && !customAudienceId) {
+      setCustomAudienceId(customAudiences[0]?.id ?? "");
+    }
+  };
 
   const pageTitle = isViewMode
     ? "View Broadcast"
@@ -185,10 +217,12 @@ export function BroadcastBuilderContainer({
     const loadOptions = async () => {
       setIsLoadingOptions(true);
       try {
-        const [templateList, audienceList] = await Promise.all([
-          fetchTemplates(),
-          fetchBroadcastAudiences(),
-        ]);
+        const [templateList, audienceList, customAudienceList] =
+          await Promise.all([
+            fetchTemplates(),
+            fetchBroadcastAudiences(),
+            fetchAudiences(),
+          ]);
 
         if (isCancelled) {
           return;
@@ -199,6 +233,9 @@ export function BroadcastBuilderContainer({
         );
         setTemplates(activeTemplates);
         setAudiences(audienceList);
+        setCustomAudiences(
+          customAudienceList.filter((audience) => audience.isActive),
+        );
 
         const firstTemplate = activeTemplates.find(
           (template) => !isRichMessage(template),
@@ -257,6 +294,8 @@ export function BroadcastBuilderContainer({
         );
         setTemplateId(broadcast.templateId ?? "");
         setAudienceType(broadcast.audienceType);
+        setCustomAudienceId(broadcast.audienceId ?? "");
+        setSavedAudience(broadcast.audience);
         setSendMode(mapBroadcastStatusToSendMode(broadcast.status));
         setScheduledFor(toDatetimeLocalValue(broadcast.scheduledFor));
         setSentAt(
@@ -349,6 +388,11 @@ export function BroadcastBuilderContainer({
       return false;
     }
 
+    if (audienceType === "custom" && !customAudienceId) {
+      toast.error("Please select a custom audience");
+      return false;
+    }
+
     if (sendMode === "schedule") {
       if (!scheduledFor) {
         toast.error("Please choose a schedule date and time");
@@ -388,6 +432,7 @@ export function BroadcastBuilderContainer({
         description: description.trim() || undefined,
         templateId,
         audienceType,
+        audienceId: audienceType === "custom" ? customAudienceId : undefined,
         status,
         scheduledFor:
           sendMode === "schedule"
@@ -605,7 +650,7 @@ export function BroadcastBuilderContainer({
                 Select who should receive this broadcast
               </p>
               <div className="grid gap-3">
-                {audiences.map((option) => (
+                {[...audiences, CUSTOM_AUDIENCE_OPTION].map((option) => (
                   <label
                     key={option.value}
                     className={`flex gap-3 rounded-lg border p-4 transition-colors ${
@@ -621,7 +666,7 @@ export function BroadcastBuilderContainer({
                       name="audienceType"
                       value={option.value}
                       checked={audienceType === option.value}
-                      onChange={() => setAudienceType(option.value)}
+                      onChange={() => handleAudienceTypeChange(option.value)}
                       className="mt-1"
                       disabled={isReadOnly}
                     />
@@ -630,9 +675,11 @@ export function BroadcastBuilderContainer({
                         <span className="block text-sm font-medium text-gray-900 dark:text-white">
                           {option.label}
                         </span>
-                        <Badge variant="outline">
-                          {option.count.toLocaleString()} users
-                        </Badge>
+                        {"count" in option && (
+                          <Badge variant="outline">
+                            {option.count.toLocaleString()} users
+                          </Badge>
+                        )}
                       </span>
                       <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
                         {option.description}
@@ -641,6 +688,52 @@ export function BroadcastBuilderContainer({
                   </label>
                 ))}
               </div>
+              {audienceType === "custom" && (
+                <div className="mt-4">
+                  {customAudiences.length === 0 && !savedAudience ? (
+                    <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
+                      No saved audiences yet.{" "}
+                      <Link
+                        href="/audiences/create"
+                        className="font-medium text-blue-600 hover:underline dark:text-blue-400"
+                      >
+                        Create an audience
+                      </Link>{" "}
+                      first.
+                    </div>
+                  ) : (
+                    <select
+                      value={customAudienceId}
+                      onChange={(event) =>
+                        setCustomAudienceId(event.target.value)
+                      }
+                      className={fieldClassName}
+                      disabled={isReadOnly}
+                    >
+                      {!customAudienceId && (
+                        <option value="" disabled>
+                          Select an audience
+                        </option>
+                      )}
+                      {savedAudience &&
+                        !customAudiences.some(
+                          (audience) => audience.id === savedAudience.id,
+                        ) && (
+                          <option value={savedAudience.id}>
+                            {savedAudience.name} (
+                            {savedAudience.memberCount.toLocaleString()} users)
+                          </option>
+                        )}
+                      {customAudiences.map((audience) => (
+                        <option key={audience.id} value={audience.id}>
+                          {audience.name} (
+                          {audience.memberCount.toLocaleString()} users)
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              )}
             </section>
 
             {!isViewMode && (

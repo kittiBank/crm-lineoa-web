@@ -2,6 +2,7 @@ import {
   Broadcast,
   BroadcastAudienceOption,
   BroadcastAudienceType,
+  BroadcastBuiltInAudienceType,
   BroadcastRecord,
   BroadcastStats,
   BroadcastStatus,
@@ -20,11 +21,12 @@ const AUDIENCE_LABELS: Record<BroadcastAudienceType, string> = {
   all: "All Followers",
   active: "Active Users",
   new: "New Followers",
+  custom: "Custom Audience",
 };
 
 export function mapBroadcastRecordToBroadcast(
   record: BroadcastRecord,
-  audienceCounts?: Partial<Record<BroadcastAudienceType, number>>,
+  audienceCounts?: Partial<Record<BroadcastBuiltInAudienceType, number>>,
 ): Broadcast {
   const delivered =
     record.messageCount > 0
@@ -33,14 +35,18 @@ export function mapBroadcastRecordToBroadcast(
         ? 100
         : 0;
 
-  const audienceCount =
-    audienceCounts?.[record.audienceType] ?? record.messageCount;
+  const isCustom = record.audienceType === "custom";
+  const audienceCount = isCustom
+    ? (record.audience?.memberCount ?? record.messageCount)
+    : (audienceCounts?.[record.audienceType as BroadcastBuiltInAudienceType] ??
+      record.messageCount);
 
   return {
     id: record.id,
     campaignName: record.name,
-    targetAudience:
-      AUDIENCE_LABELS[record.audienceType] ?? record.audienceType,
+    targetAudience: isCustom
+      ? (record.audience?.name ?? "Deleted audience")
+      : (AUDIENCE_LABELS[record.audienceType] ?? record.audienceType),
     audienceCount,
     template: {
       id: record.template?.id ?? record.templateId ?? "",
@@ -59,8 +65,10 @@ export function mapBroadcastRecordToBroadcast(
 
 export function mapAudienceCounts(
   audiences: BroadcastAudienceOption[],
-): Partial<Record<BroadcastAudienceType, number>> {
-  return audiences.reduce<Partial<Record<BroadcastAudienceType, number>>>(
+): Partial<Record<BroadcastBuiltInAudienceType, number>> {
+  return audiences.reduce<
+    Partial<Record<BroadcastBuiltInAudienceType, number>>
+  >(
     (counts, audience) => {
       counts[audience.value] = audience.count;
       return counts;
