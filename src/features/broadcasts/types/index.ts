@@ -9,7 +9,13 @@ export type BroadcastStatus =
   | "Failed"
   | "Processing";
 
-export type BroadcastAudienceType = "all" | "active" | "new";
+export type BroadcastAudienceType = "all" | "active" | "new" | "custom";
+
+/** Built-in audience types served by `GET /broadcasts/audiences`. */
+export type BroadcastBuiltInAudienceType = Exclude<
+  BroadcastAudienceType,
+  "custom"
+>;
 
 export type BroadcastSendMode = "now" | "schedule" | "draft";
 
@@ -53,10 +59,16 @@ export interface BroadcastRecord {
     name: string;
     type: string;
   } | null;
+  audienceId: string | null;
+  audience: {
+    id: string;
+    name: string;
+    memberCount: number;
+  } | null;
 }
 
 export interface BroadcastAudienceOption {
-  value: BroadcastAudienceType;
+  value: BroadcastBuiltInAudienceType;
   label: string;
   description: string;
   count: number;
@@ -67,6 +79,7 @@ export interface CreateBroadcastPayload {
   description?: string;
   templateId: string;
   audienceType: BroadcastAudienceType;
+  audienceId?: string;
   status: "draft" | "scheduled" | "processing";
   scheduledFor?: string;
 }
@@ -76,6 +89,7 @@ export interface UpdateBroadcastPayload {
   description?: string;
   templateId?: string;
   audienceType?: BroadcastAudienceType;
+  audienceId?: string;
   status?: "draft" | "scheduled" | "processing";
   scheduledFor?: string | null;
 }
