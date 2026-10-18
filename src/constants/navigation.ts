@@ -25,6 +25,12 @@ export const MENU_ITEMS: MenuItem[] = [
     icon: "LayoutDashboard",
   },
   {
+    id: "inbox",
+    label: "Inbox",
+    href: "/inbox",
+    icon: "MessagesSquare",
+  },
+  {
     id: "broadcasts",
     label: "Broadcasts",
     href: "/broadcasts",
@@ -155,6 +161,7 @@ export function isMenuChildActive(
  */
 export const BREADCRUMB_MAP: Record<string, string[]> = {
   "/dashboard": ["Dashboard"],
+  "/inbox": ["Inbox"],
   "/broadcasts": ["Broadcasts"],
   "/broadcasts/create": ["Broadcasts", "Create"],
   "/broadcasts/[id]": ["Broadcasts", "Edit"],

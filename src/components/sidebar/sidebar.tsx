@@ -11,11 +11,13 @@ import {
 } from "@/constants/navigation";
 import { useIsMounted } from "@/lib/hooks/useIsMounted";
 import { cn } from "@/lib/utils";
+import { useInboxUnread } from "@/features/inbox/lib/use-inbox-unread";
 import {
   ChevronDown,
   LayoutDashboard,
   Send,
   MessageSquare,
+  MessagesSquare,
   Bot,
   Users,
   UsersRound,
@@ -33,6 +35,7 @@ const iconMap: Record<string, React.ReactNode> = {
   LayoutDashboard: <LayoutDashboard className="h-[18px] w-[18px]" />,
   Send: <Send className="h-[18px] w-[18px]" />,
   MessageSquare: <MessageSquare className="h-[18px] w-[18px]" />,
+  MessagesSquare: <MessagesSquare className="h-[18px] w-[18px]" />,
   Bot: <Bot className="h-[18px] w-[18px]" />,
   Users: <Users className="h-[18px] w-[18px]" />,
   UsersRound: <UsersRound className="h-[18px] w-[18px]" />,
@@ -60,6 +63,7 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
   const pathname = usePathname();
   const mounted = useIsMounted();
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
+  const inboxUnread = useInboxUnread();
 
   useEffect(() => {
     if (!mounted) {
@@ -100,6 +104,7 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
       collapsed?: boolean;
       active: boolean;
       className?: string;
+      badge?: number;
     },
   ) => (
     <Link
@@ -115,9 +120,19 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
       }}
       className={options.className}
     >
-      {options.icon ? iconMap[options.icon] : null}
+      <span className="relative flex">
+        {options.icon ? iconMap[options.icon] : null}
+        {options.collapsed && Boolean(options.badge) && (
+          <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500" />
+        )}
+      </span>
       {!options.collapsed && (
         <span className="truncate font-medium">{label}</span>
+      )}
+      {!options.collapsed && Boolean(options.badge) && (
+        <span className="ml-auto rounded-full bg-red-500 px-1.5 text-[11px] leading-[18px] font-semibold text-white">
+          {options.badge! > 99 ? "99+" : options.badge}
+        </span>
       )}
     </Link>
   );
@@ -137,6 +152,7 @@ export function Sidebar({ collapsed = false }: SidebarProps) {
           {renderLink(href, item.label, {
             icon: item.icon,
             collapsed,
+            badge: item.id === "inbox" ? inboxUnread : undefined,
             active: mounted ? isMenuPathActive(pathname, href) : false,
             className: itemClassName(
               mounted ? isMenuPathActive(pathname, href) : false,
