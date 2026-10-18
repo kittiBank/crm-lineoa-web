@@ -13,6 +13,18 @@ export function setAuthToken(token: string, user?: unknown): void {
   }
 }
 
+/** ID of the signed-in user, from the profile saved at login. */
+export function getStoredUserId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(AUTH_USER_KEY);
+    const user = raw ? (JSON.parse(raw) as { id?: string }) : null;
+    return user?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function clearAuth(): void {
   localStorage.removeItem(AUTH_TOKEN_KEY);
   localStorage.removeItem(AUTH_USER_KEY);

@@ -63,6 +63,17 @@ export const API_ENDPOINTS = {
     PREVIEW: `${API_BASE_URL}/api/v1/audiences/preview`,
     DETAIL: (id: string) => `${API_BASE_URL}/api/v1/audiences/${id}`,
   },
+  INBOX: {
+    CONVERSATIONS: `${API_BASE_URL}/api/v1/inbox/conversations`,
+    CONVERSATION: (id: string) =>
+      `${API_BASE_URL}/api/v1/inbox/conversations/${id}`,
+    MESSAGES: (id: string) =>
+      `${API_BASE_URL}/api/v1/inbox/conversations/${id}/messages`,
+    READ: (id: string) =>
+      `${API_BASE_URL}/api/v1/inbox/conversations/${id}/read`,
+    SUMMARY: `${API_BASE_URL}/api/v1/inbox/summary`,
+    AGENTS: `${API_BASE_URL}/api/v1/inbox/agents`,
+  },
   AUDIENCE_IMPORTS: {
     JOBS: `${API_BASE_URL}/api/v1/audience-imports/jobs`,
     JOB: (id: string) => `${API_BASE_URL}/api/v1/audience-imports/jobs/${id}`,
