@@ -60,6 +60,22 @@ export interface AudienceEstimate {
   memberCount: number;
 }
 
+export interface AudiencePreviewUser {
+  id: string;
+  displayName: string | null;
+  pictureUrl: string | null;
+  userType: string;
+  userTier: string | null;
+  followedAt: string | null;
+  lastActivity: string | null;
+}
+
+export interface AudiencePreview {
+  type: AudienceSegmentType;
+  criteria: AudienceCriteria;
+  users: AudiencePreviewUser[];
+}
+
 export type AudienceWritableType = Exclude<
   AudienceSegmentType,
   "all" | "segment"
