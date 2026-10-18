@@ -2,7 +2,7 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { agentLabel, formatDate } from "../lib/format";
+import { agentFullLabel, formatDate } from "../lib/format";
 import {
   Conversation,
   ConversationStatus,
@@ -91,7 +91,7 @@ export function ConversationDetails({
             <option value="">Unassigned</option>
             {agents.map((agent) => (
               <option key={agent.id} value={agent.id}>
-                {agentLabel(agent)}
+                {agentFullLabel(agent)}
                 {agent.id === currentUserId ? " (you)" : ""}
               </option>
             ))}
@@ -126,7 +126,7 @@ export function ConversationDetails({
 
         {!canManage && (
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            Only {conversation.assignee ? agentLabel(conversation.assignee) : "the assignee"}{" "}
+            Only {conversation.assignee ? agentFullLabel(conversation.assignee) : "the assignee"}{" "}
             or an admin can change this conversation.
           </p>
         )}

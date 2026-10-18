@@ -49,3 +49,9 @@ export function formatDate(value: string | null): string {
 export function agentLabel(agent: { name: string | null; email: string }) {
   return agent.name?.trim() || agent.email;
 }
+
+/** Name plus email, so agents who share a name can be told apart. */
+export function agentFullLabel(agent: { name: string | null; email: string }) {
+  const name = agent.name?.trim();
+  return name ? `${name} (${agent.email})` : agent.email;
+}
