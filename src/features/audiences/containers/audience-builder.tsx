@@ -7,6 +7,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import { FormActionFooter } from "@/components/ui/form-footer";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/lib/hooks/useToast";
+import { AudiencePreview } from "@/features/audiences/components/audience-preview";
 import {
   createAudience,
   estimateMemberCount,
@@ -767,6 +768,16 @@ export function AudienceBuilderContainer({
               </div>
             )}
           </section>
+
+          <AudiencePreview
+            type={segmentType}
+            criteria={resolvedCriteria}
+            enabled={
+              usesLiveEstimate &&
+              !(includesUserType && (criteria.userTypes ?? []).length === 0)
+            }
+            totalCount={displayCount}
+          />
         </div>
 
         <div className="space-y-6 xl:sticky xl:top-6 xl:self-start">

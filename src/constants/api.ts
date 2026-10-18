@@ -60,6 +60,7 @@ export const API_ENDPOINTS = {
     LIST: `${API_BASE_URL}/api/v1/audiences`,
     CREATE: `${API_BASE_URL}/api/v1/audiences`,
     ESTIMATE: `${API_BASE_URL}/api/v1/audiences/estimate`,
+    PREVIEW: `${API_BASE_URL}/api/v1/audiences/preview`,
     DETAIL: (id: string) => `${API_BASE_URL}/api/v1/audiences/${id}`,
   },
   AUDIENCE_IMPORTS: {

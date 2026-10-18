@@ -9,6 +9,7 @@ import {
   Audience,
   AudienceCriteria,
   AudienceEstimate,
+  AudiencePreview,
   AudienceSegmentType,
   CreateAudiencePayload,
   UpdateAudiencePayload,
@@ -95,10 +96,10 @@ export function buildAudienceCriteria(
   }
 }
 
-export async function fetchAudienceEstimate(
+function buildAudienceCriteriaParams(
   type: AudienceSegmentType,
   criteria?: AudienceCriteria,
-): Promise<AudienceEstimate> {
+): URLSearchParams {
   const params = new URLSearchParams({ type });
   const includeUserType =
     type === "user_type" ||
@@ -130,6 +131,15 @@ export async function fetchAudienceEstimate(
     params.set("newFollowerDays", String(criteria.newFollowerDays));
   }
 
+  return params;
+}
+
+export async function fetchAudienceEstimate(
+  type: AudienceSegmentType,
+  criteria?: AudienceCriteria,
+): Promise<AudienceEstimate> {
+  const params = buildAudienceCriteriaParams(type, criteria);
+
   return dedupeAsync(
     `audiences:estimate:${params.toString()}`,
     async () => {
@@ -150,6 +160,43 @@ export async function fetchAudienceEstimate(
 
       if (!payload.success || !payload.data) {
         throw new Error("Failed to estimate audience members");
+      }
+
+      return payload.data;
+    },
+    { ttlMs: REMOUNT_DEDUPE_TTL_MS },
+  );
+}
+
+/** Sample of users matching the criteria (API caches it for 1 minute). */
+export async function fetchAudiencePreview(
+  type: AudienceSegmentType,
+  criteria?: AudienceCriteria,
+  limit = 10,
+): Promise<AudiencePreview> {
+  const params = buildAudienceCriteriaParams(type, criteria);
+  params.set("limit", String(limit));
+
+  return dedupeAsync(
+    `audiences:preview:${params.toString()}`,
+    async () => {
+      const response = await fetch(
+        `${API_ENDPOINTS.AUDIENCES.PREVIEW}?${params.toString()}`,
+        {
+          headers: getAuthHeaders(),
+          cache: "no-store",
+        },
+      );
+
+      await assertOkResponse(response, "Failed to load audience preview");
+
+      const payload = (await response.json()) as {
+        success?: boolean;
+        data?: AudiencePreview;
+      };
+
+      if (!payload.success || !payload.data) {
+        throw new Error("Failed to load audience preview");
       }
 
       return payload.data;
