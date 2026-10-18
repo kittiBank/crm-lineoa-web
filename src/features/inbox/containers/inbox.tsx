@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MessagesSquare } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
-import { getStoredUserId } from "@/lib/auth";
+import { getCurrentUserId } from "@/lib/auth";
 import { useToast } from "@/lib/hooks/useToast";
 import { ChatThread } from "../components/chat-thread";
 import { ConversationDetails } from "../components/conversation-details";
@@ -18,7 +18,7 @@ import {
   sendMessage,
   updateConversation,
 } from "../lib/api";
-import { agentLabel } from "../lib/format";
+import { agentFullLabel } from "../lib/format";
 import { usePolling } from "../lib/use-polling";
 import {
   Conversation,
@@ -55,7 +55,7 @@ function mergeConversations(current: Conversation[], fresh: Conversation[]) {
 
 export function InboxContainer() {
   const toast = useToast();
-  const [currentUserId] = useState(getStoredUserId);
+  const [currentUserId] = useState(getCurrentUserId);
 
   const [query, setQuery] = useState<ConversationQuery>({
     status: "OPEN",
@@ -275,7 +275,7 @@ export function InboxContainer() {
         payload.status
           ? `Conversation marked as ${payload.status.toLowerCase()}`
           : updated.assignee
-            ? `Assigned to ${agentLabel(updated.assignee)}`
+            ? `Assigned to ${agentFullLabel(updated.assignee)}`
             : "Conversation unassigned",
       );
     } catch (error) {
@@ -296,7 +296,7 @@ export function InboxContainer() {
       return "This user has blocked your LINE OA and can't receive messages.";
     }
     if (selected.assignee && selected.assignee.id !== currentUserId) {
-      return `Assigned to ${agentLabel(selected.assignee)}. Only they can reply.`;
+      return `Assigned to ${agentFullLabel(selected.assignee)}. Only they can reply.`;
     }
     return null;
   }, [selected, currentUserId]);
@@ -348,7 +348,7 @@ export function InboxContainer() {
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {selected.assignee
-                    ? `Assigned to ${selected.assignee.id === currentUserId ? "you" : agentLabel(selected.assignee)}`
+                    ? `Assigned to ${selected.assignee.id === currentUserId ? "you" : agentFullLabel(selected.assignee)}`
                     : "Unassigned — your first reply assigns it to you"}
                 </p>
               </div>

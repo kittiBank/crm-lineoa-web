@@ -13,13 +13,19 @@ export function setAuthToken(token: string, user?: unknown): void {
   }
 }
 
-/** ID of the signed-in user, from the profile saved at login. */
-export function getStoredUserId(): string | null {
-  if (typeof window === "undefined") return null;
+/**
+ * ID of the signed-in user, read from the JWT `sub` claim. Login returns
+ * only the token, so there is no saved profile to read it from.
+ */
+export function getCurrentUserId(): string | null {
+  const token = getToken();
+  const payload = token?.split(".")[1];
+  if (!payload) return null;
+
   try {
-    const raw = localStorage.getItem(AUTH_USER_KEY);
-    const user = raw ? (JSON.parse(raw) as { id?: string }) : null;
-    return user?.id ?? null;
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const claims = JSON.parse(atob(base64)) as { sub?: unknown };
+    return typeof claims.sub === "string" ? claims.sub : null;
   } catch {
     return null;
   }
