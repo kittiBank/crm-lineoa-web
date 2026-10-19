@@ -1,15 +1,56 @@
 "use client";
 
+import { useState } from "react";
 import { LineUser, UserStatus, UserTier } from "../types";
-import { Eye, MoreVertical, Pencil } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 import { CustomerTagList } from "./customer-tag-badge";
 
 interface LineUserTableProps {
   users: LineUser[];
   startIndex?: number;
-  onView?: (id: string) => void;
-  onEditTier?: (user: LineUser) => void;
-  onMore?: (id: string) => void;
+}
+
+function maskLineUserId(lineUserId: string): string {
+  if (lineUserId.length <= 12) return lineUserId;
+  return `${lineUserId.slice(0, 5)}…${lineUserId.slice(-5)}`;
+}
+
+function LineUserIdCopy({ lineUserId }: { lineUserId: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(lineUserId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API unavailable — full ID is still shown in the tooltip.
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <span
+        className="text-xs font-mono text-gray-500 dark:text-gray-400"
+        title={lineUserId}
+      >
+        {maskLineUserId(lineUserId)}
+      </span>
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="p-0.5 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 rounded transition-colors"
+        title={copied ? "Copied" : "Copy LINE user ID"}
+        aria-label="Copy LINE user ID"
+      >
+        {copied ? (
+          <Check className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />
+        ) : (
+          <Copy className="w-3.5 h-3.5" />
+        )}
+      </button>
+    </div>
+  );
 }
 
 function formatDateTime(date: Date): string {
@@ -88,9 +129,6 @@ export function UserTierBadge({ userTier }: { userTier: UserTier | null }) {
 export function LineUserTable({
   users,
   startIndex = 0,
-  onView,
-  onEditTier,
-  onMore,
 }: LineUserTableProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -122,9 +160,6 @@ export function LineUserTable({
               <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Date Added
               </th>
-              <th className="px-4 py-4 text-center text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                Actions
-              </th>
             </tr>
           </thead>
 
@@ -152,9 +187,7 @@ export function LineUserTable({
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
                           {user.displayName}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {user.lineUserId}
-                        </p>
+                        <LineUserIdCopy lineUserId={user.lineUserId} />
                       </div>
                     </div>
                   </td>
@@ -186,40 +219,11 @@ export function LineUserTable({
                       {formatDateTime(user.dateAdded)}
                     </p>
                   </td>
-
-                  <td className="px-4 py-4">
-                    <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => onView?.(user.id)}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-                        title="View user"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      {onEditTier && (
-                        <button
-                          onClick={() => onEditTier(user)}
-                          className="inline-flex items-center gap-1 px-2 py-1 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                          title="Edit user tier"
-                          aria-label={`Edit tier of ${user.displayName}`}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                      )}
-                      <button
-                        onClick={() => onMore?.(user.id)}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-                        title="More options"
-                      >
-                        <MoreVertical className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={9} className="px-4 py-8 text-center">
+                <td colSpan={8} className="px-4 py-8 text-center">
                   <p className="text-gray-500 dark:text-gray-400 text-sm">
                     No users found. Try adjusting your search filters.
                   </p>
