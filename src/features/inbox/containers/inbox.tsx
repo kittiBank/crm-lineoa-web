@@ -1,10 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { MessagesSquare } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import { getCurrentUserId } from "@/lib/auth";
 import { useToast } from "@/lib/hooks/useToast";
+import {
+  useRealtimeConnected,
+  useRealtimeEvent,
+} from "@/lib/realtime/realtime-provider";
 import { ChatThread } from "../components/chat-thread";
 import { ConversationDetails } from "../components/conversation-details";
 import { ConversationList } from "../components/conversation-list";
@@ -31,6 +36,8 @@ import {
 
 const LIST_POLL_MS = 15_000;
 const THREAD_POLL_MS = 5_000;
+/** Safety net only; `inbox.updated` events drive refreshes while connected. */
+const CONNECTED_POLL_MS = 60_000;
 const SEARCH_DEBOUNCE_MS = 300;
 
 const errorMessage = (error: unknown, fallback: string) =>
@@ -55,6 +62,9 @@ function mergeConversations(current: Conversation[], fresh: Conversation[]) {
 
 export function InboxContainer() {
   const toast = useToast();
+  const router = useRouter();
+  const linkedId = useSearchParams().get("c");
+  const isRealtimeConnected = useRealtimeConnected();
   const [currentUserId] = useState(getCurrentUserId);
 
   const [query, setQuery] = useState<ConversationQuery>({
@@ -133,7 +143,7 @@ export function InboxContainer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  usePolling(async () => {
+  const refreshList = async () => {
     const queryAtStart = debouncedQuery;
     try {
       const page = await fetchConversations(queryAtStart);
@@ -142,7 +152,9 @@ export function InboxContainer() {
       // Next tick retries.
     }
     void refreshSummary();
-  }, LIST_POLL_MS);
+  };
+
+  usePolling(refreshList, isRealtimeConnected ? CONNECTED_POLL_MS : LIST_POLL_MS);
 
   const handleLoadMore = async () => {
     if (!nextCursor) return;
@@ -182,6 +194,10 @@ export function InboxContainer() {
   const handleSelect = async (id: string) => {
     if (selectedIdRef.current === id) return;
     selectedIdRef.current = id;
+    // Keep the URL shareable and in sync with notification links.
+    if (linkedId !== id) {
+      router.replace(`/inbox?c=${encodeURIComponent(id)}`, { scroll: false });
+    }
 
     const fromList = conversations.find((item) => item.id === id) ?? null;
     setSelected(fromList);
@@ -208,26 +224,47 @@ export function InboxContainer() {
     }
   };
 
+  // Opened from a notification or a shared /inbox?c=<id> link.
+  useEffect(() => {
+    if (linkedId && linkedId !== selectedIdRef.current) {
+      void handleSelect(linkedId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linkedId]);
+
+  const refreshThread = async () => {
+    const id = selectedIdRef.current;
+    if (!id) return;
+    try {
+      const [conversation, page] = await Promise.all([
+        fetchConversation(id),
+        fetchMessages(id),
+      ]);
+      if (selectedIdRef.current !== id) return;
+      applyConversation(conversation);
+      setMessages((current) => mergeMessages(current, page.items));
+      void markRead(conversation);
+    } catch {
+      // Next tick retries.
+    }
+  };
+
   usePolling(
-    async () => {
-      const id = selectedIdRef.current;
-      if (!id) return;
-      try {
-        const [conversation, page] = await Promise.all([
-          fetchConversation(id),
-          fetchMessages(id),
-        ]);
-        if (selectedIdRef.current !== id) return;
-        applyConversation(conversation);
-        setMessages((current) => mergeMessages(current, page.items));
-        void markRead(conversation);
-      } catch {
-        // Next tick retries.
-      }
-    },
-    THREAD_POLL_MS,
+    refreshThread,
+    isRealtimeConnected ? CONNECTED_POLL_MS : THREAD_POLL_MS,
     Boolean(selected),
   );
+
+  useRealtimeEvent<{ conversationId: string }>("inbox.updated", (event) => {
+    void refreshList();
+    if (event.conversationId === selectedIdRef.current) void refreshThread();
+  });
+
+  // Catch up on anything missed while the stream was reconnecting.
+  useRealtimeEvent("connected", () => {
+    void refreshList();
+    void refreshThread();
+  });
 
   const handleLoadOlder = async () => {
     const id = selectedIdRef.current;

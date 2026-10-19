@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { InboxContainer } from "@/features/inbox/containers/inbox";
 
 /**
@@ -7,5 +8,10 @@ import { InboxContainer } from "@/features/inbox/containers/inbox";
  * 1:1 chat with LINE followers, agent assignment and conversation status
  */
 export default function InboxPage() {
-  return <InboxContainer />;
+  // useSearchParams (the ?c= deep link) needs a Suspense boundary.
+  return (
+    <Suspense>
+      <InboxContainer />
+    </Suspense>
+  );
 }

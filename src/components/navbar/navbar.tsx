@@ -1,7 +1,26 @@
 "use client";
 
 import { LogOut, Settings, User } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { API_ENDPOINTS } from "@/constants/api";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
+import { getAuthHeaders } from "@/lib/api-client";
+
+interface Profile {
+  name: string | null;
+  email: string;
+}
+
+function initialsOf(profile: Profile | null): string {
+  const source = profile?.name?.trim() || profile?.email || "";
+  const words = source.split(/[\s@._-]+/).filter(Boolean);
+  return (
+    words
+      .slice(0, 2)
+      .map((word) => word[0]!.toUpperCase())
+      .join("") || "?"
+  );
+}
 
 /**
  * Top navigation bar component
@@ -10,6 +29,17 @@ import { useState } from "react";
 export function Navbar() {
   // State for mobile menu dropdown
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    fetch(API_ENDPOINTS.AUTH.PROFILE, {
+      headers: getAuthHeaders(),
+      cache: "no-store",
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: Profile | null) => data && setProfile(data))
+      .catch(() => undefined); // Falls back to the placeholder initials.
+  }, []);
 
   return (
     <nav className="w-full bg-gradient-to-r from-blue-400 to-blue-600 border-b border-blue-700 shadow-lg h-16 flex items-center">
@@ -21,18 +51,24 @@ export function Navbar() {
       {/* Center spacer */}
       <div className="flex-1"></div>
 
-      {/* Right section - User menu */}
-      <div className="relative px-4 md:px-6">
+      {/* Right section - Notifications + user menu */}
+      <div className="relative flex items-center gap-1 px-4 md:px-6">
+        <NotificationBell />
+
         <button
           onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
           className="flex items-center gap-2 p-2 rounded-lg hover:bg-blue-300/30 transition-colors"
         >
           <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white text-sm font-bold border border-white/30">
-            AB
+            {initialsOf(profile)}
           </div>
           <div className="hidden sm:flex flex-col items-end">
-            <p className="text-sm font-medium text-white">Admin User</p>
-            <p className="text-xs text-blue-100">Admin</p>
+            <p className="text-sm font-medium text-white">
+              {profile?.name?.trim() || profile?.email || "\u00a0"}
+            </p>
+            {profile?.name?.trim() && (
+              <p className="text-xs text-blue-100">{profile.email}</p>
+            )}
           </div>
         </button>
 

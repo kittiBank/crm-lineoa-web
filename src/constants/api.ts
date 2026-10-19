@@ -8,6 +8,7 @@ export const API_BASE_URL =
 export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: `${API_BASE_URL}/api/v1/auth/login`,
+    PROFILE: `${API_BASE_URL}/api/v1/auth/profile`,
   },
   LINE: {
     ACCOUNT: `${API_BASE_URL}/api/v1/line/account`,
@@ -74,6 +75,14 @@ export const API_ENDPOINTS = {
     SUMMARY: `${API_BASE_URL}/api/v1/inbox/summary`,
     AGENTS: `${API_BASE_URL}/api/v1/inbox/agents`,
   },
+  NOTIFICATIONS: {
+    LIST: `${API_BASE_URL}/api/v1/notifications`,
+    UNREAD_COUNT: `${API_BASE_URL}/api/v1/notifications/unread-count`,
+    READ: (id: string) => `${API_BASE_URL}/api/v1/notifications/${id}/read`,
+    READ_ALL: `${API_BASE_URL}/api/v1/notifications/read-all`,
+  },
+  /** Server-Sent Events; open with a fetch-based reader (see lib/realtime). */
+  REALTIME_STREAM: `${API_BASE_URL}/api/v1/realtime/stream`,
   AUDIENCE_IMPORTS: {
     JOBS: `${API_BASE_URL}/api/v1/audience-imports/jobs`,
     JOB: (id: string) => `${API_BASE_URL}/api/v1/audience-imports/jobs/${id}`,
