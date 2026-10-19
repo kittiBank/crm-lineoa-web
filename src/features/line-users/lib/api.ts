@@ -2,7 +2,14 @@ import { API_ENDPOINTS } from "@/constants/api";
 import { assertOkResponse, getAuthHeaders } from "@/lib/api-client";
 import { getToken } from "@/lib/auth";
 import { dedupeAsync, REMOUNT_DEDUPE_TTL_MS } from "@/lib/dedupe-async";
-import { FilterOptions, LineUser, UserTier, isUserTier } from "../types";
+import { isCustomerTag } from "@/constants/customer-tag";
+import {
+  CustomerTagItem,
+  FilterOptions,
+  LineUser,
+  UserTier,
+  isUserTier,
+} from "../types";
 
 export interface LineUsersResponse {
   data: LineUserApiItem[];
@@ -24,7 +31,7 @@ export interface LineUserApiItem {
   assignedTier?: UserTier | null;
   phone?: string;
   status: "Active" | "Blocked" | "Unfollowed";
-  tags: string[];
+  tags: CustomerTagItem[];
   lastActive: string;
   dateAdded: string;
   followedDate?: string;
@@ -41,7 +48,8 @@ function mapApiUserToLineUser(user: LineUserApiItem): LineUser {
     assignedTier: isUserTier(user.assignedTier) ? user.assignedTier : null,
     phone: user.phone,
     status: user.status,
-    tags: user.tags,
+    // Skip keys this build doesn't know yet (API may add tags first).
+    tags: (user.tags ?? []).filter((tag) => isCustomerTag(tag.key)),
     lastActive: new Date(user.lastActive),
     dateAdded: new Date(user.dateAdded),
     followedDate: user.followedDate ? new Date(user.followedDate) : undefined,
@@ -68,6 +76,10 @@ export async function fetchLineUsers(
 
   if (filters.dateRange) {
     params.set("dateRange", filters.dateRange);
+  }
+
+  if (filters.tag !== "All") {
+    params.set("tag", filters.tag);
   }
 
   return dedupeAsync(

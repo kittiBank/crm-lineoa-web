@@ -31,10 +31,18 @@ export function inferRulesFromAudience(
     if (criteria.newFollowerDays) {
       rules.push("new");
     }
+    if ((criteria.customerTags ?? []).length > 0) {
+      rules.push("customer_tag");
+    }
     return rules.length > 0 ? rules : ["active"];
   }
 
-  if (type === "user_type" || type === "active" || type === "new") {
+  if (
+    type === "user_type" ||
+    type === "active" ||
+    type === "new" ||
+    type === "customer_tag"
+  ) {
     return [type];
   }
 
@@ -67,6 +75,10 @@ export function criteriaForRules(
 
   if (rules.includes("new")) {
     next.newFollowerDays = current.newFollowerDays ?? 14;
+  }
+
+  if (rules.includes("customer_tag")) {
+    next.customerTags = current.customerTags ?? [];
   }
 
   if (rules.length >= 2) {

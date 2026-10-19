@@ -2,6 +2,7 @@
 
 import { LineUser, UserStatus, UserTier } from "../types";
 import { Eye, MoreVertical, Pencil } from "lucide-react";
+import { CustomerTagList } from "./customer-tag-badge";
 
 interface LineUserTableProps {
   users: LineUser[];
@@ -171,27 +172,7 @@ export function LineUserTable({
                   </td>
 
                   <td className="px-4 py-4">
-                    <div className="flex flex-wrap gap-1">
-                      {user.tags.length > 0 ? (
-                        user.tags.slice(0, 2).map((tag, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
-                          >
-                            {tag}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          No tags
-                        </span>
-                      )}
-                      {user.tags.length > 2 && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
-                          +{user.tags.length - 2}
-                        </span>
-                      )}
-                    </div>
+                    <CustomerTagList tags={user.tags} />
                   </td>
 
                   <td className="px-4 py-4">

@@ -15,6 +15,7 @@ import {
   UpdateAudiencePayload,
 } from "../types";
 import { isUserTier } from "@/constants/user-tier";
+import { isCustomerTag } from "@/constants/customer-tag";
 
 /**
  * Client-side estimate for form preview.
@@ -47,6 +48,7 @@ export function estimateMemberCount(
       if (days <= 14) return 1620;
       return 3100;
     }
+    case "customer_tag":
     case "combined":
     case "segment":
       return 0;
@@ -72,6 +74,10 @@ export function buildAudienceCriteria(
       return { activityDays: criteria.activityDays };
     case "new":
       return { newFollowerDays: criteria.newFollowerDays };
+    case "customer_tag":
+      return {
+        customerTags: (criteria.customerTags ?? []).filter(isCustomerTag),
+      };
     case "combined": {
       const next: AudienceCriteria = {
         match: criteria.match === "or" ? "or" : "and",
@@ -88,6 +94,10 @@ export function buildAudienceCriteria(
       }
       if (criteria.newFollowerDays) {
         next.newFollowerDays = criteria.newFollowerDays;
+      }
+      const customerTags = (criteria.customerTags ?? []).filter(isCustomerTag);
+      if (customerTags.length > 0) {
+        next.customerTags = customerTags;
       }
       return next;
     }
@@ -109,6 +119,9 @@ function buildAudienceCriteriaParams(
   const includeNew =
     type === "new" ||
     (type === "combined" && Boolean(criteria?.newFollowerDays));
+  const includeCustomerTags =
+    type === "customer_tag" ||
+    (type === "combined" && (criteria?.customerTags ?? []).length > 0);
 
   if (type === "combined") {
     params.set("match", criteria?.match === "or" ? "or" : "and");
@@ -129,6 +142,12 @@ function buildAudienceCriteriaParams(
 
   if (includeNew && criteria?.newFollowerDays) {
     params.set("newFollowerDays", String(criteria.newFollowerDays));
+  }
+
+  if (includeCustomerTags) {
+    for (const tag of criteria?.customerTags ?? []) {
+      params.append("customerTags", tag);
+    }
   }
 
   return params;

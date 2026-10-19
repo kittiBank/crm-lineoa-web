@@ -22,6 +22,8 @@ function TypeBadge({
     active:
       "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400",
     new: "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400",
+    customer_tag:
+      "bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400",
     combined:
       "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400",
     segment:

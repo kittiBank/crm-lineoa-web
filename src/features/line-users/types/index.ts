@@ -7,9 +7,20 @@ import {
   UserTier,
   isUserTier,
 } from "@/constants/user-tier";
+import { CustomerTag } from "@/constants/customer-tag";
 
 export type UserType = "Member" | "Guest";
 export type UserStatus = "Active" | "Blocked" | "Unfollowed";
+
+/** Auto customer tag from shop orders (see constants/customer-tag). */
+export interface CustomerTagItem {
+  key: CustomerTag;
+  /** Repeat count, gap days or month spend, depending on the tag. */
+  value: number | null;
+  /** When the tag ends; null = permanent. */
+  expiresAt: string | null;
+  since: string;
+}
 export { USER_TIERS, UserTier, isUserTier };
 
 export interface LineUser {
@@ -25,7 +36,7 @@ export interface LineUser {
   /** Verified tel no (Members only). */
   phone?: string;
   status: UserStatus;
-  tags: string[];
+  tags: CustomerTagItem[];
   lastActive: Date;
   dateAdded: Date;
   followedDate?: Date;
@@ -36,6 +47,7 @@ export interface FilterOptions {
   userType: UserType | "All";
   status: UserStatus | "All";
   dateRange: string;
+  tag: CustomerTag | "All";
 }
 
 export const DEFAULT_FILTER_OPTIONS: FilterOptions = {
@@ -43,4 +55,5 @@ export const DEFAULT_FILTER_OPTIONS: FilterOptions = {
   userType: "All",
   status: "All",
   dateRange: "",
+  tag: "All",
 };

@@ -7,6 +7,7 @@ import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import { FormActionFooter } from "@/components/ui/form-footer";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/lib/hooks/useToast";
+import { CUSTOMER_TAG_DEFINITIONS, CustomerTag } from "@/constants/customer-tag";
 import { AudiencePreview } from "@/features/audiences/components/audience-preview";
 import {
   createAudience,
@@ -30,6 +31,7 @@ import {
   AudienceMatchMode,
   AudienceUserTierFilter,
   AudienceUserTypeFilter,
+  CUSTOMER_TAG_FILTER_OPTIONS,
   NEW_FOLLOWER_DAY_OPTIONS,
   TargetingRule,
   USER_TIER_FILTER_OPTIONS,
@@ -50,6 +52,7 @@ type AudienceFormErrors = {
   userTypes?: string;
   activityDays?: string;
   newFollowerDays?: string;
+  customerTags?: string;
 };
 
 function RequiredMark() {
@@ -124,6 +127,10 @@ export function AudienceBuilderContainer({
   const includesUserType = selectedRules.includes("user_type");
   const includesActive = selectedRules.includes("active");
   const includesNew = selectedRules.includes("new");
+  const includesCustomerTags = selectedRules.includes("customer_tag");
+  const hasRequiredSelections =
+    !(includesUserType && (criteria.userTypes ?? []).length === 0) &&
+    !(includesCustomerTags && (criteria.customerTags ?? []).length === 0);
   const showMatchMode = selectedRules.length >= 2;
   const resolvedCriteria = useMemo(
     () => ({
@@ -143,6 +150,7 @@ export function AudienceBuilderContainer({
     (segmentType === "user_type" ||
       segmentType === "active" ||
       segmentType === "new" ||
+      segmentType === "customer_tag" ||
       segmentType === "combined");
 
   const displayCount =
@@ -207,7 +215,7 @@ export function AudienceBuilderContainer({
       return;
     }
 
-    if (includesUserType && (criteria.userTypes ?? []).length === 0) {
+    if (!hasRequiredSelections) {
       setLiveEstimateCount(0);
       setIsEstimatingMembers(false);
       return;
@@ -249,12 +257,13 @@ export function AudienceBuilderContainer({
     usesLiveEstimate,
     selectedRules.length,
     segmentType,
-    includesUserType,
+    hasRequiredSelections,
     matchMode,
     criteria.userTypes,
     criteria.userTiers,
     criteria.activityDays,
     criteria.newFollowerDays,
+    criteria.customerTags,
   ]);
 
   const applyRules = (rules: TargetingRule[]) => {
@@ -266,6 +275,9 @@ export function AudienceBuilderContainer({
       userTypes: rules.includes("user_type") ? prev.userTypes : undefined,
       activityDays: rules.includes("active") ? prev.activityDays : undefined,
       newFollowerDays: rules.includes("new") ? prev.newFollowerDays : undefined,
+      customerTags: rules.includes("customer_tag")
+        ? prev.customerTags
+        : undefined,
     }));
   };
 
@@ -312,6 +324,22 @@ export function AudienceBuilderContainer({
     setCriteria({ ...criteria, userTiers: next });
   };
 
+  const toggleCustomerTag = (tag: CustomerTag) => {
+    if (isReadOnly) return;
+
+    const current = criteria.customerTags ?? [];
+    const next = current.includes(tag)
+      ? current.filter((item) => item !== tag)
+      : [...current, tag];
+
+    setCriteria({ ...criteria, customerTags: next });
+    setErrors((prev) => ({
+      ...prev,
+      customerTags:
+        next.length === 0 ? "Select at least one customer tag" : undefined,
+    }));
+  };
+
   const validateForm = () => {
     const nextErrors: AudienceFormErrors = {};
 
@@ -329,6 +357,9 @@ export function AudienceBuilderContainer({
     }
     if (includesNew && !criteria.newFollowerDays) {
       nextErrors.newFollowerDays = "Select a new follower window";
+    }
+    if (includesCustomerTags && (criteria.customerTags ?? []).length === 0) {
+      nextErrors.customerTags = "Select at least one customer tag";
     }
 
     setErrors(nextErrors);
@@ -487,7 +518,8 @@ export function AudienceBuilderContainer({
               Targeting rules <RequiredMark />
             </h2>
             <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              Combine User Type, Active Users, and New Followers with AND or OR.
+              Combine User Type, Active Users, New Followers, and Customer Tags
+              with AND or OR.
               Targeting every follower is available when sending a broadcast.
             </p>
 
@@ -767,15 +799,64 @@ export function AudienceBuilderContainer({
                 <FieldError message={errors.newFollowerDays} />
               </div>
             )}
+
+            {includesCustomerTags && (
+              <div className="mt-5 space-y-3 border-t border-gray-200 pt-5 dark:border-gray-700">
+                <div>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    Customer tags <RequiredMark />
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Users with any selected tag are included. Spend tags also
+                    include higher levels, e.g. ฿5k+ includes ฿10k+.
+                  </p>
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {CUSTOMER_TAG_FILTER_OPTIONS.map((option) => {
+                    const checked =
+                      criteria.customerTags?.includes(option.value) ?? false;
+
+                    return (
+                      <label
+                        key={option.value}
+                        className={`rounded-lg border p-4 transition-colors ${optionCardClass(
+                          {
+                            isReadOnly,
+                            isSelected: checked,
+                            hasError: Boolean(errors.customerTags),
+                          },
+                        )}`}
+                      >
+                        <span className="flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => toggleCustomerTag(option.value)}
+                            className="mt-1"
+                            disabled={isReadOnly}
+                          />
+                          <span>
+                            <span className="text-sm font-medium text-gray-900 dark:text-white">
+                              {option.label}
+                            </span>
+                            <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+                              {option.description}
+                            </span>
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <FieldError message={errors.customerTags} />
+              </div>
+            )}
           </section>
 
           <AudiencePreview
             type={segmentType}
             criteria={resolvedCriteria}
-            enabled={
-              usesLiveEstimate &&
-              !(includesUserType && (criteria.userTypes ?? []).length === 0)
-            }
+            enabled={usesLiveEstimate && hasRequiredSelections}
             totalCount={displayCount}
           />
         </div>
@@ -877,6 +958,20 @@ export function AudienceBuilderContainer({
                   </dt>
                   <dd className="text-right font-medium text-gray-900 dark:text-white">
                     Last {criteria.newFollowerDays ?? "—"} days
+                  </dd>
+                </div>
+              )}
+              {includesCustomerTags && (
+                <div className="flex items-start justify-between gap-4">
+                  <dt className="text-gray-500 dark:text-gray-400">
+                    Customer tags
+                  </dt>
+                  <dd className="text-right font-medium text-gray-900 dark:text-white">
+                    {(criteria.customerTags ?? []).length > 0
+                      ? (criteria.customerTags ?? [])
+                          .map((tag) => CUSTOMER_TAG_DEFINITIONS[tag].label)
+                          .join(", ")
+                      : "—"}
                   </dd>
                 </div>
               )}

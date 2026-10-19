@@ -1,4 +1,5 @@
 import { faker } from "@faker-js/faker";
+import { CUSTOMER_TAGS } from "@/constants/customer-tag";
 import { LineUser, UserType, UserStatus, UserTier, USER_TIERS, FilterOptions } from "../types";
 
 /**
@@ -9,21 +10,12 @@ export function generateMockLineUsers(count: number = 50): LineUser[] {
   const userTypes: UserType[] = ["Member", "Guest"];
   const userTiers: Array<UserTier | null> = [null, ...USER_TIERS];
   const statuses: UserStatus[] = ["Active", "Blocked", "Unfollowed"];
-  const tagOptions = [
-    "VIP",
-    "Frequent Buyer",
-    "New User",
-    "Inactive",
-    "Premium",
-    "Engaged",
-    "Supporter",
-  ];
 
   return Array.from({ length: count }, () => {
     const tagsCount = faker.number.int({ min: 0, max: 3 });
     const selectedTags = Array.from(
       { length: tagsCount },
-      () => tagOptions[Math.floor(Math.random() * tagOptions.length)]
+      () => CUSTOMER_TAGS[Math.floor(Math.random() * CUSTOMER_TAGS.length)]
     );
 
     return {
@@ -35,7 +27,12 @@ export function generateMockLineUsers(count: number = 50): LineUser[] {
       userTier: userTiers[Math.floor(Math.random() * userTiers.length)],
       assignedTier: null,
       status: statuses[Math.floor(Math.random() * statuses.length)],
-      tags: [...new Set(selectedTags)], // Remove duplicates
+      tags: [...new Set(selectedTags)].map((key) => ({ // Remove duplicates
+        key,
+        value: null,
+        expiresAt: null,
+        since: faker.date.recent({ days: 30 }).toISOString(),
+      })),
       lastActive: faker.date.recent({ days: 30 }),
       dateAdded: faker.date.past({ years: 2 }),
       followedDate: faker.date.past({ years: 2 }),

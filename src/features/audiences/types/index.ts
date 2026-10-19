@@ -5,6 +5,11 @@ import {
   UserTier,
   isUserTier,
 } from "@/constants/user-tier";
+import {
+  CUSTOMER_TAG_DEFINITIONS,
+  CUSTOMER_TAGS,
+  CustomerTag,
+} from "@/constants/customer-tag";
 
 /**
  * Audience segment types for targeting LINE users
@@ -14,10 +19,16 @@ export type AudienceSegmentType =
   | "user_type"
   | "active"
   | "new"
+  | "customer_tag"
   | "combined"
   | "segment";
 
-export const COMBINABLE_AUDIENCE_RULES = ["user_type", "active", "new"] as const;
+export const COMBINABLE_AUDIENCE_RULES = [
+  "user_type",
+  "active",
+  "new",
+  "customer_tag",
+] as const;
 export type CombinableAudienceRule = (typeof COMBINABLE_AUDIENCE_RULES)[number];
 export type TargetingRule = CombinableAudienceRule;
 export type AudienceMatchMode = "and" | "or";
@@ -40,6 +51,8 @@ export interface AudienceCriteria {
   activityDays?: number;
   /** Days since follow when type = new or combined */
   newFollowerDays?: number;
+  /** Auto customer tags (match any) when type = customer_tag or combined */
+  customerTags?: CustomerTag[];
 }
 
 export interface Audience {
@@ -119,7 +132,23 @@ export const AUDIENCE_SEGMENT_OPTIONS: AudienceSegmentOption[] = [
     label: "New Followers",
     description: "Users who recently started following the OA. Can be combined with other rules.",
   },
+  {
+    value: "customer_tag",
+    label: "Customer Tags",
+    description:
+      "Auto tags from shop orders, e.g. repeat or high-spending customers. Can be combined with other rules.",
+  },
 ];
+
+export const CUSTOMER_TAG_FILTER_OPTIONS: {
+  value: CustomerTag;
+  label: string;
+  description: string;
+}[] = CUSTOMER_TAGS.map((value) => ({
+  value,
+  label: CUSTOMER_TAG_DEFINITIONS[value].label,
+  description: CUSTOMER_TAG_DEFINITIONS[value].description,
+}));
 
 export const USER_TYPE_FILTER_OPTIONS: {
   value: AudienceUserTypeFilter;
@@ -156,6 +185,7 @@ export const AUDIENCE_TYPE_LABELS: Record<AudienceSegmentType, string> = {
   user_type: "User Type",
   active: "Active",
   new: "New",
+  customer_tag: "Customer Tags",
   combined: "Combined",
   segment: "Segment",
 };
