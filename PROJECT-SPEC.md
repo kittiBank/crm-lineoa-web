@@ -750,7 +750,7 @@ This project should demonstrate the following skills:
 - [Done]เพิ่มหน้า Brodcast planner แบบ Calendar view คล่าวๆ
 - [Done] เพิ่ม Unit test 
 - [Done] เพิ่ม E2E Test
-- ทำ Noti แจ้งเตือนผูกกับ user ตอบแชทได้, แจ้งเตือน message จากไลน์
+- [Done] ทำ Noti แจ้งเตือนผูกกับ user ตอบแชทได้, แจ้งเตือน message จากไลน์
 - [Done] เพิ่มเมนู Liff builder จัดการหน้า Ecom สินค้าได้
 - [Done] หน้า LINE Users เพิ่ม filter ตาม User Tier
 - [Done] หน้า Create Audience preview แสดงรายชื่อ user ตัวอย่างที่ตรง filter
@@ -759,9 +759,10 @@ This project should demonstrate the following skills:
 - // เพิ่มการทำระบบ Coupoun สะสมแต้มจาก LineOA
 - [Done] หน้า Brodcast มีให้เลือก custome audience 
 - [Done] ทำ Tag เพิ่มจาก Liff Ecom ว่าใครคือลูกค้าใหม่, ซื้อซ้ำ x ครั้ง
-- // ทำ User Settings ให้มี defualt password และส่งเมลล์ไปให้ user เปลี่ยน password เอง
-- // ปรับหน้า Dashboard design ใหม่ให้ดูข้อมูลได้หลากหลายมากขึ้น เพิ่ม Filter btn แบ่งตามกลุ่มของ User tracking (อยากให้มีส่วน block, active user ได้ด้วย), Sale Tracnking (เอาข้อมูลจาก EcomLiff), Brodcast Tracking (จากการ Brodcast)
+- [Done] ทำ User Settings ให้มี defualt password Setup by Superadmin map กับ lineOA
+- [Done] ปรับหน้า Dashboard design ใหม่ให้ดูข้อมูลได้หลากหลายมากขึ้น เพิ่ม Filter btn แบ่งตามกลุ่มของ User tracking (อยากให้มีส่วน block, active user ได้ด้วย), Sale Tracnking (เอาข้อมูลจาก EcomLiff), Brodcast Tracking (จากการ Brodcast)
 - [Done] เพิ่ม LineOA mapping กับ user admin รองรับการทำงานหลาย LineOA และแสดง lineOA name บน Navbar
+- [Done] ปรับ Navbar มีชื่อ user, role
 
 <!-- ทำทีหลัง -->
 - เปลี่ยน Toast ใช้ของ Sandui
@@ -770,7 +771,6 @@ This project should demonstrate the following skills:
 - refc โหลดแต่ละหน้าให้ fetch api ไม่เบิ้ลกัน
 - ทำ Chahing เพิ่ในแต่ละเมนู จะได้โหลดไวขึ้น
 - เพิ่มเมนู Automation workflow เช่น User เพิ่มเพื่อน > ส่งข้อความ welcome > รอ 1 วัน > ส่ง Promotion
-- ปรับ Navbar มีชื่อ user, role
 
 
 

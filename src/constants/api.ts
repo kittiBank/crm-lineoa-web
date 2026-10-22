@@ -10,6 +10,12 @@ export const API_ENDPOINTS = {
     LOGIN: `${API_BASE_URL}/api/v1/auth/login`,
     PROFILE: `${API_BASE_URL}/api/v1/auth/profile`,
   },
+  ADMIN: {
+    LINE_ACCOUNTS: `${API_BASE_URL}/api/v1/admin/line-accounts`,
+    LINE_ACCOUNT: (id: string) =>
+      `${API_BASE_URL}/api/v1/admin/line-accounts/${id}`,
+    USERS: `${API_BASE_URL}/api/v1/admin/users`,
+  },
   LINE: {
     ACCOUNT: `${API_BASE_URL}/api/v1/line/account`,
     MESSAGE_QUOTA: `${API_BASE_URL}/api/v1/line/message-quota`,

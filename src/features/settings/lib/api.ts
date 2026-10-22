@@ -1,7 +1,7 @@
 import { API_ENDPOINTS } from "@/constants/api";
 import { AUTH_USER_KEY } from "@/lib/auth";
 import { assertOkResponse, getAuthHeaders } from "@/lib/api-client";
-import { LineAccountResponse } from "../types";
+import { AdminLineAccount, LineAccountResponse } from "../types";
 
 export const LINE_ACCOUNT_CACHE_TTL_MS = 5 * 60 * 1000;
 export const LINE_ACCOUNT_CACHE_KEY = "crm.line-account.cache.v3";
@@ -164,6 +164,8 @@ function omitMaskedSecret(value?: string) {
 
 export async function submitLineAccount(payload: {
   action: "test" | "save";
+  /** Existing OA to test; omit to connect a new OA. */
+  lineAccountId?: string;
   channelAccessToken?: string;
   channelSecret?: string;
   name?: string;
@@ -173,6 +175,7 @@ export async function submitLineAccount(payload: {
     headers: getAuthHeaders(),
     body: JSON.stringify({
       action: payload.action,
+      lineAccountId: payload.lineAccountId,
       channelAccessToken: omitMaskedSecret(payload.channelAccessToken),
       channelSecret: omitMaskedSecret(payload.channelSecret),
       name: payload.name,
@@ -182,9 +185,35 @@ export async function submitLineAccount(payload: {
   await assertOkResponse(response, "Connection failed");
   const data = (await response.json()) as LineAccountResponse;
 
-  if (data.connected || payload.action === "save") {
+  // The cache holds the user's own OA; a super admin also tests or connects
+  // other OAs, so only refresh it for that one and reload it after a connect.
+  if (data.connected && data.id && data.id === peekLineAccountCache()?.id) {
     setCachedLineAccount(data);
+  } else if (payload.action === "save") {
+    invalidateLineAccountCache();
   }
 
   return data;
+}
+
+/** Super admin: every OA, for the settings OA picker and user form. */
+export async function fetchAdminLineAccounts(): Promise<AdminLineAccount[]> {
+  const response = await fetch(API_ENDPOINTS.ADMIN.LINE_ACCOUNTS, {
+    headers: getAuthHeaders(),
+    cache: "no-store",
+  });
+  await assertOkResponse(response, "Failed to load LINE accounts");
+  return (await response.json()) as AdminLineAccount[];
+}
+
+/** Super admin: settings payload of any OA. */
+export async function fetchAdminLineAccount(
+  id: string,
+): Promise<LineAccountResponse> {
+  const response = await fetch(API_ENDPOINTS.ADMIN.LINE_ACCOUNT(id), {
+    headers: getAuthHeaders(),
+    cache: "no-store",
+  });
+  await assertOkResponse(response, "Failed to load LINE account");
+  return (await response.json()) as LineAccountResponse;
 }
