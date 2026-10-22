@@ -26,3 +26,12 @@ export type LineAccountResponse = {
   channelSecretMasked?: string;
   oaInfo?: LineOaInfo | null;
 };
+
+export type AdminLineAccount = {
+  id: string;
+  name: string;
+  displayName: string | null;
+  pictureUrl: string | null;
+  basicId: string | null;
+  memberCount: number;
+};

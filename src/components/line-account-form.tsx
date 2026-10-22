@@ -15,6 +15,10 @@ interface LineAccountFormProps {
     testing: boolean;
   }) => void;
   onOaInfoChange?: (info: LineOaInfo | null) => void;
+  /** Called after a new OA is saved (super admin connect flow). */
+  onSaved?: (account: LineAccountResponse) => void;
+  /** View only: no test or save actions (admins viewing their own OA). */
+  readOnly?: boolean;
 }
 
 interface FormData {
@@ -41,6 +45,8 @@ export function LineAccountForm({
   initialAccount,
   onStatusChange,
   onOaInfoChange,
+  onSaved,
+  readOnly = false,
 }: LineAccountFormProps) {
   const toast = useToast();
   const [loading, setLoading] = useState(false);
@@ -62,7 +68,8 @@ export function LineAccountForm({
     }
   }, [initialAccount, onOaInfoChange]);
 
-  const fieldsDisabled = isExistingAccount || loading || testingConnection;
+  const fieldsDisabled =
+    readOnly || isExistingAccount || loading || testingConnection;
 
   useEffect(() => {
     onStatusChange?.({
@@ -129,7 +136,7 @@ export function LineAccountForm({
     try {
       const data = await submitLineAccount(
         isExistingAccount
-          ? { action: "test" }
+          ? { action: "test", lineAccountId: initialAccount.id }
           : {
             action: "test",
             channelAccessToken: formData.channelAccessToken,
@@ -201,6 +208,7 @@ export function LineAccountForm({
       if (data.oaInfo) {
         onOaInfoChange?.(data.oaInfo);
       }
+      onSaved?.(data);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to save account",
@@ -215,8 +223,9 @@ export function LineAccountForm({
       {isExistingAccount && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
           <p className="text-sm text-blue-800 dark:text-blue-200">
-            LINE Official Account is already connected. Credentials are locked.
-            You can still test the connection to refresh profile data.
+            {readOnly
+              ? "LINE Official Account is managed by the super admin. Contact them to change it."
+              : "LINE Official Account is already connected. Credentials are locked. You can still test the connection to refresh profile data."}
           </p>
         </div>
       )}
@@ -303,28 +312,30 @@ export function LineAccountForm({
         </div>
       )}
 
-      <div className="flex gap-3">
-        <button
-          type="button"
-          onClick={handleTestConnection}
-          disabled={testingConnection || loading}
-          className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-        >
-          {testingConnection && <Loader2 className="h-4 w-4 animate-spin" />}
-          Test Connection
-        </button>
-
-        {!isExistingAccount && (
+      {!readOnly && (
+        <div className="flex gap-3">
           <button
-            type="submit"
-            disabled={loading || testingConnection || !isConnectionVerified}
-            className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-700 dark:hover:bg-blue-600"
+            type="button"
+            onClick={handleTestConnection}
+            disabled={testingConnection || loading}
+            className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           >
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Save Account
+            {testingConnection && <Loader2 className="h-4 w-4 animate-spin" />}
+            Test Connection
           </button>
-        )}
-      </div>
+
+          {!isExistingAccount && (
+            <button
+              type="submit"
+              disabled={loading || testingConnection || !isConnectionVerified}
+              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-700 dark:hover:bg-blue-600"
+            >
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              Save Account
+            </button>
+          )}
+        </div>
+      )}
     </form>
   );
 }

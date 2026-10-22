@@ -1,26 +1,11 @@
 "use client";
 
 import { LogOut, Settings, User } from "lucide-react";
-import { useEffect, useState } from "react";
-import { API_ENDPOINTS } from "@/constants/api";
+import { useState } from "react";
 import { NotificationBell } from "@/features/notifications/components/notification-bell";
-import { getAuthHeaders } from "@/lib/api-client";
 import { clearAuth, redirectToLogin } from "@/lib/auth";
-
-interface ProfileLineAccount {
-  id: string;
-  name: string;
-  displayName: string | null;
-  pictureUrl: string | null;
-  basicId: string | null;
-}
-
-interface Profile {
-  name: string | null;
-  email: string;
-  role: string;
-  lineAccount: ProfileLineAccount | null;
-}
+import { useProfile } from "@/lib/hooks/useProfile";
+import { Profile, ProfileLineAccount } from "@/lib/profile";
 
 function initialsOf(profile: Profile | null): string {
   const source = profile?.name?.trim() || profile?.email || "";
@@ -80,17 +65,8 @@ function LineOaBadge({ account }: { account: ProfileLineAccount | null }) {
 export function Navbar() {
   // State for mobile menu dropdown
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [profile, setProfile] = useState<Profile | null>(null);
-
-  useEffect(() => {
-    fetch(API_ENDPOINTS.AUTH.PROFILE, {
-      headers: getAuthHeaders(),
-      cache: "no-store",
-    })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data: Profile | null) => data && setProfile(data))
-      .catch(() => undefined); // Falls back to the placeholder initials.
-  }, []);
+  // Falls back to the placeholder initials until the profile loads.
+  const { profile, isSuperAdmin } = useProfile();
 
   // JWT is stateless: drop the stored token and cached data, then hard-redirect
   // so the realtime connection and in-memory state are torn down too.
@@ -129,7 +105,7 @@ export function Navbar() {
               {profile?.name?.trim() && (
                 <p className="text-xs text-blue-100">{profile.email}</p>
               )}
-              {profile?.role === "super_admin" && (
+              {isSuperAdmin && (
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-yellow-200">
                   Super admin
                 </p>
