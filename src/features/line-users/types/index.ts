@@ -35,6 +35,8 @@ export interface LineUser {
   assignedTier: UserTier | null;
   /** Verified tel no (Members only). */
   phone?: string;
+  /** Loyalty point balance */
+  points: number;
   status: UserStatus;
   tags: CustomerTagItem[];
   lastActive: Date;

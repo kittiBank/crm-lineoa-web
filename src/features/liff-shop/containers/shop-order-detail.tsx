@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { initLiffSession } from "@/features/liff-login/lib/liff";
-import { OrderStatusBadge } from "../components";
+import { OrderAmountBreakdown, OrderStatusBadge } from "../components";
 import { fetchOrderDetail } from "../lib/api";
 import { ShopOrder } from "../types";
 
@@ -113,22 +113,21 @@ export function ShopOrderDetailContainer({
                   {item.nameSnapshot}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  ฿{item.priceSnapshot.toLocaleString()} × {item.qty}
+                  {order.isReward
+                    ? `Reward × ${item.qty}`
+                    : `฿${item.priceSnapshot.toLocaleString()} × ${item.qty}`}
                 </p>
               </div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                ฿{(item.priceSnapshot * item.qty).toLocaleString()}
-              </p>
+              {!order.isReward ? (
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  ฿{(item.priceSnapshot * item.qty).toLocaleString()}
+                </p>
+              ) : null}
             </div>
           ))}
         </div>
-        <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3 dark:border-gray-800">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">
-            Total
-          </p>
-          <p className="text-base font-bold text-gray-900 dark:text-white">
-            ฿{order.totalAmount.toLocaleString()}
-          </p>
+        <div className="mt-3 border-t border-gray-100 pt-3 dark:border-gray-800">
+          <OrderAmountBreakdown order={order} />
         </div>
       </div>
 

@@ -98,7 +98,9 @@ export function ShopOrderHistoryContainer() {
           </div>
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold text-gray-900 dark:text-white">
-              ฿{order.totalAmount.toLocaleString()}
+              {order.isReward
+                ? `${order.pointsUsed.toLocaleString()} pts`
+                : `฿${order.totalAmount.toLocaleString()}`}
             </p>
             <ChevronRight className="h-4 w-4 text-gray-400" />
           </div>

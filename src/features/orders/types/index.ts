@@ -27,6 +27,14 @@ export interface Order {
   lineUserId: string;
   orderNumber: string;
   status: OrderStatus;
+  /** Before points discount */
+  subtotalAmount: number;
+  pointsUsed: number;
+  pointsDiscount: number;
+  pointsEarned: number;
+  /** Redeemed fully with points */
+  isReward: boolean;
+  /** Net amount paid (counts as spend) */
   totalAmount: number;
   qrPayload: string | null;
   paidAt: string | null;

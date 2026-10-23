@@ -6,7 +6,7 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { initLiffSession } from "@/features/liff-login/lib/liff";
 import { useToast } from "@/lib/hooks/useToast";
-import { OrderStatusBadge } from "../components";
+import { OrderAmountBreakdown, OrderStatusBadge } from "../components";
 import { confirmPayment, fetchOrderDetail } from "../lib/api";
 import { clearCart } from "../lib/cart";
 import { ShopOrder } from "../types";
@@ -133,6 +133,12 @@ export function ShopCheckoutContainer({ orderId }: ShopCheckoutContainerProps) {
           ฿{order.totalAmount.toLocaleString()}
         </p>
       </div>
+
+      {order.pointsDiscount > 0 ? (
+        <div className="w-full rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+          <OrderAmountBreakdown order={order} />
+        </div>
+      ) : null}
 
       <p className="text-center text-xs text-gray-400">
         This is a demo QR — no real payment is processed. Tap the button below

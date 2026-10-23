@@ -1,14 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ImageOff, Minus, Plus, ShoppingCart } from "lucide-react";
+import { Gift, ImageOff, Minus, Plus, ShoppingCart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { addToCart, getCart, onCartUpdated, updateQty } from "../lib/cart";
 import { ShopProduct } from "../types";
 
-export function ProductCard({ product }: { product: ShopProduct }) {
+interface ProductCardProps {
+  product: ShopProduct;
+  /** Shown for reward products (pointsCost set). */
+  onRedeem?: (product: ShopProduct) => void;
+}
+
+export function ProductCard({ product, onRedeem }: ProductCardProps) {
   const [qty, setQty] = useState(0);
 
   useEffect(() => {
@@ -66,6 +72,11 @@ export function ProductCard({ product }: { product: ShopProduct }) {
           </p>
           <p className="text-sm font-semibold text-[#06C755]">
             ฿{product.price.toLocaleString()}
+            {product.pointsCost ? (
+              <span className="ml-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+                or {product.pointsCost.toLocaleString()} pts
+              </span>
+            ) : null}
           </p>
         </div>
 
@@ -103,6 +114,19 @@ export function ProductCard({ product }: { product: ShopProduct }) {
             </button>
           </div>
         )}
+
+        {product.pointsCost && onRedeem ? (
+          <Button
+            onClick={() => onRedeem(product)}
+            disabled={outOfStock}
+            variant="outline"
+            size="sm"
+            className="w-full border-amber-400 text-amber-700 hover:bg-amber-50 dark:text-amber-300 dark:hover:bg-amber-950/30"
+          >
+            <Gift className="h-4 w-4" />
+            Redeem {product.pointsCost.toLocaleString()} pts
+          </Button>
+        ) : null}
       </CardContent>
     </Card>
   );

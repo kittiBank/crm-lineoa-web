@@ -19,6 +19,7 @@ const MAX_DESCRIPTION_LENGTH = 1000;
 // products.price is DECIMAL(10, 2).
 const MAX_PRICE = 99_999_999.99;
 const MAX_QTY = 999_999;
+const MAX_POINTS_COST = 9_999_999;
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
@@ -36,6 +37,7 @@ type ProductFormErrors = {
   name?: string;
   price?: string;
   stockQty?: string;
+  pointsCost?: string;
 };
 
 function RequiredMark() {
@@ -68,6 +70,8 @@ export function ProductBuilderContainer({ productId }: ProductBuilderProps) {
   const [price, setPrice] = useState("");
   const [stockQty, setStockQty] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [isReward, setIsReward] = useState(false);
+  const [pointsCost, setPointsCost] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [imagePreview, setImagePreview] = useState("");
   const [errors, setErrors] = useState<ProductFormErrors>({});
@@ -92,6 +96,8 @@ export function ProductBuilderContainer({ productId }: ProductBuilderProps) {
         setPrice(String(product.price));
         setStockQty(String(product.stockQty));
         setIsActive(product.isActive);
+        setIsReward(product.pointsCost !== null);
+        setPointsCost(product.pointsCost ? String(product.pointsCost) : "");
         setImageUrl(product.imageUrl ?? "");
         setImagePreview(product.imageUrl ?? "");
       } catch (error) {
@@ -181,6 +187,18 @@ export function ProductBuilderContainer({ productId }: ProductBuilderProps) {
       nextErrors.stockQty = "Qty for sale must be 999,999 or less";
     }
 
+    if (isReward) {
+      const costText = pointsCost.trim();
+      const costNumber = Number(costText);
+      if (!costText) {
+        nextErrors.pointsCost = "Points to redeem is required";
+      } else if (!Number.isInteger(costNumber) || costNumber < 1) {
+        nextErrors.pointsCost = "Points must be a whole number, 1 or more";
+      } else if (costNumber > MAX_POINTS_COST) {
+        nextErrors.pointsCost = "Points must be 9,999,999 or less";
+      }
+    }
+
     // Keep an image upload error; it is not re-checked here.
     setErrors((prev) => ({ image: prev.image, ...nextErrors }));
     return Object.keys(nextErrors).length === 0;
@@ -199,6 +217,7 @@ export function ProductBuilderContainer({ productId }: ProductBuilderProps) {
         // Edit sends null to remove an image; create just omits it.
         imageUrl: imageUrl || (isEditMode ? null : undefined),
         isActive,
+        pointsCost: isReward ? Number(pointsCost) : null,
       };
 
       if (isEditMode && productId) {
@@ -412,6 +431,50 @@ export function ProductBuilderContainer({ productId }: ProductBuilderProps) {
                 <option value="active">Active (visible in shop)</option>
                 <option value="inactive">Inactive (hidden)</option>
               </select>
+            </div>
+            <div className="md:col-span-2">
+              <label className="flex items-start gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+                <input
+                  type="checkbox"
+                  checked={isReward}
+                  onChange={(e) => {
+                    setIsReward(e.target.checked);
+                    setFieldError("pointsCost", undefined);
+                  }}
+                  className="mt-0.5 h-4 w-4 accent-blue-600"
+                />
+                <span>
+                  <span className="block text-sm font-medium text-gray-900 dark:text-white">
+                    Redeemable with points (reward)
+                  </span>
+                  <span className="block text-xs text-gray-500 dark:text-gray-400">
+                    Members can redeem it in the LIFF shop for points instead
+                    of paying. It still sells at the price above.
+                  </span>
+                </span>
+              </label>
+              {isReward ? (
+                <div className="mt-3">
+                  <label htmlFor="product-points" className={labelClassName}>
+                    Points to redeem 1 unit <RequiredMark />
+                  </label>
+                  <Input
+                    id="product-points"
+                    type="number"
+                    min={1}
+                    step="1"
+                    value={pointsCost}
+                    onChange={(e) => {
+                      setPointsCost(e.target.value);
+                      setFieldError("pointsCost", undefined);
+                    }}
+                    className={fieldClassName(errors.pointsCost)}
+                    placeholder="300"
+                    aria-invalid={Boolean(errors.pointsCost)}
+                  />
+                  <FieldError message={errors.pointsCost} />
+                </div>
+              ) : null}
             </div>
           </div>
         </section>

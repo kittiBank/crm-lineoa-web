@@ -68,8 +68,19 @@ export function OrderTable({ orders, onView }: OrderTableProps) {
 
                 <td className="px-6 py-4">
                   <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    ฿{order.totalAmount.toLocaleString()}
+                    {order.isReward
+                      ? `${order.pointsUsed.toLocaleString()} pts`
+                      : `฿${order.totalAmount.toLocaleString()}`}
                   </span>
+                  {order.isReward ? (
+                    <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+                      Reward
+                    </span>
+                  ) : order.pointsUsed > 0 ? (
+                    <span className="block text-xs text-gray-500 dark:text-gray-400">
+                      -{order.pointsUsed.toLocaleString()} pts used
+                    </span>
+                  ) : null}
                 </td>
 
                 <td className="px-6 py-4">

@@ -9,6 +9,7 @@ import {
   Pagination,
 } from "@/features/line-users/components";
 import { fetchLineUsers } from "@/features/line-users/lib/api";
+import { LineUserPointsDialog } from "@/features/points/components/line-user-points-dialog";
 import {
   DEFAULT_FILTER_OPTIONS,
   FilterOptions,
@@ -25,6 +26,7 @@ export function LineUsersListContainer() {
   const [totalPages, setTotalPages] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pointsUser, setPointsUser] = useState<LineUser | null>(null);
   const requestIdRef = useRef(0);
 
   const loadUsers = useCallback(
@@ -120,6 +122,7 @@ export function LineUsersListContainer() {
             <LineUserTable
               users={users}
               startIndex={startIndex}
+              onOpenPoints={setPointsUser}
             />
           </div>
 
@@ -136,6 +139,22 @@ export function LineUsersListContainer() {
           />
         </>
       )}
+
+      <LineUserPointsDialog
+        key={pointsUser?.id ?? "closed"}
+        lineUserId={pointsUser?.id ?? null}
+        displayName={pointsUser?.displayName ?? ""}
+        onOpenChange={(open) => {
+          if (!open) setPointsUser(null);
+        }}
+        onBalanceChange={(id, balance) =>
+          setUsers((current) =>
+            current.map((user) =>
+              user.id === id ? { ...user, points: balance } : user,
+            ),
+          )
+        }
+      />
     </div>
   );
 }
