@@ -8,6 +8,8 @@ export interface Product {
   /** Qty available for sale; paid orders deduct from it. */
   stockQty: number;
   isActive: boolean;
+  /** Reward: points to redeem 1 unit in the LIFF shop; null = not a reward. */
+  pointsCost: number | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,6 +22,8 @@ export interface CreateProductPayload {
   imageUrl?: string | null;
   stockQty: number;
   isActive?: boolean;
+  /** null turns the reward off. */
+  pointsCost?: number | null;
 }
 
 export type UpdateProductPayload = Partial<CreateProductPayload>;

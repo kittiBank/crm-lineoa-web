@@ -24,6 +24,7 @@ export interface MemberCardData extends MemberCardBase {
   tier: UserTier | null;
   assignedTier: UserTier | null;
   earnedTier: UserTier | null;
+  pointBalance: number;
   /** Spend (THB) in the last `spendWindowMonths` months. */
   spend: number;
   spendSince: string;

@@ -5,3 +5,5 @@ export { ProductGridSkeleton } from "./product-grid-skeleton";
 export { CartItemRow } from "./cart-item-row";
 export { OrderStatusBadge } from "./order-status-badge";
 export { EmptyState } from "./empty-state";
+export { PointsDiscount } from "./points-discount";
+export { OrderAmountBreakdown } from "./order-amount-breakdown";

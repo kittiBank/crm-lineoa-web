@@ -29,6 +29,7 @@ export interface LineUserApiItem {
   userTier: UserTier | null;
   assignedTier?: UserTier | null;
   phone?: string;
+  points?: number;
   status: "Active" | "Blocked" | "Unfollowed";
   tags: CustomerTagItem[];
   lastActive: string;
@@ -46,6 +47,7 @@ function mapApiUserToLineUser(user: LineUserApiItem): LineUser {
     userTier: isUserTier(user.userTier) ? user.userTier : null,
     assignedTier: isUserTier(user.assignedTier) ? user.assignedTier : null,
     phone: user.phone,
+    points: user.points ?? 0,
     status: user.status,
     // Skip keys this build doesn't know yet (API may add tags first).
     tags: (user.tags ?? []).filter((tag) => isCustomerTag(tag.key)),

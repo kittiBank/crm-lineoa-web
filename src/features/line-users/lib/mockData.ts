@@ -26,6 +26,7 @@ export function generateMockLineUsers(count: number = 50): LineUser[] {
       userType: userTypes[Math.floor(Math.random() * userTypes.length)],
       userTier: userTiers[Math.floor(Math.random() * userTiers.length)],
       assignedTier: null,
+      points: faker.number.int({ min: 0, max: 2000 }),
       status: statuses[Math.floor(Math.random() * statuses.length)],
       tags: [...new Set(selectedTags)].map((key) => ({ // Remove duplicates
         key,

@@ -19,6 +19,11 @@ export const MERGE_TAG_DEFINITIONS = [
     description: "Verified phone number",
     example: "[Phone]",
   },
+  {
+    key: "points",
+    description: "Loyalty point balance",
+    example: "[Points]",
+  },
 ] as const;
 
 export const MERGE_TAG_PREVIEW_VALUES: Record<string, string> = {
@@ -29,6 +34,7 @@ export const MERGE_TAG_PREVIEW_VALUES: Record<string, string> = {
   phone: "[Phone]",
   pictureUrl: "[Picture URL]",
   lineUserId: "[Line user ID]",
+  points: "[Points]",
 };
 
 for (const [key, value] of Object.entries({ ...MERGE_TAG_PREVIEW_VALUES })) {

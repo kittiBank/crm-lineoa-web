@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { Loader2, UserPlus } from "lucide-react";
 import { initLiffSession } from "@/features/liff-login/lib/liff";
 import { setPendingCheckoutRedirect } from "@/features/liff-shop/lib/checkout-redirect";
+import { PointsSummary } from "@/features/points/components/points-summary";
+import { fetchMyPoints } from "@/features/points/lib/api";
+import { MyPointsResponse } from "@/features/points/types";
 import { TierCard } from "../components/tier-card";
 import { TierLadder, TierProgress } from "../components/tier-progress";
 import { themeFor } from "../components/tier-theme";
@@ -14,6 +17,7 @@ import { MemberCardResponse } from "../types";
 export function MemberCardContainer() {
   const router = useRouter();
   const [card, setCard] = useState<MemberCardResponse | null>(null);
+  const [points, setPoints] = useState<MyPointsResponse | null>(null);
   const [mockQuery, setMockQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -23,8 +27,13 @@ export function MemberCardContainer() {
     const load = async () => {
       try {
         const session = await initLiffSession();
-        const data = await fetchMemberCard(session.lineUserId);
+        const [data, myPoints] = await Promise.all([
+          fetchMemberCard(session.lineUserId),
+          // Points are a bonus section; the card still renders without them.
+          fetchMyPoints(session.lineUserId).catch(() => null),
+        ]);
         if (isCancelled) return;
+        setPoints(myPoints);
         // Keep the local-testing mock lineUserId across the login redirect.
         setMockQuery(
           session.usingMock
@@ -120,6 +129,9 @@ export function MemberCardContainer() {
         <p className="-mt-1 text-center text-xs text-gray-500 dark:text-gray-400">
           Your {themeFor(card.tier).label} tier was granted by the shop.
         </p>
+      ) : null}
+      {points ? (
+        <PointsSummary points={points} shopHref={`/liff/shop${mockQuery}`} />
       ) : null}
       <TierProgress card={card} />
       <TierLadder

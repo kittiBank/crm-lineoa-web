@@ -187,20 +187,65 @@ export function OrderDetailContainer({ orderId }: OrderDetailProps) {
                     {item.nameSnapshot}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    ฿{item.priceSnapshot.toLocaleString()} × {item.qty}
+                    {order.isReward
+                      ? `Reward × ${item.qty}`
+                      : `฿${item.priceSnapshot.toLocaleString()} × ${item.qty}`}
                   </p>
                 </div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                  ฿{(item.priceSnapshot * item.qty).toLocaleString()}
-                </p>
+                {!order.isReward && (
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    ฿{(item.priceSnapshot * item.qty).toLocaleString()}
+                  </p>
+                )}
               </div>
             ))}
           </div>
-          <div className="mt-4 flex items-center justify-between border-t border-gray-200 pt-4 dark:border-gray-700">
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">Total</p>
-            <p className="text-lg font-bold text-gray-900 dark:text-white">
-              ฿{order.totalAmount.toLocaleString()}
-            </p>
+          <div className="mt-4 space-y-2 border-t border-gray-200 pt-4 dark:border-gray-700">
+            {order.isReward ? (
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Reward · paid with points
+                </p>
+                <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                  {order.pointsUsed.toLocaleString()} pts
+                </p>
+              </div>
+            ) : (
+              <>
+                {order.pointsDiscount > 0 && (
+                  <>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+                      <span className="text-gray-900 dark:text-white">
+                        ฿{order.subtotalAmount.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-500 dark:text-gray-400">
+                        Points discount ({order.pointsUsed.toLocaleString()} pts)
+                      </span>
+                      <span className="text-green-600 dark:text-green-400">
+                        -฿{order.pointsDiscount.toLocaleString()}
+                      </span>
+                    </div>
+                  </>
+                )}
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">Total</p>
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">
+                    ฿{order.totalAmount.toLocaleString()}
+                  </p>
+                </div>
+              </>
+            )}
+            {order.pointsEarned > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">Points earned</span>
+                <span className="text-amber-600 dark:text-amber-400">
+                  +{order.pointsEarned.toLocaleString()} pts
+                </span>
+              </div>
+            )}
           </div>
         </section>
 
@@ -277,6 +322,10 @@ export function OrderDetailContainer({ orderId }: OrderDetailProps) {
             {order.status === "PENDING_PAYMENT"
               ? "It has not been paid, so no qty changes."
               : "Its items' qty is added back to each product."}{" "}
+            {order.pointsUsed > 0 &&
+              `${order.pointsUsed.toLocaleString()} used points go back to the buyer. `}
+            {order.pointsEarned > 0 &&
+              `${order.pointsEarned.toLocaleString()} earned points are taken back. `}
             The buyer gets a LINE message. This cannot be undone.
           </>
         }
@@ -304,7 +353,8 @@ export function OrderDetailContainer({ orderId }: OrderDetailProps) {
             </span>{" "}
             (฿{order.totalAmount.toLocaleString()})? Use this when the buyer
             paid outside the app. Each item&apos;s qty is deducted from its
-            product and the buyer gets a LINE message.
+            product, the buyer earns points on the total and gets a LINE
+            message.
           </>
         }
         variant="default"

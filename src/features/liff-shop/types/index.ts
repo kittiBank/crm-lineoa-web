@@ -6,6 +6,8 @@ export interface ShopProduct {
   imageUrl: string | null;
   stockQty: number;
   isActive: boolean;
+  /** Reward: points to redeem 1 unit; null = not redeemable */
+  pointsCost: number | null;
 }
 
 export interface CartItem {
@@ -35,6 +37,14 @@ export interface ShopOrder {
   id: string;
   orderNumber: string;
   status: ShopOrderStatus;
+  /** Before points discount */
+  subtotalAmount: number;
+  pointsUsed: number;
+  pointsDiscount: number;
+  pointsEarned: number;
+  /** Paid fully with points */
+  isReward: boolean;
+  /** Net amount paid */
   totalAmount: number;
   qrPayload: string | null;
   qrCodeDataUrl?: string;

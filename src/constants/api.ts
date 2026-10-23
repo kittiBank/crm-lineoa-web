@@ -105,6 +105,13 @@ export const API_ENDPOINTS = {
   },
   MEMBER_TIER: (lineUserId: string) =>
     `${API_BASE_URL}/api/v1/member-tier?lineUserId=${encodeURIComponent(lineUserId)}`,
+  POINTS: {
+    ME: (lineUserId: string) =>
+      `${API_BASE_URL}/api/v1/points/me?lineUserId=${encodeURIComponent(lineUserId)}`,
+    LINE_USER: (id: string) => `${API_BASE_URL}/api/v1/line/users/${id}/points`,
+    ADJUST: (id: string) =>
+      `${API_BASE_URL}/api/v1/line/users/${id}/points/adjust`,
+  },
   PRODUCTS: {
     LIST: `${API_BASE_URL}/api/v1/products`,
     ADMIN_LIST: `${API_BASE_URL}/api/v1/products/admin`,
@@ -117,6 +124,7 @@ export const API_ENDPOINTS = {
     CREATE: `${API_BASE_URL}/api/v1/orders`,
     CONFIRM_PAYMENT: (id: string) =>
       `${API_BASE_URL}/api/v1/orders/${id}/confirm-payment`,
+    REDEEM: `${API_BASE_URL}/api/v1/orders/redeem`,
     HISTORY: (lineUserId: string) =>
       `${API_BASE_URL}/api/v1/orders?lineUserId=${encodeURIComponent(lineUserId)}`,
     DETAIL: (id: string, lineUserId: string) =>

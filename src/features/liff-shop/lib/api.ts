@@ -58,8 +58,27 @@ export async function fetchMemberStatus(
 export async function createOrder(input: {
   lineUserId: string;
   items: { productId: string; qty: number }[];
+  pointsToUse?: number;
 }): Promise<CreateOrderResult> {
   const response = await fetch(API_ENDPOINTS.ORDERS.CREATE, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  return response.json();
+}
+
+export async function redeemReward(input: {
+  lineUserId: string;
+  productId: string;
+  qty: number;
+}): Promise<ShopOrder> {
+  const response = await fetch(API_ENDPOINTS.ORDERS.REDEEM, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),

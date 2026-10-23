@@ -8,6 +8,8 @@ import { CustomerTagList } from "./customer-tag-badge";
 interface LineUserTableProps {
   users: LineUser[];
   startIndex?: number;
+  /** Opens the points dialog for a user. */
+  onOpenPoints?: (user: LineUser) => void;
 }
 
 function maskLineUserId(lineUserId: string): string {
@@ -129,6 +131,7 @@ export function UserTierBadge({ userTier }: { userTier: UserTier | null }) {
 export function LineUserTable({
   users,
   startIndex = 0,
+  onOpenPoints,
 }: LineUserTableProps) {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -147,6 +150,9 @@ export function LineUserTable({
               </th>
               <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 User Tier
+              </th>
+              <th className="px-4 py-4 text-right text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                Points
               </th>
               <th className="px-4 py-4 text-left text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Status
@@ -200,6 +206,18 @@ export function LineUserTable({
                     <UserTierBadge userTier={user.userTier} />
                   </td>
 
+                  <td className="px-4 py-4 text-right">
+                    <button
+                      type="button"
+                      onClick={() => onOpenPoints?.(user)}
+                      disabled={!onOpenPoints}
+                      className="text-sm font-medium tabular-nums text-blue-600 hover:underline disabled:text-gray-700 disabled:no-underline dark:text-blue-400 dark:disabled:text-gray-300"
+                      title="View and adjust points"
+                    >
+                      {user.points.toLocaleString()}
+                    </button>
+                  </td>
+
                   <td className="px-4 py-4">
                     <StatusBadge status={user.status} />
                   </td>
@@ -223,7 +241,7 @@ export function LineUserTable({
               ))
             ) : (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center">
+                <td colSpan={9} className="px-4 py-8 text-center">
                   <p className="text-gray-500 dark:text-gray-400 text-sm">
                     No users found. Try adjusting your search filters.
                   </p>

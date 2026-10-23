@@ -41,6 +41,21 @@ function StatusBadge({ isActive }: { isActive: boolean }) {
   );
 }
 
+function RedeemPointsBadge({ pointsCost }: { pointsCost: number | null }) {
+  if (pointsCost === null) {
+    return <span className="text-sm text-gray-400 dark:text-gray-500">—</span>;
+  }
+
+  return (
+    <span
+      className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold whitespace-nowrap text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+      title="Members can redeem this product with points"
+    >
+      {pointsCost.toLocaleString()} pts
+    </span>
+  );
+}
+
 function QtyCell({ stockQty }: { stockQty: number }) {
   if (stockQty === 0) {
     return (
@@ -84,6 +99,7 @@ export function ProductTable({
               <th className={headerClassName}>Product</th>
               <th className={headerClassName}>Price</th>
               <th className={headerClassName}>Qty</th>
+              <th className={headerClassName}>Redeem Points</th>
               <th className={headerClassName}>Status</th>
               <th className={`${headerClassName} w-32 text-right`}>Action</th>
             </tr>
@@ -138,6 +154,9 @@ export function ProductTable({
                   </td>
                   <td className="px-4 py-3">
                     <QtyCell stockQty={product.stockQty} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <RedeemPointsBadge pointsCost={product.pointsCost} />
                   </td>
                   <td className="px-4 py-3">
                     <StatusBadge isActive={product.isActive} />
