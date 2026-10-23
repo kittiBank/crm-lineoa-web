@@ -314,6 +314,7 @@ export function normalizeAreasWithBounds(
       text: area.text,
       uri: area.uri,
       mode: area.mode,
+      targetRichMenuId: area.targetRichMenuId,
       bounds,
     };
   });

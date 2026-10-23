@@ -3,7 +3,7 @@
 import { Edit2, Eye, Loader2, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RichMenuRecord } from "../types";
+import { MENU_TYPE_BADGE_LABEL, RichMenuRecord } from "../types";
 
 interface RichMenuCardProps {
   menu: RichMenuRecord;
@@ -104,7 +104,7 @@ export function RichMenuCard({
             <Badge
               variant={menu.menuType === "default" ? "default" : "secondary"}
             >
-              {menu.menuType === "default" ? "Guest" : "Member"}
+              {MENU_TYPE_BADGE_LABEL[menu.menuType] ?? menu.menuType}
             </Badge>
             <StatusBadge isActive={menu.isActive} />
           </div>
