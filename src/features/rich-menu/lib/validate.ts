@@ -6,10 +6,13 @@ export interface RichMenuFormErrors {
   image?: string;
 }
 
-export type RichMenuAreaFormErrors = Record<
-  number,
-  { label?: string; uri?: string }
->;
+export interface RichMenuAreaFieldErrors {
+  label?: string;
+  uri?: string;
+  targetRichMenuId?: string;
+}
+
+export type RichMenuAreaFormErrors = Record<number, RichMenuAreaFieldErrors>;
 
 export function isValidHttpsUrl(value: string): boolean {
   try {
@@ -50,7 +53,7 @@ export function computeAreaErrors(
   const errors: RichMenuAreaFormErrors = {};
 
   areas.forEach((area, index) => {
-    const areaError: { label?: string; uri?: string } = {};
+    const areaError: RichMenuAreaFieldErrors = {};
 
     if (!area.label.trim()) {
       areaError.label = "Label is required";
@@ -63,6 +66,10 @@ export function computeAreaErrors(
       } else if (!isValidHttpsUrl(uri)) {
         areaError.uri = "Enter a valid link starting with https://";
       }
+    }
+
+    if (area.actionType === "richmenuswitch" && !area.targetRichMenuId) {
+      areaError.targetRichMenuId = "Target menu is required";
     }
 
     if (Object.keys(areaError).length > 0) {

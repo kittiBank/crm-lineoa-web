@@ -16,10 +16,11 @@ import {
   RichMenuCanvas,
 } from "@/features/rich-menu/components";
 import { errorInputClassName, FieldError } from "@/features/rich-menu/components/form-field";
+import type { RichMenuSwitchTargetOption } from "@/features/rich-menu/components/area-editor";
 import {
   createRichMenu,
-  deleteRichMenu,
   fetchRichMenuById,
+  fetchRichMenus,
 } from "@/features/rich-menu/lib/api";
 import {
   createInitialAreas,
@@ -104,6 +105,9 @@ export function RichMenuBuilderContainer({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingMenu, setIsLoadingMenu] = useState(Boolean(menuId));
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  const [switchTargets, setSwitchTargets] = useState<
+    RichMenuSwitchTargetOption[]
+  >([]);
 
   const layout = useMemo(() => getLayoutById(layoutId), [layoutId]);
   const gridPresets = useMemo(
@@ -119,6 +123,30 @@ export function RichMenuBuilderContainer({
     ? computeBasicInfoErrors(name, chatBarText, Boolean(imageFile || imagePreview))
     : {};
   const areaErrorsMap = hasAttemptedSubmit ? computeAreaErrors(areas) : {};
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    fetchRichMenus()
+      .then((menus) => {
+        if (isCancelled) {
+          return;
+        }
+
+        setSwitchTargets(
+          menus
+            .filter((menu) => menu.id !== menuId)
+            .map((menu) => ({ id: menu.id, name: menu.name })),
+        );
+      })
+      .catch(() => {
+        // Target list is optional; the editor still offers "This menu".
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [menuId]);
 
   useEffect(() => {
     if (!menuId) {
@@ -327,18 +355,17 @@ export function RichMenuBuilderContainer({
         layoutId,
         areas,
         image: resolvedImage,
+        replaceRichMenuId: isEditMode ? menuId : undefined,
       });
-
-      if (isEditMode && menuId) {
-        await deleteRichMenu(menuId);
-      }
 
       toast.success(
         isEditMode
           ? "Rich menu updated successfully"
           : menuType === "default"
             ? "Default rich menu created and applied to guest users"
-            : "Member rich menu created successfully",
+            : menuType === "sub"
+              ? "Tab menu created successfully"
+              : "Member rich menu created successfully",
       );
 
       router.push("/rich-menu");
@@ -603,6 +630,7 @@ export function RichMenuBuilderContainer({
                 }
                 readOnly={isViewMode}
                 error={areaErrorsMap[selectedAreaIndex]}
+                switchTargets={switchTargets}
               />
             ) : (
               <p className="rounded-lg border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400">
@@ -645,7 +673,9 @@ export function RichMenuBuilderContainer({
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {menuType === "default"
                   ? "This menu will be set as the default rich menu for guest users on LINE."
-                  : "This menu will be created on LINE. You can link it to members from the list page later."}
+                  : menuType === "sub"
+                    ? "This menu will be created on LINE and only appears when a user taps a Switch menu area pointing to it."
+                    : "This menu will be created on LINE. You can link it to members from the list page later."}
               </p>
             </section>
           )}

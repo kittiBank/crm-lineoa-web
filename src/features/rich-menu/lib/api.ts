@@ -98,6 +98,9 @@ export async function createRichMenu(
   formData.append("layoutId", payload.layoutId);
   formData.append("areas", JSON.stringify(payload.areas));
   formData.append("image", payload.image);
+  if (payload.replaceRichMenuId) {
+    formData.append("replaceRichMenuId", payload.replaceRichMenuId);
+  }
 
   const response = await fetch(API_ENDPOINTS.RICH_MENU.CREATE, {
     method: "POST",
@@ -115,6 +118,9 @@ export async function createRichMenu(
   }
 
   invalidateDedupe("rich-menus:list");
+  if (payload.replaceRichMenuId) {
+    invalidateDedupe(`rich-menus:${payload.replaceRichMenuId}`);
+  }
   return response.json();
 }
 

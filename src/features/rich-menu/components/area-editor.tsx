@@ -4,17 +4,26 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   ACTION_TYPE_OPTIONS,
+  RICH_MENU_SWITCH_SELF_TARGET,
   RichMenuActionType,
   RichMenuAreaConfig,
 } from "../types";
+import type { RichMenuAreaFieldErrors } from "../lib/validate";
 import { errorInputClassName, FieldError } from "./form-field";
+
+export interface RichMenuSwitchTargetOption {
+  id: string;
+  name: string;
+}
 
 interface AreaEditorProps {
   areaIndex: number;
   area: RichMenuAreaConfig;
   onChange: (area: RichMenuAreaConfig) => void;
   readOnly?: boolean;
-  error?: { label?: string; uri?: string };
+  error?: RichMenuAreaFieldErrors;
+  /** Other menus of this OA that a Switch menu area can open */
+  switchTargets?: RichMenuSwitchTargetOption[];
 }
 
 const inputClassName =
@@ -29,6 +38,7 @@ export function AreaEditor({
   onChange,
   readOnly = false,
   error,
+  switchTargets = [],
 }: AreaEditorProps) {
   const actionMeta = ACTION_TYPE_OPTIONS.find(
     (item) => item.value === area.actionType,
@@ -201,6 +211,51 @@ export function AreaEditor({
             </select>
           </div>
         </>
+      )}
+
+      {area.actionType === "richmenuswitch" && (
+        <div>
+          <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Target menu *
+          </label>
+          <select
+            value={area.targetRichMenuId || ""}
+            onChange={(event) =>
+              onChange({
+                ...area,
+                targetRichMenuId: event.target.value || undefined,
+              })
+            }
+            className={
+              error?.targetRichMenuId
+                ? `${selectClassName} ${errorInputClassName}`
+                : selectClassName
+            }
+            aria-invalid={Boolean(error?.targetRichMenuId)}
+          >
+            <option value="">Select a menu</option>
+            <option value={RICH_MENU_SWITCH_SELF_TARGET}>This menu</option>
+            {switchTargets.map((target) => (
+              <option key={target.id} value={target.id}>
+                {target.name}
+              </option>
+            ))}
+            {area.targetRichMenuId &&
+              area.targetRichMenuId !== RICH_MENU_SWITCH_SELF_TARGET &&
+              !switchTargets.some(
+                (target) => target.id === area.targetRichMenuId,
+              ) && (
+                <option value={area.targetRichMenuId}>Unknown menu</option>
+              )}
+          </select>
+          <FieldError message={error?.targetRichMenuId} />
+          {!error?.targetRichMenuId && (
+            <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+              Tip: create tab menus as &quot;Tab / Sub menu&quot; so they
+              don&apos;t replace the default menu
+            </p>
+          )}
+        </div>
       )}
     </fieldset>
   );

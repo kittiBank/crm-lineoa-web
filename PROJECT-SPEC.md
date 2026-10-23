@@ -733,7 +733,7 @@ This project should demonstrate the following skills:
 - [Done] หน้า Create Rich menu เพิ่มแบบ custom area วาดได้
 - [Done] หน้า Create Rich menu ให้เลือก layout น้อยลง แบบ Big, compact, Custom (พร้อม default grid ใต้ Big/Compact)
 - [Done] หน้า Create message เพิ่ม Default img / video / carousel (ไฟล์ใน `public/defaults`) + อัปโหลด video พร้อม thumbnail อัตโนมัติ
-- [Done]หน้า Create message เพิ่ม Merge Tag ข้อมูล linruser กับ flex msg ได้
+- [Done] หน้า Create message เพิ่ม Merge Tag ข้อมูล linruser กับ flex msg ได้
 - [Done] Sidebar ปิด Link prefetch เพื่อไม่โหลดหน้าเมนูอื่นล่วงหน้าบน prod
 - [Done] ทำ User tracking reach, read
 - [Done] ทำ Import user ใช้ทำ audience group map user ระบบกับ line ได้ เช่น VIP 
@@ -746,7 +746,7 @@ This project should demonstrate the following skills:
 - [Done] เพิ่ม Import user ใช้ Map กับ Line เพื่อจัดกลุ่ม Audience
 - [Done] เพิ่ม Export excel ได้หลัง Brodcast แล้ว
 - [Done] เพิ่มหน้าจัดการ Liff Content เช่น หน้า Ecom จัด layout ต่างๆ มี live preview เอา url ไปใส่ rich menu ได้
-- ทำ Switching rich menu ได้
+- [Done] ทำ Switching rich menu ได้
 - [Done]เพิ่มหน้า Brodcast planner แบบ Calendar view คล่าวๆ
 - [Done] เพิ่ม Unit test 
 - [Done] เพิ่ม E2E Test

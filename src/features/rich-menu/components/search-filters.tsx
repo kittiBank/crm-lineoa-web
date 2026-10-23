@@ -76,6 +76,7 @@ export function SearchFilters({ filters, onFilterChange }: SearchFiltersProps) {
             <option value="all">All Types</option>
             <option value="default">Guest</option>
             <option value="member">Member</option>
+            <option value="sub">Tab / Sub menu</option>
           </select>
         </div>
 
