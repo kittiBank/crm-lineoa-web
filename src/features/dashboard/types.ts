@@ -1,13 +1,19 @@
-export type DashboardPeriod = "today" | "7d" | "month";
+export type DashboardPeriod = "today" | "7d" | "30d" | "90d";
 
 export const DASHBOARD_PERIOD_OPTIONS: Array<{
   value: DashboardPeriod;
   label: string;
+  title: string;
 }> = [
-    { value: "today", label: "Today" },
-    { value: "7d", label: "Last 7 days" },
-    { value: "month", label: "This month" },
+    { value: "today", label: "Today", title: "Today" },
+    { value: "7d", label: "7D", title: "Last 7 days" },
+    { value: "30d", label: "30D", title: "Last 30 days" },
+    { value: "90d", label: "90D", title: "Last 90 days" },
   ];
+
+export const DEFAULT_DASHBOARD_PERIOD: DashboardPeriod = "30d";
+
+export type DashboardTab = "overview" | "users" | "sales" | "broadcasts";
 
 export type DashboardBroadcastStatus =
   | "Sent"
@@ -16,27 +22,34 @@ export type DashboardBroadcastStatus =
   | "Draft"
   | "Failed";
 
-export interface DashboardMetrics {
-  totalAudience: number;
-  activeBroadcasts: number;
-  messageSentToday: number;
+export interface Comparison {
+  current: number;
+  previous: number;
 }
 
-export interface FollowerStatus {
-  active: number;
-  inactive: number;
+export interface DashboardRange {
+  start: string;
+  end: string;
+  previousStart: string;
+  previousEnd: string;
 }
 
-export interface BroadcastTrendData {
-  day: string;
-  sent: number;
-  delivered: number;
+export type GrowthMetric = "newFollowers" | "revenue" | "orders" | "messagesSent";
+
+export type GrowthTotals = Record<GrowthMetric, number>;
+
+export interface GrowthTrendPoint extends GrowthTotals {
+  label: string;
+  start: string;
+  previous: GrowthTotals;
 }
 
-export interface BroadcastStatusData {
-  name: DashboardBroadcastStatus;
-  value: number;
-  fill: string;
+export interface PurchaseFunnel {
+  attributionWindowHours: number;
+  linkClicks: number;
+  ordersPlaced: number;
+  paid: number;
+  revenue: number;
 }
 
 export interface RecentBroadcast {
@@ -47,22 +60,30 @@ export interface RecentBroadcast {
   sent: number;
   delivered: number;
   deliveredRate: number;
+  revenue: number;
   date: string;
 }
 
-export interface DashboardOverview {
-  metrics: DashboardMetrics;
-  followers: FollowerStatus;
-  broadcastTrend: BroadcastTrendData[];
-  broadcastStatus: BroadcastStatusData[];
-  recentBroadcasts: RecentBroadcast[];
+export interface TopProduct {
+  productId: string;
+  name: string;
+  units: number;
+  revenue: number;
 }
 
-export const BROADCAST_STATUS_COLORS: Record<DashboardBroadcastStatus, string> =
-{
-  Sent: "#3b82f6",
-  "In Progress": "#f59e0b",
-  Scheduled: "#10b981",
-  Draft: "#9ca3af",
-  Failed: "#ef4444",
-};
+export interface DashboardOverview {
+  period: DashboardPeriod;
+  granularity: "hour" | "day" | "week";
+  range: DashboardRange;
+  kpis: {
+    totalFollowers: Comparison;
+    newFollowers: Comparison;
+    revenue: Comparison;
+    orders: Comparison;
+    messagesDelivered: Comparison;
+  };
+  trend: GrowthTrendPoint[];
+  funnel: PurchaseFunnel;
+  recentBroadcasts: RecentBroadcast[];
+  topProducts: TopProduct[];
+}

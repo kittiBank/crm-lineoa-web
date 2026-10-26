@@ -763,6 +763,10 @@ This project should demonstrate the following skills:
 - [Done] ปรับหน้า Dashboard design ใหม่ให้ดูข้อมูลได้หลากหลายมากขึ้น เพิ่ม Filter btn แบ่งตามกลุ่มของ User tracking (อยากให้มีส่วน block, active user ได้ด้วย), Sale Tracnking (เอาข้อมูลจาก EcomLiff), Brodcast Tracking (จากการ Brodcast)
 - [Done] เพิ่ม LineOA mapping กับ user admin รองรับการทำงานหลาย LineOA และแสดง lineOA name บน Navbar
 - [Done] ปรับ Navbar มีชื่อ user, role
+- [Done] ปรับ Design หน้า Dashboard > Overview
+- ปรับ Design หน้า Dashboard > Users
+- ปรับ Design หน้า Dashboard > Sales
+- ปรับ Design หน้า Dashboard > Brdocast
 
 <!-- ทำทีหลัง -->
 - เปลี่ยน Toast ใช้ของ Sandui
