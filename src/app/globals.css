@@ -24,6 +24,13 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  /* Dashboard chart scale: darker = more important / later stage */
+  --color-chart-blue-900: #1e3a8a;
+  --color-chart-blue-600: #2563eb;
+  --color-chart-blue-500: #3b82f6;
+  --color-chart-blue-400: #60a5fa;
+  --color-chart-blue-300: #93c5fd;
+  --color-chart-blue-200: #bfdbfe;
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);

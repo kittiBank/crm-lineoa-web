@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dashboard — Broadcasts</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#0A0A0A;text-decoration:none}a:hover{color:#047A35}
+.nav-link:hover{background:#F0F0F0}
+.tab:hover{color:#0A0A0A}
+.chip:hover{border-color:#A3A3A3}
+.btn:hover{background:#F5F5F5}
+.row:hover td{background:#FAFAFA}
+button,select,input{font-family:inherit}
+button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #3B82F6;outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #FAFAFA; color: #0A0A0A; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<aside style="flex: 1 1 232px; background: #FFFFFF; border-right: 1px solid #E5E5E5; padding: 20px 12px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px">
+<div style="width: 32px; height: 32px; border-radius: 9px; background: {{accent}}; display: flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+</div>
+<div style="display: flex; flex-direction: column">
+<span style="font-weight: 700; font-size: 15px">LINE OA CRM</span>
+<span style="font-size: 12px; color: #6B6B6B">Admin console</span>
+</div>
+</div>
+<nav aria-label="Main" style="display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="11">
+<a class="nav-link" href="{{item.href}}" style="display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; border-radius: 8px; font-size: 14px; font-weight: {{item.weight}}; background: {{item.bg}}; color: {{item.fg}}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+<span>{{item.label}}</span>
+</a>
+</sc-for>
+</nav>
+</aside>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 24px clamp(16px, 3vw, 32px) 48px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<nav aria-label="Breadcrumb" style="display: flex; gap: 6px; font-size: 13px; color: #6B6B6B"><a href="overview.dc.html" style="color: #6B6B6B">Home</a><span>/</span><a href="overview.dc.html" style="color: #6B6B6B">Dashboard</a><span>/</span><span style="color: #0A0A0A">Broadcasts</span></nav>
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+<h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Dashboard</h1>
+<span style="font-size: 12px; font-weight: 500; color: #525252; background: #F0F0F0; border-radius: 999px; padding: 3px 10px">Sample data</span>
+</div>
+<p style="margin: 0; font-size: 14px; color: #6B6B6B">Broadcast delivery, engagement and revenue impact</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+<div role="group" aria-label="Date range" style="display: flex; gap: 2px; background: #F0F0F0; border-radius: 10px; padding: 3px">
+<sc-for list="{{periods}}" as="p" hint-placeholder-count="4">
+<button type="button" onClick="{{p.pick}}" aria-pressed="{{p.pressed}}" style="border: 0; cursor: pointer; min-height: 36px; padding: 0 14px; border-radius: 8px; font-size: 13px; font-weight: 600; background: {{p.bg}}; color: {{p.fg}}; box-shadow: {{p.shadow}}">{{p.label}}</button>
+</sc-for>
+</div>
+<a href="#" style="display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 16px; background: #0A0A0A; color: #FFFFFF; border-radius: 10px; font-size: 13px; font-weight: 600">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+New broadcast
+</a>
+</div>
+</div>
+
+<nav aria-label="Dashboard sections" style="display: flex; gap: 4px; border-bottom: 1px solid #E5E5E5; overflow-x: auto">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<a class="tab" href="{{t.href}}" aria-current="{{t.current}}" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; font-size: 14px; font-weight: 600; white-space: nowrap; color: {{t.fg}}; border-bottom: 2px solid {{t.line}}; margin-bottom: -1px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.icon}}"></path></svg>
+{{t.label}}
+</a>
+</sc-for>
+</nav>
+
+<section aria-label="Broadcast filters" style="background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 12px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+<span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #404040">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54z"></path></svg>
+Filters
+</span>
+<label style="display: flex; align-items: center; gap: 8px; min-height: 38px; border: 1px solid #E5E5E5; border-radius: 8px; padding: 0 10px; font-size: 13px; color: #6B6B6B; flex: 0 1 220px">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none"><path d="M11 3a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM21 21l-4.3-4.3"></path></svg>
+<span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Search campaigns</span>
+<input type="search" placeholder="Search campaigns" style="border: 0; outline: none; font-size: 13px; color: #0A0A0A; background: transparent; min-width: 0; width: 100%">
+</label>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #525252">Status
+<select value="{{sfVal}}" onChange="{{onStatus}}" style="min-height: 38px; border: 1px solid #E5E5E5; border-radius: 8px; padding: 0 10px; background: #FFFFFF; font-size: 13px; color: #0A0A0A">
+<sc-for list="{{statusOptions}}" as="o" hint-placeholder-count="6"><option value="{{o.value}}">{{o.label}}</option></sc-for>
+</select>
+</label>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #525252">Audience
+<select style="min-height: 38px; border: 1px solid #E5E5E5; border-radius: 8px; padding: 0 10px; background: #FFFFFF; font-size: 13px; color: #0A0A0A">
+<option>All segments</option><option>All followers</option><option>Gold &amp; Platinum</option><option>Repeat customers</option><option>Inactive 30d</option><option>Imported list</option>
+</select>
+</label>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #525252">Message type
+<select style="min-height: 38px; border: 1px solid #E5E5E5; border-radius: 8px; padding: 0 10px; background: #FFFFFF; font-size: 13px; color: #0A0A0A">
+<option>All types</option><option>Text</option><option>Rich message</option><option>Template</option><option>Image</option>
+</select>
+</label>
+<button type="button" class="btn" onClick="{{reset}}" style="margin-left: auto; min-height: 34px; padding: 0 12px; border: 1px solid #E5E5E5; background: #FFFFFF; border-radius: 8px; font-size: 13px; font-weight: 500; color: #0A0A0A; cursor: pointer">Reset</button>
+</section>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: 12px">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="5">
+<div style="background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px; font-weight: 500; color: #525252">{{k.label}}</span>
+<span class="num" style="font-size: 26px; font-weight: 700; letter-spacing: -0.02em">{{k.value}}</span>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6B6B6B">
+<span class="num" style="font-weight: 600; border-radius: 999px; padding: 2px 8px; background: {{k.d.bg}}; color: {{k.d.fg}}">{{k.d.txt}}</span>
+<span>{{k.note}}</span>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<section style="flex: 2 1 520px; min-width: 0; background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-start">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Sent vs. delivered</h2>
+<span style="font-size: 13px; color: #6B6B6B">Messages per period, with link clicks</span>
+</div>
+<div style="display: flex; gap: 16px; font-size: 12px; color: #525252; flex-wrap: wrap">
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 0; border-top: 2px dashed #60A5FA"></span>Sent</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 3px; border-radius: 2px; background: #2563EB"></span>Delivered</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #1E3A8A"></span>Clicks</span>
+</div>
+</div>
+<div style="display: flex; gap: 8px">
+<div class="num" style="width: 44px; height: 240px; display: flex; flex-direction: column; justify-content: space-between; font-size: 11px; color: #6B6B6B; text-align: right; transform: translateY(-6px)">
+<sc-for list="{{trend.ticks}}" as="y" hint-placeholder-count="5"><span>{{y.t}}</span></sc-for>
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px">
+<svg viewBox="0 0 600 240" preserveAspectRatio="none" style="width: 100%; height: 240px; display: block; overflow: visible" aria-hidden="true">
+<defs><linearGradient id="dArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2563EB" stop-opacity="0.16"></stop><stop offset="1" stop-color="#2563EB" stop-opacity="0"></stop></linearGradient></defs>
+<path d="M0 0H600M0 60H600M0 120H600M0 180H600" stroke="#EDEDED" stroke-width="1" vector-effect="non-scaling-stroke"></path>
+<path d="M0 240H600" stroke="#D4D4D4" stroke-width="1" vector-effect="non-scaling-stroke"></path>
+<path d="{{trend.clicks}}" fill="#1E3A8A" opacity="0.85"></path>
+<path d="{{trend.area}}" fill="url(#dArea)"></path>
+<path d="{{trend.sent}}" fill="none" stroke="#60A5FA" stroke-width="2" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"></path>
+<path d="{{trend.delivered}}" fill="none" stroke="#2563EB" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"></path>
+</svg>
+<div class="num" style="display: flex; justify-content: space-between; font-size: 11px; color: #6B6B6B">
+<sc-for list="{{xLabels}}" as="x" hint-placeholder-count="5"><span>{{x.t}}</span></sc-for>
+</div>
+</div>
+</div>
+</section>
+
+<section style="flex: 1 1 300px; min-width: 0; background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Broadcast status</h2>
+<span style="font-size: 13px; color: #6B6B6B">Campaigns created in this period</span>
+</div>
+<div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap">
+<div style="position: relative; width: 148px; height: 148px; flex: none">
+<svg viewBox="0 0 42 42" style="width: 100%; height: 100%; display: block" aria-hidden="true">
+<circle cx="21" cy="21" r="15.9155" fill="none" stroke="#F2F2F2" stroke-width="5"></circle>
+<sc-for list="{{statusDonut}}" as="s" hint-placeholder-count="5">
+<circle cx="21" cy="21" r="15.9155" fill="none" stroke="{{s.color}}" stroke-width="5" stroke-dasharray="{{s.dash}}" stroke-dashoffset="{{s.offset}}" opacity="{{s.op}}"></circle>
+</sc-for>
+</svg>
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center">
+<span class="num" style="font-size: 22px; font-weight: 700">{{campaignTotal}}</span>
+<span style="font-size: 11px; color: #6B6B6B">campaigns</span>
+</div>
+</div>
+<ul style="margin: 0; padding: 0; list-style: none; flex: 1; min-width: 140px; display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{statusDonut}}" as="s" hint-placeholder-count="5">
+<li style="display: flex; align-items: center; gap: 8px; font-size: 13px; opacity: {{s.op}}"><span style="width: 10px; height: 10px; border-radius: 3px; background: {{s.color}}"></span><span style="flex: 1">{{s.label}}</span><span class="num" style="color: #525252">{{s.value}}</span></li>
+</sc-for>
+</ul>
+</div>
+</section>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<section style="flex: 1 1 340px; min-width: 0; background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Click rate by message type</h2>
+<span style="font-size: 13px; color: #6B6B6B">Clicks ÷ delivered</span>
+</div>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px">
+<sc-for list="{{types}}" as="t" hint-placeholder-count="4">
+<li style="display: grid; grid-template-columns: 110px minmax(0, 1fr) 52px; gap: 12px; align-items: center; font-size: 13px">
+<span style="font-weight: 500">{{t.label}}</span>
+<div style="height: 22px; border-radius: 6px; background: #F5F5F5; overflow: hidden"><div style="height: 100%; width: {{t.w}}; border-radius: 6px; background: {{t.color}}"></div></div>
+<span class="num" style="text-align: right; font-weight: 600">{{t.rate}}</span>
+</li>
+</sc-for>
+</ul>
+</section>
+<section style="flex: 1 1 340px; min-width: 0; background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Revenue by audience segment</h2>
+<span style="font-size: 13px; color: #6B6B6B">Orders within 72h of a broadcast click</span>
+</div>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px">
+<sc-for list="{{segments}}" as="t" hint-placeholder-count="5">
+<li style="display: grid; grid-template-columns: 130px minmax(0, 1fr) 72px; gap: 12px; align-items: center; font-size: 13px">
+<span style="font-weight: 500">{{t.label}}</span>
+<div style="height: 22px; border-radius: 6px; background: #F5F5F5; overflow: hidden"><div style="height: 100%; width: {{t.w}}; border-radius: 6px; background: #2563EB"></div></div>
+<span class="num" style="text-align: right; font-weight: 600">{{t.value}}</span>
+</li>
+</sc-for>
+</ul>
+</section>
+</div>
+
+<section style="background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Campaign performance</h2>
+<span class="num" style="font-size: 13px; color: #6B6B6B">{{rowCount}}</span>
+</div>
+<a href="#" style="font-size: 13px; font-weight: 600; color: #047A35">Open Broadcasts</a>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 860px">
+<thead><tr style="text-align: left; color: #6B6B6B">
+<th style="font-weight: 500; padding: 8px 10px; border-bottom: 1px solid #EDEDED">Campaign</th>
+<th style="font-weight: 500; padding: 8px 10px; border-bottom: 1px solid #EDEDED">Audience</th>
+<th style="font-weight: 500; padding: 8px 10px; border-bottom: 1px solid #EDEDED">Status</th>
+<th style="font-weight: 500; padding: 8px 10px; border-bottom: 1px solid #EDEDED; text-align: right">Sent</th>
+<th style="font-weight: 500; padding: 8px 10px; border-bottom: 1px solid #EDEDED">Delivered</th>
+<th style="font-weight: 500; padding: 8px 10px; border-bottom: 1px solid #EDEDED; text-align: right">Click rate</th>
+<th style="font-weight: 500; padding: 8px 10px; border-bottom: 1px solid #EDEDED; text-align: right">Orders</th>
+<th style="font-weight: 500; padding: 8px 10px; border-bottom: 1px solid #EDEDED; text-align: right">Revenue</th>
+</tr></thead>
+<tbody>
+<sc-for list="{{rows}}" as="b" hint-placeholder-count="7">
+<tr class="row">
+<td style="padding: 12px 10px; border-bottom: 1px solid #F3F3F3"><div style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 600">{{b.name}}</span><span style="font-size: 12px; color: #6B6B6B">{{b.type}} · {{b.date}}</span></div></td>
+<td style="padding: 12px 10px; border-bottom: 1px solid #F3F3F3; color: #404040">{{b.segment}}</td>
+<td style="padding: 12px 10px; border-bottom: 1px solid #F3F3F3"><span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; background: {{b.sbg}}; color: {{b.sfg}}; white-space: nowrap"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{b.sdot}}"></span>{{b.status}}</span></td>
+<td class="num" style="padding: 12px 10px; border-bottom: 1px solid #F3F3F3; text-align: right">{{b.sent}}</td>
+<td style="padding: 12px 10px; border-bottom: 1px solid #F3F3F3"><div style="display: flex; align-items: center; gap: 8px"><div style="flex: 1; min-width: 70px; height: 6px; border-radius: 999px; background: #F2F2F2; overflow: hidden"><div style="height: 100%; width: {{b.rate}}; background: {{b.rc}}"></div></div><span class="num" style="width: 44px; text-align: right">{{b.rate}}</span></div></td>
+<td class="num" style="padding: 12px 10px; border-bottom: 1px solid #F3F3F3; text-align: right">{{b.ctr}}</td>
+<td class="num" style="padding: 12px 10px; border-bottom: 1px solid #F3F3F3; text-align: right">{{b.orders}}</td>
+<td class="num" style="padding: 12px 10px; border-bottom: 1px solid #F3F3F3; text-align: right; font-weight: 600">{{b.revenue}}</td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+<sc-if value="{{empty}}" hint-placeholder-val="{{ false }}">
+<p style="margin: 0; padding: 28px 10px; text-align: center; font-size: 13px; color: #6B6B6B">No campaigns match these filters.</p>
+</sc-if>
+</div>
+</section>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#06C755","options":["#06C755","#3B82F6","#8B5CF6","#0A0A0A"]},"$preview":{"width":1440,"height":1600}}'>
+var PERIODS = [
+  { label: 'Today', days: 1, n: 24, x: ['00:00', '06:00', '12:00', '18:00', '23:00'] },
+  { label: '7D', days: 7, n: 7, x: ['Oct 16', 'Oct 17', 'Oct 18', 'Oct 19', 'Oct 20', 'Oct 21', 'Oct 22'] },
+  { label: '30D', days: 30, n: 30, x: ['Sep 23', 'Sep 30', 'Oct 7', 'Oct 14', 'Oct 22'] },
+  { label: '90D', days: 90, n: 13, x: ['Jul 24', 'Aug 21', 'Sep 18', 'Oct 22'] }
+];
+var NAV = [
+  ['Dashboard', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'],
+  ['Inbox', 'M22 12h-6l-2 3h-4l-2-3H2M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'],
+  ['Broadcasts', 'M3 11l18-5v12L3 14v-3zM11.6 16.8a3 3 0 1 1-5.8-1.6'],
+  ['Message', 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'],
+  ['Auto Message', 'M13 2 3 14h9l-1 8 10-12h-9l1-8z'],
+  ['LINE Users', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'],
+  ['Audience Management', 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12zM12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4z'],
+  ['Rich Menu', 'M3 3h18v18H3zM3 12h18M12 3v18'],
+  ['LINE Shop', 'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0'],
+  ['LINE OA Settings', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6'],
+  ['User Settings', 'M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z']
+];
+var TABS = [
+  ['Overview', 'overview.dc.html', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'],
+  ['Users', 'users.dc.html', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'],
+  ['Sales', 'sales.dc.html', 'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0'],
+  ['Broadcasts', 'broadcasts.dc.html', 'M3 11l18-5v12L3 14v-3zM11.6 16.8a3 3 0 1 1-5.8-1.6']
+];
+var CAMPAIGNS = [
+  ['Mid-month flash sale', 'Rich message', 'Oct 21, 18:00', 'All followers', 'Sent', 18420, 0.981, 0.112, 104, 128400],
+  ['Gold member early access', 'Template', 'Oct 20, 12:00', 'Gold & Platinum', 'Sent', 4210, 0.993, 0.184, 61, 86250],
+  ['Payday reminder', 'Text', 'Oct 19, 09:30', 'Repeat customers', 'In Progress', 9120, 0.612, 0.064, 17, 21300],
+  ['Re-engage 30d inactive', 'Image', 'Oct 17, 20:00', 'Inactive 30d', 'Failed', 3500, 0.214, 0.021, 0, 0],
+  ['Weekend bundle deal', 'Rich message', 'Oct 12, 10:00', 'All followers', 'Sent', 17980, 0.976, 0.097, 88, 97600],
+  ['New arrivals — October', 'Rich message', 'Oct 24, 10:00', 'All followers', 'Scheduled', 0, 0, 0, 0, 0],
+  ['11.11 teaser', 'Template', '—', 'Imported list', 'Draft', 0, 0, 0, 0, 0]
+];
+var ST = [
+  { key: 'Sent', label: 'Sent', bg: '#EFF5FF', fg: '#1D4ED8', dot: '#2563EB' },
+  { key: 'In Progress', label: 'In progress', bg: '#F3F8FF', fg: '#1E40AF', dot: '#60A5FA' },
+  { key: 'Scheduled', label: 'Scheduled', bg: '#F3F8FF', fg: '#1E40AF', dot: '#BFDBFE' },
+  { key: 'Draft', label: 'Draft', bg: '#F5F5F5', fg: '#525252', dot: '#D4D4D4' },
+  { key: 'Failed', label: 'Failed', bg: '#FFF4ED', fg: '#B93815', dot: '#EA580C' }
+];
+function rnd(i, seed) { var s = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453; return s - Math.floor(s); }
+function series(n, base, seed, growth, noise) {
+  var g = growth == null ? 0.25 : growth, nz = noise == null ? 0.35 : noise, o = [];
+  for (var i = 0; i < n; i++) {
+    var w = 1 + g * (i / Math.max(n - 1, 1)) - g / 2;
+    o.push(Math.max(0, base * w * (1 + nz * (rnd(i + 1, seed) - 0.5) + 0.12 * Math.sin(i * 0.9 + seed))));
+  }
+  return o;
+}
+function sum(a) { return a.reduce(function (s, v) { return s + v; }, 0); }
+function niceMax(m) { if (m <= 0) return 1; var p = Math.pow(10, Math.floor(Math.log10(m))), f = m / p; var s = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 4 ? 4 : f <= 5 ? 5 : f <= 8 ? 8 : 10; return s * p; }
+function fmt(v) { return Math.round(v).toLocaleString('en-US'); }
+function compact(v) { var a = Math.abs(v); if (a >= 1e6) return (v / 1e6).toFixed(1).replace(/\.0$/, '') + 'M'; if (a >= 1e3) return (v / 1e3).toFixed(a >= 1e4 ? 0 : 1).replace(/\.0$/, '') + 'k'; return String(Math.round(v)); }
+function pts(vals, max, W, H) { var n = vals.length; return vals.map(function (v, i) { return [n < 2 ? W / 2 : i * W / (n - 1), H - (v / max) * H]; }); }
+function smooth(p) { if (!p.length) return ''; var d = 'M' + p[0][0].toFixed(1) + ' ' + p[0][1].toFixed(1); for (var i = 1; i < p.length; i++) { var a = p[i - 1], b = p[i], mx = ((a[0] + b[0]) / 2).toFixed(1); d += ' C' + mx + ' ' + a[1].toFixed(1) + ' ' + mx + ' ' + b[1].toFixed(1) + ' ' + b[0].toFixed(1) + ' ' + b[1].toFixed(1); } return d; }
+function areaD(p, H) { return smooth(p) + ' L' + p[p.length - 1][0].toFixed(1) + ' ' + H + ' L' + p[0][0].toFixed(1) + ' ' + H + ' Z'; }
+function delta(seed, pi, invert) { var d = rnd(pi + 3, seed) * 24 - 6; var good = invert ? d < 0 : d >= 0; return { txt: (d >= 0 ? '▲ ' : '▼ ') + Math.abs(d).toFixed(1) + '%', bg: good ? '#ECFDF3' : '#FFF4ED', fg: good ? '#047A35' : '#B93815' }; }
+
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var accent = this.props.accent ?? '#06C755';
+    var st = this.state || {};
+    var pi = st.pi == null ? 2 : st.pi;
+    var allOn = { Sent: true, 'In Progress': true, Scheduled: true, Draft: true, Failed: true };
+    var sf = st.sf || 'ALL';
+    var on = allOn;
+    if (sf !== 'ALL') { on = {}; on[sf] = true; }
+    var P = PERIODS[pi];
+    var per = P.days / P.n;
+
+    var sent = series(P.n, 9800 * per, 4 + pi, 0.3, 0.6);
+    var deliv = sent.map(function (v, i) { return v * (0.95 + rnd(i, 6) * 0.04); });
+    var clicks = deliv.map(function (v, i) { return v * (0.07 + rnd(i, 8) * 0.04); });
+    var max = niceMax(Math.max.apply(null, sent) * 1.08);
+    var dp = pts(deliv, max, 600, 240);
+    var slot = 600 / P.n, bw = Math.max(2, slot * 0.5), cb = '';
+    clicks.forEach(function (v, i) { var h = v / max * 240, x = i * slot + (slot - bw) / 2; cb += 'M' + x.toFixed(1) + ' ' + (240 - h).toFixed(1) + 'h' + bw.toFixed(1) + 'v' + h.toFixed(1) + 'h' + (-bw).toFixed(1) + 'Z'; });
+    var tSent = sum(sent), tDel = sum(deliv), tClk = sum(clicks);
+
+    var kpis = [
+      { label: 'Broadcasts sent', value: fmt(Math.max(1, P.days / 2.6)), note: 'campaigns', d: delta(1, pi) },
+      { label: 'Messages delivered', value: fmt(tDel), note: 'of ' + compact(tSent) + ' sent', d: delta(2, pi) },
+      { label: 'Delivery rate', value: (tDel / tSent * 100).toFixed(1) + '%', note: 'vs prev. period', d: delta(3, pi) },
+      { label: 'Click rate', value: (tClk / tDel * 100).toFixed(1) + '%', note: fmt(tClk) + ' clicks', d: delta(4, pi) },
+      { label: 'Attributed revenue', value: '฿' + fmt(48200 * P.days * 0.42), note: '72h after click', d: delta(5, pi) }
+    ];
+
+    var counts = {};
+    CAMPAIGNS.forEach(function (c) { counts[c[4]] = (counts[c[4]] || 0) + 1; });
+    var mulC = Math.max(1, Math.round(P.days / 10));
+    var dItems = ST.map(function (s) { return { label: s.label, v: (counts[s.key] || 0) * mulC, color: s.dot || accent, op: on[s.key] ? 1 : 0.25 }; });
+    var dTot = sum(dItems.map(function (x) { return x.v; }));
+    var off = 25;
+    var statusDonut = dItems.map(function (x) { var pct = x.v / dTot * 100; var o = { label: x.label, color: x.color, op: x.op, value: fmt(x.v), dash: pct.toFixed(2) + ' ' + (100 - pct).toFixed(2), offset: off.toFixed(2) }; off -= pct; return o; });
+
+    var TY = [['Rich message', 0.108, '#2563EB'], ['Template', 0.142, '#1E3A8A'], ['Image', 0.061, '#60A5FA'], ['Text', 0.048, '#93C5FD']];
+    var tyMax = 0.16;
+    var types = TY.map(function (t) { return { label: t[0], rate: (t[1] * 100).toFixed(1) + '%', w: (t[1] / tyMax * 100).toFixed(0) + '%', color: t[2] }; });
+
+    var SG = [['All followers', 0.46], ['Gold & Platinum', 0.29], ['Repeat customers', 0.15], ['Inactive 30d', 0.06], ['Imported list', 0.04]];
+    var attr = 48200 * P.days * 0.42;
+    var segments = SG.map(function (s) { return { label: s[0], value: '฿' + compact(attr * s[1]), w: (s[1] / SG[0][1] * 100).toFixed(0) + '%' }; });
+
+    var stMap = {}; ST.forEach(function (s) { stMap[s.key] = s; });
+    var rows = CAMPAIGNS.filter(function (c) { return on[c[4]]; }).map(function (c) {
+      var s = stMap[c[4]];
+      return { name: c[0], type: c[1], date: c[2], segment: c[3], status: s.label, sbg: s.bg, sfg: s.fg, sdot: s.dot || accent, sent: c[5] ? fmt(c[5]) : '—', rate: c[6] ? (c[6] * 100).toFixed(1) + '%' : '0%', rc: c[6] >= 0.9 ? '#2563EB' : c[6] >= 0.5 ? '#60A5FA' : '#93C5FD', ctr: c[7] ? (c[7] * 100).toFixed(1) + '%' : '—', orders: c[8] ? fmt(c[8]) : '—', revenue: c[9] ? '฿' + fmt(c[9]) : '—' };
+    });
+
+    var toggle = function (k) { return function () { var nx = Object.assign({}, on); nx[k] = !nx[k]; self.setState({ on: nx }); }; };
+
+    return {
+      accent: accent,
+      nav: NAV.map(function (nv, i) { var a = i === 0; return { label: nv[0], icon: nv[1], href: a ? 'overview.dc.html' : '#', bg: a ? '#F0F0F0' : 'transparent', fg: a ? '#0A0A0A' : '#404040', weight: a ? 600 : 500 }; }),
+      tabs: TABS.map(function (t, i) { var a = i === 3; return { label: t[0], href: t[1], icon: t[2], current: a ? 'page' : 'false', fg: a ? '#0A0A0A' : '#6B6B6B', line: a ? accent : 'transparent' }; }),
+      periods: PERIODS.map(function (p, i) { var a = i === pi; return { label: p.label, pressed: a, pick: function () { self.setState({ pi: i }); }, bg: a ? '#FFFFFF' : 'transparent', fg: a ? '#0A0A0A' : '#525252', shadow: a ? '0 1px 2px rgba(0,0,0,0.10)' : 'none' }; }),
+      sfVal: sf,
+      statusOptions: [{ value: 'ALL', label: 'All statuses (' + CAMPAIGNS.length + ')' }].concat(ST.map(function (s) { return { value: s.key, label: s.label + ' (' + (counts[s.key] || 0) + ')' }; })),
+      onStatus: function (e) { self.setState({ sf: e.target.value }); },
+      reset: function () { self.setState({ sf: 'ALL' }); },
+      kpis: kpis,
+      trend: { sent: smooth(pts(sent, max, 600, 240)), delivered: smooth(dp), area: areaD(dp, 240), clicks: cb, ticks: [1, 0.75, 0.5, 0.25, 0].map(function (t) { return { t: compact(max * t) }; }) },
+      xLabels: P.x.map(function (t) { return { t: t }; }),
+      statusDonut: statusDonut,
+      campaignTotal: fmt(dTot),
+      types: types,
+      segments: segments,
+      rows: rows,
+      empty: rows.length === 0,
+      rowCount: rows.length + ' of ' + CAMPAIGNS.length + ' campaigns shown'
+    };
+  }
+}
+</script>
+</body>
+</html>

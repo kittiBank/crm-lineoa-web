@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Dashboard — Sales</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#0A0A0A;text-decoration:none}a:hover{color:#047A35}
+.nav-link:hover{background:#F0F0F0}
+.tab:hover{color:#0A0A0A}
+.chip:hover{border-color:#A3A3A3}
+.btn:hover{background:#F5F5F5}
+.row:hover td{background:#FAFAFA}
+button,select,input{font-family:inherit}
+button:focus-visible,a:focus-visible,select:focus-visible{outline:2px solid #3B82F6;outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #FAFAFA; color: #0A0A0A; display: flex; flex-wrap: wrap; align-items: stretch">
+
+<aside style="flex: 1 1 232px; background: #FFFFFF; border-right: 1px solid #E5E5E5; padding: 20px 12px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box">
+<div style="display: flex; align-items: center; gap: 10px; padding: 0 8px">
+<div style="width: 32px; height: 32px; border-radius: 9px; background: {{accent}}; display: flex; align-items: center; justify-content: center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+</div>
+<div style="display: flex; flex-direction: column">
+<span style="font-weight: 700; font-size: 15px">LINE OA CRM</span>
+<span style="font-size: 12px; color: #6B6B6B">Admin console</span>
+</div>
+</div>
+<nav aria-label="Main" style="display: flex; flex-direction: column; gap: 2px">
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="11">
+<a class="nav-link" href="{{item.href}}" style="display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 0 10px; border-radius: 8px; font-size: 14px; font-weight: {{item.weight}}; background: {{item.bg}}; color: {{item.fg}}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.icon}}"></path></svg>
+<span>{{item.label}}</span>
+</a>
+</sc-for>
+</nav>
+</aside>
+
+<main style="flex: 999 1 560px; min-width: 0; padding: 24px clamp(16px, 3vw, 32px) 48px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<nav aria-label="Breadcrumb" style="display: flex; gap: 6px; font-size: 13px; color: #6B6B6B"><a href="overview.dc.html" style="color: #6B6B6B">Home</a><span>/</span><a href="overview.dc.html" style="color: #6B6B6B">Dashboard</a><span>/</span><span style="color: #0A0A0A">Sales</span></nav>
+<div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap">
+<h1 style="margin: 0; font-size: 28px; font-weight: 700; letter-spacing: -0.02em">Dashboard</h1>
+<span style="font-size: 12px; font-weight: 500; color: #525252; background: #F0F0F0; border-radius: 999px; padding: 3px 10px">Sample data</span>
+</div>
+<p style="margin: 0; font-size: 14px; color: #6B6B6B">LINE Shop orders, revenue and best sellers</p>
+</div>
+<div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center">
+<div role="group" aria-label="Date range" style="display: flex; gap: 2px; background: #F0F0F0; border-radius: 10px; padding: 3px">
+<sc-for list="{{periods}}" as="p" hint-placeholder-count="4">
+<button type="button" onClick="{{p.pick}}" aria-pressed="{{p.pressed}}" style="border: 0; cursor: pointer; min-height: 36px; padding: 0 14px; border-radius: 8px; font-size: 13px; font-weight: 600; background: {{p.bg}}; color: {{p.fg}}; box-shadow: {{p.shadow}}">{{p.label}}</button>
+</sc-for>
+</div>
+<button type="button" class="btn" style="display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 0 14px; border: 1px solid #E5E5E5; background: #FFFFFF; border-radius: 10px; font-size: 13px; font-weight: 500; color: #0A0A0A; cursor: pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"></path></svg>
+Export orders
+</button>
+</div>
+</div>
+
+<nav aria-label="Dashboard sections" style="display: flex; gap: 4px; border-bottom: 1px solid #E5E5E5; overflow-x: auto">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+<a class="tab" href="{{t.href}}" aria-current="{{t.current}}" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; font-size: 14px; font-weight: 600; white-space: nowrap; color: {{t.fg}}; border-bottom: 2px solid {{t.line}}; margin-bottom: -1px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.icon}}"></path></svg>
+{{t.label}}
+</a>
+</sc-for>
+</nav>
+
+<section aria-label="Sales filters" style="background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 12px; padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center">
+<span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #404040">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54z"></path></svg>
+Filters
+</span>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #525252">Order status
+<select value="{{sfVal}}" onChange="{{onStatus}}" style="min-height: 38px; border: 1px solid #E5E5E5; border-radius: 8px; padding: 0 10px; background: #FFFFFF; font-size: 13px; color: #0A0A0A">
+<sc-for list="{{statusOptions}}" as="o" hint-placeholder-count="7"><option value="{{o.value}}">{{o.label}}</option></sc-for>
+</select>
+</label>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #525252">Product
+<select style="min-height: 38px; border: 1px solid #E5E5E5; border-radius: 8px; padding: 0 10px; background: #FFFFFF; font-size: 13px; color: #0A0A0A">
+<option>All products</option><option>Signature Tote Bag</option><option>Cold Brew Set (6)</option><option>Everyday Hoodie</option><option>Ceramic Mug — Sage</option><option>Gift Card ฿500</option>
+</select>
+</label>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #525252">Buyer tier
+<select style="min-height: 38px; border: 1px solid #E5E5E5; border-radius: 8px; padding: 0 10px; background: #FFFFFF; font-size: 13px; color: #0A0A0A">
+<option>All tiers</option><option>Silver</option><option>Gold</option><option>Platinum</option><option>Member</option>
+</select>
+</label>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #525252">Buyer type
+<select value="{{btVal}}" onChange="{{onBuyer}}" style="min-height: 38px; border: 1px solid #E5E5E5; border-radius: 8px; padding: 0 10px; background: #FFFFFF; font-size: 13px; color: #0A0A0A">
+<option value="0">All buyers</option><option value="1">New</option><option value="2">Returning</option>
+</select>
+</label>
+<div style="margin-left: auto; display: flex; align-items: center; gap: 10px">
+<span class="num" style="font-size: 12px; color: #6B6B6B">{{activeFilters}}</span>
+<button type="button" class="btn" onClick="{{reset}}" style="min-height: 34px; padding: 0 12px; border: 1px solid #E5E5E5; background: #FFFFFF; border-radius: 8px; font-size: 13px; font-weight: 500; color: #0A0A0A; cursor: pointer">Reset</button>
+</div>
+</section>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr)); gap: 12px">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="5">
+<div style="background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px">
+<span style="font-size: 13px; font-weight: 500; color: #525252">{{k.label}}</span>
+<span class="num" style="font-size: 26px; font-weight: 700; letter-spacing: -0.02em">{{k.value}}</span>
+<div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6B6B6B">
+<span class="num" style="font-weight: 600; border-radius: 999px; padding: 2px 8px; background: {{k.d.bg}}; color: {{k.d.fg}}">{{k.d.txt}}</span>
+<span>{{k.note}}</span>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<section style="flex: 2 1 520px; min-width: 0; background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: flex-start">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Revenue &amp; orders</h2>
+<span class="num" style="font-size: 13px; color: #6B6B6B">{{revTotal}} from {{ordTotal}} orders</span>
+</div>
+<div style="display: flex; gap: 16px; font-size: 12px; color: #525252">
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 3px; border-radius: 2px; background: #3B82F6"></span>Revenue</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 10px; height: 10px; border-radius: 3px; background: #93C5FD"></span>Orders</span>
+</div>
+</div>
+<div style="display: flex; gap: 8px">
+<div class="num" style="width: 48px; flex: none; display: flex; flex-direction: column; font-size: 11px; color: #6B6B6B; text-align: right">
+<div style="height: 200px; display: flex; flex-direction: column; justify-content: space-between; transform: translateY(-6px)"><sc-for list="{{rev.ticks}}" as="y" hint-placeholder-count="5"><span>{{y.t}}</span></sc-for></div>
+<div style="height: 70px; margin-top: 14px; display: flex; flex-direction: column; justify-content: space-between"><span>{{ordMax}}</span><span>0</span></div>
+</div>
+<div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<svg viewBox="0 0 600 200" preserveAspectRatio="none" style="width: 100%; height: 200px; display: block; overflow: visible" aria-hidden="true">
+<defs><linearGradient id="rArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3B82F6" stop-opacity="0.22"></stop><stop offset="1" stop-color="#3B82F6" stop-opacity="0"></stop></linearGradient></defs>
+<path d="M0 0H600M0 50H600M0 100H600M0 150H600" stroke="#EDEDED" stroke-width="1" vector-effect="non-scaling-stroke"></path>
+<path d="M0 200H600" stroke="#D4D4D4" stroke-width="1" vector-effect="non-scaling-stroke"></path>
+<path d="{{rev.area}}" fill="url(#rArea)"></path>
+<path d="{{rev.line}}" fill="none" stroke="#3B82F6" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"></path>
+</svg>
+<svg viewBox="0 0 600 70" preserveAspectRatio="none" style="width: 100%; height: 70px; display: block" aria-hidden="true">
+<path d="M0 70H600" stroke="#D4D4D4" stroke-width="1" vector-effect="non-scaling-stroke"></path>
+<path d="{{ordBars}}" fill="#93C5FD"></path>
+</svg>
+<div class="num" style="display: flex; justify-content: space-between; font-size: 11px; color: #6B6B6B; margin-top: -6px">
+<sc-for list="{{xLabels}}" as="x" hint-placeholder-count="5"><span>{{x.t}}</span></sc-for>
+</div>
+</div>
+</div>
+</section>
+
+<section style="flex: 1 1 300px; min-width: 0; background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+<div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Order pipeline</h2>
+<span style="font-size: 13px; color: #6B6B6B">Orders by status in this period</span>
+</div>
+<a href="#" style="font-size: 13px; font-weight: 600; color: #047A35; white-space: nowrap">Open orders</a>
+</div>
+<div style="display: flex; height: 14px; border-radius: 999px; overflow: hidden; gap: 2px">
+<sc-for list="{{pipeline}}" as="s" hint-placeholder-count="5"><div style="width: {{s.share}}; background: {{s.color}}; opacity: {{s.op}}"></div></sc-for>
+</div>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column">
+<sc-for list="{{pipeline}}" as="s" hint-placeholder-count="5">
+<li style="display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #F3F3F3; font-size: 13px; opacity: {{s.op}}">
+<span style="width: 10px; height: 10px; border-radius: 3px; background: {{s.color}}; flex: none"></span>
+<span style="flex: 1; font-weight: 500">{{s.label}}</span>
+<span class="num" style="color: #525252; width: 48px; text-align: right">{{s.count}}</span>
+<span class="num" style="font-weight: 600; width: 92px; text-align: right">{{s.amount}}</span>
+</li>
+</sc-for>
+</ul>
+</section>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px">
+<section style="flex: 2 1 520px; min-width: 0; background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 12px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Top products</h2>
+<a href="#" style="font-size: 13px; font-weight: 600; color: #047A35">All products</a>
+</div>
+<div style="overflow-x: auto">
+<table style="width: 100%; border-collapse: collapse; font-size: 13px; min-width: 560px">
+<thead><tr style="text-align: left; color: #6B6B6B">
+<th style="font-weight: 500; padding: 8px 10px; border-bottom: 1px solid #EDEDED">Product</th>
+<th style="font-weight: 500; padding: 8px 10px; border-bottom: 1px solid #EDEDED; text-align: right">Units</th>
+<th style="font-weight: 500; padding: 8px 10px; border-bottom: 1px solid #EDEDED">Share of revenue</th>
+<th style="font-weight: 500; padding: 8px 10px; border-bottom: 1px solid #EDEDED; text-align: right">Revenue</th>
+<th style="font-weight: 500; padding: 8px 10px; border-bottom: 1px solid #EDEDED; text-align: right">Trend</th>
+</tr></thead>
+<tbody>
+<sc-for list="{{products}}" as="pr" hint-placeholder-count="6">
+<tr class="row">
+<td style="padding: 10px; border-bottom: 1px solid #F3F3F3"><div style="display: flex; align-items: center; gap: 10px"><span style="width: 36px; height: 36px; border-radius: 8px; background: #F2F2F2; flex: none; display: flex; align-items: center; justify-content: center; color: #8A8A8A"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h18v18H3zM8.5 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM21 15l-5-5L5 21"></path></svg></span><span style="font-weight: 600">{{pr.name}}</span></div></td>
+<td class="num" style="padding: 10px; border-bottom: 1px solid #F3F3F3; text-align: right">{{pr.units}}</td>
+<td style="padding: 10px; border-bottom: 1px solid #F3F3F3"><div style="display: flex; align-items: center; gap: 8px"><div style="flex: 1; min-width: 60px; height: 6px; border-radius: 999px; background: #F2F2F2; overflow: hidden"><div style="height: 100%; width: {{pr.w}}; background: #3B82F6; border-radius: 999px"></div></div><span class="num" style="width: 40px; text-align: right">{{pr.share}}</span></div></td>
+<td class="num" style="padding: 10px; border-bottom: 1px solid #F3F3F3; text-align: right; font-weight: 600">{{pr.revenue}}</td>
+<td style="padding: 10px; border-bottom: 1px solid #F3F3F3"><div style="display: flex; justify-content: flex-end"><svg viewBox="0 0 100 32" preserveAspectRatio="none" style="width: 72px; height: 24px; display: block" aria-hidden="true"><path d="{{pr.spark}}" fill="none" stroke="{{pr.sc}}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round"></path></svg></div></td>
+</tr>
+</sc-for>
+</tbody>
+</table>
+</div>
+</section>
+
+<section style="flex: 1 1 300px; min-width: 0; background: #FFFFFF; border: 1px solid #E5E5E5; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 18px">
+<div style="display: flex; flex-direction: column; gap: 4px">
+<h2 style="margin: 0; font-size: 16px; font-weight: 600">Revenue by buyer tier</h2>
+<span style="font-size: 13px; color: #6B6B6B">Who drives sales</span>
+</div>
+<div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap">
+<div style="position: relative; width: 148px; height: 148px; flex: none">
+<svg viewBox="0 0 42 42" style="width: 100%; height: 100%; display: block" aria-hidden="true">
+<circle cx="21" cy="21" r="15.9155" fill="none" stroke="#F2F2F2" stroke-width="5"></circle>
+<sc-for list="{{tierDonut}}" as="s" hint-placeholder-count="4">
+<circle cx="21" cy="21" r="15.9155" fill="none" stroke="{{s.color}}" stroke-width="5" stroke-dasharray="{{s.dash}}" stroke-dashoffset="{{s.offset}}"></circle>
+</sc-for>
+</svg>
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center">
+<span class="num" style="font-size: 18px; font-weight: 700">{{revShort}}</span>
+<span style="font-size: 11px; color: #6B6B6B">revenue</span>
+</div>
+</div>
+<ul style="margin: 0; padding: 0; list-style: none; flex: 1; min-width: 140px; display: flex; flex-direction: column; gap: 10px">
+<sc-for list="{{tierDonut}}" as="s" hint-placeholder-count="4">
+<li style="display: flex; align-items: center; gap: 8px; font-size: 13px"><span style="width: 10px; height: 10px; border-radius: 3px; background: {{s.color}}"></span><span style="flex: 1">{{s.label}}</span><span class="num" style="color: #525252">{{s.pct}}</span></li>
+</sc-for>
+</ul>
+</div>
+<div style="border-top: 1px solid #F0F0F0; padding-top: 16px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; color: #6B6B6B">New buyers</span><span class="num" style="font-size: 18px; font-weight: 700">{{newBuyers}}</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><span style="font-size: 12px; color: #6B6B6B">Returning buyers</span><span class="num" style="font-size: 18px; font-weight: 700">{{retBuyers}}</span></div>
+</div>
+</section>
+</div>
+
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#06C755","options":["#06C755","#3B82F6","#8B5CF6","#0A0A0A"]},"$preview":{"width":1440,"height":1640}}'>
+var PERIODS = [
+  { label: 'Today', days: 1, n: 24, x: ['00:00', '06:00', '12:00', '18:00', '23:00'] },
+  { label: '7D', days: 7, n: 7, x: ['Oct 16', 'Oct 17', 'Oct 18', 'Oct 19', 'Oct 20', 'Oct 21', 'Oct 22'] },
+  { label: '30D', days: 30, n: 30, x: ['Sep 23', 'Sep 30', 'Oct 7', 'Oct 14', 'Oct 22'] },
+  { label: '90D', days: 90, n: 13, x: ['Jul 24', 'Aug 21', 'Sep 18', 'Oct 22'] }
+];
+var NAV = [
+  ['Dashboard', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'],
+  ['Inbox', 'M22 12h-6l-2 3h-4l-2-3H2M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'],
+  ['Broadcasts', 'M3 11l18-5v12L3 14v-3zM11.6 16.8a3 3 0 1 1-5.8-1.6'],
+  ['Message', 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z'],
+  ['Auto Message', 'M13 2 3 14h9l-1 8 10-12h-9l1-8z'],
+  ['LINE Users', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'],
+  ['Audience Management', 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12zM12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4z'],
+  ['Rich Menu', 'M3 3h18v18H3zM3 12h18M12 3v18'],
+  ['LINE Shop', 'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0'],
+  ['LINE OA Settings', 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6'],
+  ['User Settings', 'M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z']
+];
+var TABS = [
+  ['Overview', 'overview.dc.html', 'M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'],
+  ['Users', 'users.dc.html', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75'],
+  ['Sales', 'sales.dc.html', 'M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0'],
+  ['Broadcasts', 'broadcasts.dc.html', 'M3 11l18-5v12L3 14v-3zM11.6 16.8a3 3 0 1 1-5.8-1.6']
+];
+var STATUSES = [
+  { key: 'PENDING_PAYMENT', label: 'Pending payment', color: '#BFDBFE', share: 0.12, aov: 1150 },
+  { key: 'PAID', label: 'Paid', color: '#60A5FA', share: 0.21, aov: 1260 },
+  { key: 'SHIPPED', label: 'Shipped', color: '#2563EB', share: 0.18, aov: 1220 },
+  { key: 'COMPLETED', label: 'Completed', color: '#1E3A8A', share: 0.44, aov: 1310 },
+  { key: 'CANCELLED', label: 'Cancelled', color: '#A3A3A3', share: 0.05, aov: 980 }
+];
+function rnd(i, seed) { var s = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453; return s - Math.floor(s); }
+function series(n, base, seed, growth, noise) {
+  var g = growth == null ? 0.25 : growth, nz = noise == null ? 0.35 : noise, o = [];
+  for (var i = 0; i < n; i++) {
+    var w = 1 + g * (i / Math.max(n - 1, 1)) - g / 2;
+    o.push(Math.max(0, base * w * (1 + nz * (rnd(i + 1, seed) - 0.5) + 0.12 * Math.sin(i * 0.9 + seed))));
+  }
+  return o;
+}
+function sum(a) { return a.reduce(function (s, v) { return s + v; }, 0); }
+function niceMax(m) { if (m <= 0) return 1; var p = Math.pow(10, Math.floor(Math.log10(m))), f = m / p; var s = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 4 ? 4 : f <= 5 ? 5 : f <= 8 ? 8 : 10; return s * p; }
+function fmt(v) { return Math.round(v).toLocaleString('en-US'); }
+function compact(v) { var a = Math.abs(v); if (a >= 1e6) return (v / 1e6).toFixed(1).replace(/\.0$/, '') + 'M'; if (a >= 1e3) return (v / 1e3).toFixed(a >= 1e4 ? 0 : 1).replace(/\.0$/, '') + 'k'; return String(Math.round(v)); }
+function pts(vals, max, W, H) { var n = vals.length; return vals.map(function (v, i) { return [n < 2 ? W / 2 : i * W / (n - 1), H - (v / max) * H]; }); }
+function smooth(p) { if (!p.length) return ''; var d = 'M' + p[0][0].toFixed(1) + ' ' + p[0][1].toFixed(1); for (var i = 1; i < p.length; i++) { var a = p[i - 1], b = p[i], mx = ((a[0] + b[0]) / 2).toFixed(1); d += ' C' + mx + ' ' + a[1].toFixed(1) + ' ' + mx + ' ' + b[1].toFixed(1) + ' ' + b[0].toFixed(1) + ' ' + b[1].toFixed(1); } return d; }
+function areaD(p, H) { return smooth(p) + ' L' + p[p.length - 1][0].toFixed(1) + ' ' + H + ' L' + p[0][0].toFixed(1) + ' ' + H + ' Z'; }
+function delta(seed, pi, invert) { var d = rnd(pi + 3, seed) * 24 - 6; var good = invert ? d < 0 : d >= 0; return { txt: (d >= 0 ? '▲ ' : '▼ ') + Math.abs(d).toFixed(1) + '%', bg: good ? '#ECFDF3' : '#FFF4ED', fg: good ? '#047A35' : '#B93815' }; }
+function spark(vals) { var m = Math.max.apply(null, vals) * 1.1; return smooth(pts(vals, m, 100, 30).map(function (q) { return [q[0], q[1] + 1]; })); }
+function donut(items) { var tot = sum(items.map(function (x) { return x.v; })); var off = 25; return items.map(function (x) { var pct = x.v / tot * 100; var o = { label: x.label, color: x.color, pct: pct.toFixed(1) + '%', dash: pct.toFixed(2) + ' ' + (100 - pct).toFixed(2), offset: off.toFixed(2) }; off -= pct; return o; }); }
+
+class Component extends DCLogic {
+  renderVals() {
+    var self = this;
+    var accent = this.props.accent ?? '#06C755';
+    var st = this.state || {};
+    var pi = st.pi == null ? 2 : st.pi;
+    var bt = st.bt == null ? 0 : st.bt;
+    var defOn = { PENDING_PAYMENT: false, PAID: true, SHIPPED: true, COMPLETED: true, CANCELLED: false };
+    var sf = st.sf || 'REV';
+    var on = defOn;
+    if (sf === 'ALL') { on = { PENDING_PAYMENT: true, PAID: true, SHIPPED: true, COMPLETED: true, CANCELLED: true }; }
+    else if (sf !== 'REV') { on = {}; on[sf] = true; }
+    var P = PERIODS[pi];
+    var per = P.days / P.n;
+    var buyerMul = [1, 0.36, 0.64][bt];
+    var selShare = sum(STATUSES.filter(function (s) { return on[s.key]; }).map(function (s) { return s.share; })) || 0.0001;
+    var mul = selShare * buyerMul;
+
+    var revS = series(P.n, 48200 * per * mul / 0.83, 2 + pi, 0.3);
+    var ordS = revS.map(function (v, i) { return v / (1180 + rnd(i, 9) * 260); });
+    var rMax = niceMax(Math.max.apply(null, revS) * 1.08);
+    var rp = pts(revS, rMax, 600, 200);
+    var oMax = niceMax(Math.max.apply(null, ordS) * 1.05);
+    var slot = 600 / P.n, bw = Math.max(2, slot * 0.6), ob = '';
+    ordS.forEach(function (v, i) { var h = v / oMax * 70, x = i * slot + (slot - bw) / 2; ob += 'M' + x.toFixed(1) + ' ' + (70 - h).toFixed(1) + 'h' + bw.toFixed(1) + 'v' + h.toFixed(1) + 'h' + (-bw).toFixed(1) + 'Z'; });
+    var revenue = sum(revS), orders = sum(ordS);
+    var allOrders = 63 * P.days * buyerMul;
+
+    var kpis = [
+      { label: 'Revenue', value: '฿' + fmt(revenue), note: 'vs prev. period', d: delta(1, pi) },
+      { label: 'Orders', value: fmt(orders), note: 'vs prev. period', d: delta(2, pi) },
+      { label: 'Avg. order value', value: '฿' + fmt(revenue / Math.max(orders, 1)), note: 'per order', d: delta(3, pi) },
+      { label: 'Repeat purchase rate', value: (27.8 + rnd(pi, 4) * 5).toFixed(1) + '%', note: 'bought 2+ times', d: delta(4, pi) },
+      { label: 'Pending payment', value: '฿' + fmt(allOrders * 0.12 * 1150), note: fmt(allOrders * 0.12) + ' orders', d: delta(5, pi, true) }
+    ];
+
+    var pipeline = STATUSES.map(function (s) {
+      var c = allOrders * s.share;
+      return { label: s.label, color: s.color || accent, share: (s.share * 100).toFixed(1) + '%', count: fmt(c), amount: '฿' + compact(c * s.aov), op: on[s.key] ? 1 : 0.4 };
+    });
+
+    var PR = [['Signature Tote Bag', 0.26, 890], ['Cold Brew Set (6)', 0.19, 450], ['Everyday Hoodie', 0.15, 1290], ['Ceramic Mug — Sage', 0.09, 320], ['Gift Card ฿500', 0.07, 500], ['Linen Tea Towel', 0.05, 260]];
+    var products = PR.map(function (p, i) {
+      var r = revenue * p[1];
+      var sp = series(12, 10, i + 21, i % 3 === 2 ? -0.4 : 0.5, 0.5);
+      return { name: p[0], units: fmt(r / p[2]), share: (p[1] * 100).toFixed(0) + '%', w: (p[1] / PR[0][1] * 100).toFixed(0) + '%', revenue: '฿' + fmt(r), spark: spark(sp), sc: sp[11] >= sp[0] ? '#2563EB' : '#A3A3A3' };
+    });
+
+    var tierDonut = donut([
+      { label: 'Platinum', v: 0.31, color: '#1E3A8A' },
+      { label: 'Gold', v: 0.34, color: '#2563EB' },
+      { label: 'Silver', v: 0.22, color: '#60A5FA' },
+      { label: 'Member', v: 0.13, color: '#BFDBFE' }
+    ]);
+
+    var toggle = function (k) { return function () { var nx = Object.assign({}, on); nx[k] = !nx[k]; self.setState({ on: nx }); }; };
+    var changed = (sf !== 'REV' ? 1 : 0) + (bt ? 1 : 0);
+
+    return {
+      accent: accent,
+      nav: NAV.map(function (nv, i) { var a = i === 0; return { label: nv[0], icon: nv[1], href: a ? 'overview.dc.html' : '#', bg: a ? '#F0F0F0' : 'transparent', fg: a ? '#0A0A0A' : '#404040', weight: a ? 600 : 500 }; }),
+      tabs: TABS.map(function (t, i) { var a = i === 2; return { label: t[0], href: t[1], icon: t[2], current: a ? 'page' : 'false', fg: a ? '#0A0A0A' : '#6B6B6B', line: a ? accent : 'transparent' }; }),
+      periods: PERIODS.map(function (p, i) { var a = i === pi; return { label: p.label, pressed: a, pick: function () { self.setState({ pi: i }); }, bg: a ? '#FFFFFF' : 'transparent', fg: a ? '#0A0A0A' : '#525252', shadow: a ? '0 1px 2px rgba(0,0,0,0.10)' : 'none' }; }),
+      sfVal: sf,
+      statusOptions: [{ value: 'REV', label: 'Paid, Shipped & Completed' }, { value: 'ALL', label: 'All statuses' }].concat(STATUSES.map(function (s) { return { value: s.key, label: s.label }; })),
+      onStatus: function (e) { self.setState({ sf: e.target.value }); },
+      btVal: String(bt),
+      onBuyer: function (e) { self.setState({ bt: Number(e.target.value) }); },
+      activeFilters: changed ? changed + ' filter' + (changed > 1 ? 's' : '') + ' applied' : 'Revenue counts Paid, Shipped & Completed',
+      reset: function () { self.setState({ sf: 'REV', bt: 0 }); },
+      kpis: kpis,
+      revTotal: '฿' + fmt(revenue),
+      ordTotal: fmt(orders),
+      rev: { line: smooth(rp), area: areaD(rp, 200), ticks: [1, 0.75, 0.5, 0.25, 0].map(function (t) { return { t: '฿' + compact(rMax * t) }; }) },
+      ordBars: ob,
+      ordMax: compact(oMax),
+      xLabels: P.x.map(function (t) { return { t: t }; }),
+      pipeline: pipeline,
+      pendingCount: fmt(allOrders * 0.12 * 0.35),
+      products: products,
+      tierDonut: tierDonut,
+      revShort: '฿' + compact(revenue),
+      newBuyers: fmt(orders * 0.36),
+      retBuyers: fmt(orders * 0.64 * 0.7)
+    };
+  }
+}
+</script>
+</body>
+</html>
