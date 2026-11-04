@@ -62,6 +62,9 @@ export const API_ENDPOINTS = {
   },
   DASHBOARD: {
     OVERVIEW: `${API_BASE_URL}/api/v1/dashboard`,
+    USERS: `${API_BASE_URL}/api/v1/dashboard/users`,
+    SALES: `${API_BASE_URL}/api/v1/dashboard/sales`,
+    BROADCASTS: `${API_BASE_URL}/api/v1/dashboard/broadcasts`,
   },
   AUDIENCES: {
     LIST: `${API_BASE_URL}/api/v1/audiences`,

@@ -12,7 +12,10 @@ import {
   DashboardPeriod,
   DashboardTab,
 } from "@/features/dashboard/types";
+import { BroadcastsTab } from "./broadcasts-tab";
 import { OverviewTab } from "./overview-tab";
+import { SalesTab } from "./sales-tab";
+import { UsersTab } from "./users-tab";
 
 function resolveTab(value: string | null): DashboardTab {
   const tab = DASHBOARD_TABS.find((t) => t.value === value && t.ready);
@@ -26,10 +29,13 @@ export function DashboardContainer() {
 
   return (
     <div className="flex flex-col gap-5">
-      <DashboardHeader period={period} onPeriodChange={setPeriod} />
+      <DashboardHeader tab={tab} period={period} onPeriodChange={setPeriod} />
       <DashboardTabs active={tab} />
 
       {tab === "overview" && <OverviewTab period={period} />}
+      {tab === "users" && <UsersTab period={period} />}
+      {tab === "sales" && <SalesTab period={period} />}
+      {tab === "broadcasts" && <BroadcastsTab period={period} />}
     </div>
   );
 }

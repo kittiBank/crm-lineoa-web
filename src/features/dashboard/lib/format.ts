@@ -28,6 +28,13 @@ export function formatCompact(value: number): string {
   return String(Math.round(value));
 }
 
+/** +12 / −3 / 0 (true minus sign). */
+export function formatSigned(value: number): string {
+  if (value > 0) return `+${formatNumber(value)}`;
+  if (value < 0) return `−${formatNumber(-value)}`;
+  return "0";
+}
+
 export function formatPercent(value: number, digits = 1): string {
   return `${value.toFixed(digits)}%`;
 }
@@ -47,7 +54,8 @@ export function computeDelta(
     return { percent: null, good: true };
   }
 
-  const percent = ((current - previous) / previous) * 100;
+  // abs() keeps the sign meaningful for metrics that can be negative (net growth).
+  const percent = ((current - previous) / Math.abs(previous)) * 100;
   return { percent, good: percent >= 0 === higherIsBetter };
 }
 
