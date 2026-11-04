@@ -13,6 +13,7 @@ import {
   DashboardTab,
 } from "@/features/dashboard/types";
 import { OverviewTab } from "./overview-tab";
+import { SalesTab } from "./sales-tab";
 import { UsersTab } from "./users-tab";
 
 function resolveTab(value: string | null): DashboardTab {
@@ -32,6 +33,7 @@ export function DashboardContainer() {
 
       {tab === "overview" && <OverviewTab period={period} />}
       {tab === "users" && <UsersTab period={period} />}
+      {tab === "sales" && <SalesTab period={period} />}
     </div>
   );
 }

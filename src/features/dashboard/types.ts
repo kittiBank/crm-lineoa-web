@@ -155,3 +155,62 @@ export interface DashboardUsers {
   };
   tags: Array<{ tag: CustomerTag; count: number }>;
 }
+
+// ── Sales tab ────────────────────────────────────────────────────────────
+
+export type OrderStatus =
+  | "PENDING_PAYMENT"
+  | "PAID"
+  | "SHIPPED"
+  | "COMPLETED"
+  | "CANCELLED";
+
+/** `revenue` (default) = Paid, Shipped & Completed. */
+export type DashboardSalesStatus = "revenue" | "all" | OrderStatus;
+export type DashboardBuyerType = "new" | "returning";
+
+export interface DashboardSalesFilters {
+  status?: DashboardSalesStatus;
+  productId?: string;
+  tier?: DashboardUserTier;
+  buyerType?: DashboardBuyerType;
+}
+
+export interface SalesSeriesPoint {
+  label: string;
+  start: string;
+  revenue: number;
+  orders: number;
+}
+
+export interface SalesTopProduct {
+  productId: string;
+  name: string;
+  units: number;
+  revenue: number;
+  /** % of item revenue in the period. */
+  share: number;
+  /** % change vs previous period; null when it had no sales. */
+  change: number | null;
+  /** Revenue per bucket, for the sparkline. */
+  series: number[];
+}
+
+export interface DashboardSales {
+  period: DashboardPeriod;
+  granularity: "hour" | "day" | "week";
+  range: DashboardRange;
+  products: Array<{ id: string; name: string }>;
+  kpis: {
+    revenue: Comparison;
+    orders: Comparison;
+    avgOrderValue: Comparison;
+    repeatRate: { current: number | null; previous: number | null };
+    pendingPayment: { amount: Comparison; count: Comparison };
+  };
+  series: SalesSeriesPoint[];
+  pipeline: Array<{ status: OrderStatus; count: number; amount: number }>;
+  topProducts: SalesTopProduct[];
+  revenueByTier: Array<{ tier: DashboardUserTier; revenue: number }>;
+  buyers: { new: number; returning: number };
+}

@@ -11,8 +11,15 @@ export { ActivityByHourChart } from "./users/activity-by-hour-chart";
 export { CustomerTagBars } from "./users/customer-tag-bars";
 export { FollowerMovementChart } from "./users/follower-movement-chart";
 export { MembersBreakdown } from "./users/members-breakdown";
+export { USER_FILTERS, UsersFilterBar } from "./users/users-filter-bar";
 export {
-  USER_FILTER_KEYS,
-  USER_FILTER_VALUES,
-  UsersFilterBar,
-} from "./users/users-filter-bar";
+  FilterBar,
+  readFilterParams,
+  writeFilterParams,
+  type FilterDefinition,
+  type FilterValues,
+} from "./filter-bar";
+export { BuyerTierRevenue } from "./sales/buyer-tier-revenue";
+export { ORDER_STATUS_META, OrderPipeline } from "./sales/order-pipeline";
+export { RevenueOrdersChart } from "./sales/revenue-orders-chart";
+export { TopProductsTable } from "./sales/top-products-table";

@@ -11,9 +11,10 @@ import {
   KpiCard,
   MembersBreakdown,
   PeriodSummary,
-  USER_FILTER_KEYS,
-  USER_FILTER_VALUES,
+  USER_FILTERS,
   UsersFilterBar,
+  readFilterParams,
+  writeFilterParams,
 } from "@/features/dashboard/components";
 import { fetchDashboardUsers } from "@/features/dashboard/lib/api";
 import {
@@ -28,24 +29,14 @@ import {
   DashboardUsers,
 } from "@/features/dashboard/types";
 
-function readFilters(params: URLSearchParams): DashboardUserFilters {
-  const filters: Record<string, string> = {};
-  for (const key of USER_FILTER_KEYS) {
-    const value = params.get(key);
-    if (value && USER_FILTER_VALUES[key].includes(value)) {
-      filters[key] = value;
-    }
-  }
-  return filters as DashboardUserFilters;
-}
-
 export function UsersTab({ period }: { period: DashboardPeriod }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryString = searchParams.toString();
   const filters = useMemo(
-    () => readFilters(new URLSearchParams(queryString)),
+    () =>
+      readFilterParams(new URLSearchParams(queryString), USER_FILTERS) as DashboardUserFilters,
     [queryString],
   );
   const filterKey = JSON.stringify(filters);
@@ -56,12 +47,7 @@ export function UsersTab({ period }: { period: DashboardPeriod }) {
 
   const setFilters = useCallback(
     (next: DashboardUserFilters) => {
-      const params = new URLSearchParams(queryString);
-      for (const key of USER_FILTER_KEYS) {
-        const value = next[key];
-        if (value) params.set(key, value);
-        else params.delete(key);
-      }
+      const params = writeFilterParams(queryString, USER_FILTERS, next);
       router.replace(`${pathname}?${params}`, { scroll: false });
     },
     [pathname, queryString, router],

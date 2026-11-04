@@ -17,19 +17,19 @@ export const DASHBOARD_TABS: Array<{
   value: DashboardTab;
   label: string;
   icon: typeof Users;
-  /** Tabs still in development (#67–#68) render disabled. */
+  /** Tabs still in development (#68) render disabled. */
   ready: boolean;
 }> = [
     { value: "overview", label: "Overview", icon: BarChart3, ready: true },
     { value: "users", label: "Users", icon: Users, ready: true },
-    { value: "sales", label: "Sales", icon: ShoppingBag, ready: false },
+    { value: "sales", label: "Sales", icon: ShoppingBag, ready: true },
     { value: "broadcasts", label: "Broadcasts", icon: Megaphone, ready: false },
   ];
 
 const TAB_SUBTITLES: Record<DashboardTab, string> = {
   overview: "Overview of your LINE Official Account",
   users: "Followers, members and how they engage",
-  sales: "LINE Shop orders and revenue",
+  sales: "LINE Shop orders, revenue and best sellers",
   broadcasts: "Broadcast delivery, clicks and revenue",
 };
 

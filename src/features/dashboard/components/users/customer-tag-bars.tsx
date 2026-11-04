@@ -23,7 +23,7 @@ export function CustomerTagBars({ tags }: { tags: DashboardUsers["tags"] }) {
       action={
         <Link
           href="/audiences"
-          className="text-[13px] font-semibold text-neutral-950 hover:text-[#047A35] dark:text-white"
+          className="text-[13px] font-semibold text-[#047A35] hover:underline"
         >
           Build segment
         </Link>

@@ -3,6 +3,8 @@ import { assertOkResponse, getAuthHeaders } from "@/lib/api-client";
 import {
   DashboardOverview,
   DashboardPeriod,
+  DashboardSales,
+  DashboardSalesFilters,
   DashboardUserFilters,
   DashboardUsers,
 } from "../types";
@@ -50,15 +52,30 @@ export function fetchDashboardOverview(
   return fetchDeduped(`${API_ENDPOINTS.DASHBOARD.OVERVIEW}?period=${period}`);
 }
 
-export function fetchDashboardUsers(
+function tabUrl(
+  base: string,
   period: DashboardPeriod,
-  filters: DashboardUserFilters,
-): Promise<DashboardUsers> {
+  filters: Record<string, string | undefined>,
+): string {
   const params = new URLSearchParams({ period });
   for (const [key, value] of Object.entries(filters)) {
     if (value) {
       params.set(key, value);
     }
   }
-  return fetchDeduped(`${API_ENDPOINTS.DASHBOARD.USERS}?${params}`);
+  return `${base}?${params}`;
+}
+
+export function fetchDashboardUsers(
+  period: DashboardPeriod,
+  filters: DashboardUserFilters,
+): Promise<DashboardUsers> {
+  return fetchDeduped(tabUrl(API_ENDPOINTS.DASHBOARD.USERS, period, { ...filters }));
+}
+
+export function fetchDashboardSales(
+  period: DashboardPeriod,
+  filters: DashboardSalesFilters,
+): Promise<DashboardSales> {
+  return fetchDeduped(tabUrl(API_ENDPOINTS.DASHBOARD.SALES, period, { ...filters }));
 }
