@@ -1,3 +1,6 @@
+import type { CustomerTag } from "@/constants/customer-tag";
+
+
 export type DashboardPeriod = "today" | "7d" | "30d" | "90d";
 
 export const DASHBOARD_PERIOD_OPTIONS: Array<{
@@ -86,4 +89,69 @@ export interface DashboardOverview {
   funnel: PurchaseFunnel;
   recentBroadcasts: RecentBroadcast[];
   topProducts: TopProduct[];
+}
+
+// ── Users tab ────────────────────────────────────────────────────────────
+
+export type DashboardUserType = "Member" | "Guest";
+/** `blocked` = unfollowed or blocked (LINE cannot tell them apart). */
+export type DashboardUserStatus = "following" | "blocked";
+/** `Member` = a Member with no tier yet. */
+export type DashboardUserTier = "Platinum" | "Gold" | "Silver" | "Member";
+
+export interface DashboardUserFilters {
+  userType?: DashboardUserType;
+  status?: DashboardUserStatus;
+  tier?: DashboardUserTier;
+  tag?: CustomerTag;
+}
+
+export interface FollowerMovementPoint {
+  label: string;
+  start: string;
+  gained: number;
+  lost: number;
+  net: number;
+}
+
+export interface HourlyActivityPoint {
+  hour: number;
+  /** Average active users; null when the range has no such day. */
+  weekday: number | null;
+  weekend: number | null;
+}
+
+export interface DashboardUsers {
+  period: DashboardPeriod;
+  granularity: "hour" | "day" | "week";
+  range: DashboardRange;
+  filters: DashboardUserFilters;
+  /** Unfollows are recorded from this date; earlier "lost" counts are 0. */
+  trackingSince: string | null;
+  kpis: {
+    totalFollowers: Comparison;
+    newFollowers: Comparison;
+    unfollowed: Comparison;
+    netGrowth: Comparison;
+    activeRate: {
+      windowDays: number;
+      current: number | null;
+      previous: number | null;
+      activeUsers: number;
+    };
+  };
+  movement: FollowerMovementPoint[];
+  breakdown: {
+    tiers: Array<{ tier: DashboardUserTier; count: number }>;
+    members: number;
+    userType: Array<{ userType: DashboardUserType; count: number }>;
+    status: Array<{ status: DashboardUserStatus; count: number }>;
+  };
+  activity: {
+    hours: HourlyActivityPoint[];
+    weekdayDays: number;
+    weekendDays: number;
+    peak: { hour: number; kind: "weekday" | "weekend"; users: number } | null;
+  };
+  tags: Array<{ tag: CustomerTag; count: number }>;
 }

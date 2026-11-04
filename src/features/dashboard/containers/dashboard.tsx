@@ -13,6 +13,7 @@ import {
   DashboardTab,
 } from "@/features/dashboard/types";
 import { OverviewTab } from "./overview-tab";
+import { UsersTab } from "./users-tab";
 
 function resolveTab(value: string | null): DashboardTab {
   const tab = DASHBOARD_TABS.find((t) => t.value === value && t.ready);
@@ -26,10 +27,11 @@ export function DashboardContainer() {
 
   return (
     <div className="flex flex-col gap-5">
-      <DashboardHeader period={period} onPeriodChange={setPeriod} />
+      <DashboardHeader tab={tab} period={period} onPeriodChange={setPeriod} />
       <DashboardTabs active={tab} />
 
       {tab === "overview" && <OverviewTab period={period} />}
+      {tab === "users" && <UsersTab period={period} />}
     </div>
   );
 }
