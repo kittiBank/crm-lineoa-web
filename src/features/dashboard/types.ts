@@ -214,3 +214,98 @@ export interface DashboardSales {
   revenueByTier: Array<{ tier: DashboardUserTier; revenue: number }>;
   buyers: { new: number; returning: number };
 }
+
+// ── Broadcasts tab ───────────────────────────────────────────────────────
+
+export type BroadcastStatusKey =
+  | "draft"
+  | "scheduled"
+  | "processing"
+  | "completed"
+  | "failed";
+
+/** Template messageType; `none` = template deleted. */
+export type BroadcastMessageType =
+  | "text"
+  | "image"
+  | "video"
+  | "flex"
+  | "carousel"
+  | "imagemap"
+  | "multi"
+  | "none";
+
+export interface DashboardBroadcastFilters {
+  search?: string;
+  /** Filters the campaign table only. */
+  status?: BroadcastStatusKey;
+  /** `all` | `active` | `new` | `custom:<audienceId>` */
+  segment?: string;
+  messageType?: Exclude<BroadcastMessageType, "none">;
+}
+
+export interface BroadcastSeriesPoint {
+  label: string;
+  start: string;
+  sent: number;
+  delivered: number;
+  clicks: number;
+}
+
+export interface NullableComparison {
+  current: number | null;
+  previous: number | null;
+}
+
+export interface CampaignRow {
+  id: string;
+  name: string;
+  status: BroadcastStatusKey;
+  messageType: BroadcastMessageType;
+  segment: { key: string; label: string };
+  date: string;
+  sent: number;
+  delivered: number;
+  deliveryRate: number | null;
+  clicks: number;
+  clickRate: number | null;
+  orders: number;
+  revenue: number;
+}
+
+export interface DashboardBroadcasts {
+  period: DashboardPeriod;
+  granularity: "hour" | "day" | "week";
+  range: DashboardRange;
+  options: {
+    segments: Array<{ key: string; label: string }>;
+    messageTypes: Array<Exclude<BroadcastMessageType, "none">>;
+  };
+  kpis: {
+    broadcastsSent: Comparison;
+    messagesSent: Comparison;
+    messagesDelivered: Comparison;
+    deliveryRate: NullableComparison;
+    clicks: Comparison;
+    clickRate: NullableComparison;
+    attributedRevenue: Comparison;
+  };
+  series: BroadcastSeriesPoint[];
+  statusCounts: Array<{ status: BroadcastStatusKey; count: number }>;
+  byMessageType: Array<{
+    messageType: BroadcastMessageType;
+    delivered: number;
+    clicks: number;
+    broadcasts: number;
+    clickRate: number | null;
+  }>;
+  bySegment: Array<{
+    segment: string;
+    label: string;
+    revenue: number;
+    orders: number;
+    broadcasts: number;
+  }>;
+  campaigns: CampaignRow[];
+  campaignTotal: number;
+}

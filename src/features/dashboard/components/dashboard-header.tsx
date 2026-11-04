@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, Megaphone, ShoppingBag, Users } from "lucide-react";
+import { BarChart3, Megaphone, Plus, ShoppingBag, Users } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs/breadcrumbs";
 import { cn } from "@/lib/utils";
 import {
@@ -17,20 +17,20 @@ export const DASHBOARD_TABS: Array<{
   value: DashboardTab;
   label: string;
   icon: typeof Users;
-  /** Tabs still in development (#68) render disabled. */
+  /** Set false to render a tab still in development as disabled "Soon". */
   ready: boolean;
 }> = [
     { value: "overview", label: "Overview", icon: BarChart3, ready: true },
     { value: "users", label: "Users", icon: Users, ready: true },
     { value: "sales", label: "Sales", icon: ShoppingBag, ready: true },
-    { value: "broadcasts", label: "Broadcasts", icon: Megaphone, ready: false },
+    { value: "broadcasts", label: "Broadcasts", icon: Megaphone, ready: true },
   ];
 
 const TAB_SUBTITLES: Record<DashboardTab, string> = {
   overview: "Overview of your LINE Official Account",
   users: "Followers, members and how they engage",
   sales: "LINE Shop orders, revenue and best sellers",
-  broadcasts: "Broadcast delivery, clicks and revenue",
+  broadcasts: "Broadcast delivery, engagement and revenue impact",
 };
 
 interface DashboardHeaderProps {
@@ -52,6 +52,7 @@ export function DashboardHeader({ tab, period, onPeriodChange }: DashboardHeader
         </p>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
       <div
         role="group"
         aria-label="Date range"
@@ -76,6 +77,16 @@ export function DashboardHeader({ tab, period, onPeriodChange }: DashboardHeader
             </button>
           );
         })}
+      </div>
+      {tab === "broadcasts" && (
+        <Link
+          href="/broadcasts/create"
+          className="flex min-h-9 items-center gap-1.5 rounded-lg bg-neutral-950 px-3.5 text-[13px] font-semibold text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-950 dark:hover:bg-neutral-200"
+        >
+          <Plus className="size-4" />
+          New broadcast
+        </Link>
+      )}
       </div>
     </div>
   );

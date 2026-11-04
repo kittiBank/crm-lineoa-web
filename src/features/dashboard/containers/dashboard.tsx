@@ -12,6 +12,7 @@ import {
   DashboardPeriod,
   DashboardTab,
 } from "@/features/dashboard/types";
+import { BroadcastsTab } from "./broadcasts-tab";
 import { OverviewTab } from "./overview-tab";
 import { SalesTab } from "./sales-tab";
 import { UsersTab } from "./users-tab";
@@ -34,6 +35,7 @@ export function DashboardContainer() {
       {tab === "overview" && <OverviewTab period={period} />}
       {tab === "users" && <UsersTab period={period} />}
       {tab === "sales" && <SalesTab period={period} />}
+      {tab === "broadcasts" && <BroadcastsTab period={period} />}
     </div>
   );
 }

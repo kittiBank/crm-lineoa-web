@@ -1,13 +1,21 @@
-import { SlidersHorizontal } from "lucide-react";
+"use client";
+
+import { useEffect, useState } from "react";
+import { Search, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { dashboardCardClass } from "./chart-card";
 
 export interface FilterDefinition<K extends string = string> {
   key: K;
   label: string;
-  /** The first option (value "") is the default and does not count as a filter. */
-  options: Array<{ value: string; label: string }>;
+  /** `search` = free-text input (debounced); default `select`. */
+  type?: "select" | "search";
+  /** Select only. The first option (value "") is the default and does not count as a filter. */
+  options?: Array<{ value: string; label: string }>;
 }
+
+const SEARCH_MAX_LENGTH = 100;
+const SEARCH_DEBOUNCE_MS = 350;
 
 export type FilterValues<K extends string = string> = Partial<Record<K, string>>;
 
@@ -16,7 +24,7 @@ export function allowedFilterValues<K extends string>(
   filters: FilterDefinition<K>[],
 ): Record<K, string[]> {
   return Object.fromEntries(
-    filters.map((f) => [f.key, f.options.map((o) => o.value).filter(Boolean)]),
+    filters.map((f) => [f.key, (f.options ?? []).map((o) => o.value).filter(Boolean)]),
   ) as Record<K, string[]>;
 }
 
@@ -27,9 +35,12 @@ export function readFilterParams<K extends string>(
 ): FilterValues<K> {
   const allowed = allowedFilterValues(definitions);
   const values: FilterValues<K> = {};
-  for (const { key } of definitions) {
-    const value = params.get(key);
-    if (value && allowed[key].includes(value)) {
+  for (const { key, type } of definitions) {
+    const value = params.get(key)?.trim();
+    if (!value) continue;
+    if (type === "search") {
+      values[key] = value.slice(0, SEARCH_MAX_LENGTH);
+    } else if (allowed[key].includes(value)) {
       values[key] = value;
     }
   }
@@ -80,7 +91,15 @@ export function FilterBar<K extends string>({
       </span>
 
       <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-        {filters.map((filter) => (
+        {filters.map((filter) =>
+          filter.type === "search" ? (
+            <SearchFilter
+              key={filter.key}
+              label={filter.label}
+              value={values[filter.key] ?? ""}
+              onChange={(value) => onChange({ ...values, [filter.key]: value || undefined })}
+            />
+          ) : (
           <label
             key={filter.key}
             className="flex min-w-[150px] flex-1 flex-col gap-1 text-xs font-medium text-neutral-500 sm:flex-none dark:text-neutral-400"
@@ -102,14 +121,15 @@ export function FilterBar<K extends string>({
                   : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-700",
               )}
             >
-              {filter.options.map((option) => (
+              {(filter.options ?? []).map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
             </select>
           </label>
-        ))}
+          ),
+        )}
 
         <div className="ml-auto flex min-h-9 items-center gap-3">
           <span className="text-[13px] tabular-nums text-neutral-500 dark:text-neutral-400">
@@ -126,5 +146,54 @@ export function FilterBar<K extends string>({
         </div>
       </div>
     </section>
+  );
+}
+
+function SearchFilter({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  const [syncedValue, setSyncedValue] = useState(value);
+
+  // Follow outside changes (Reset, back/forward).
+  if (value !== syncedValue) {
+    setSyncedValue(value);
+    setDraft(value);
+  }
+
+  useEffect(() => {
+    const next = draft.trim();
+    if (next === value) return;
+    const timer = setTimeout(() => onChange(next), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [draft, value, onChange]);
+
+  return (
+    <label className="flex min-w-[200px] flex-1 flex-col gap-1 text-xs font-medium text-neutral-500 sm:max-w-[260px] dark:text-neutral-400">
+      {label}
+      <span className="relative">
+        <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-neutral-400" />
+        <input
+          type="search"
+          value={draft}
+          maxLength={SEARCH_MAX_LENGTH}
+          placeholder={label}
+          onChange={(event) => setDraft(event.target.value)}
+          className={cn(
+            "h-9 w-full rounded-lg border bg-white pr-2.5 pl-8 text-[13px] font-medium text-neutral-950 outline-none placeholder:font-normal placeholder:text-neutral-400",
+            "focus-visible:ring-2 focus-visible:ring-chart-blue-500 dark:bg-neutral-900 dark:text-white",
+            value
+              ? "border-neutral-950 dark:border-white"
+              : "border-neutral-200 hover:border-neutral-400 dark:border-neutral-700",
+          )}
+        />
+      </span>
+    </label>
   );
 }

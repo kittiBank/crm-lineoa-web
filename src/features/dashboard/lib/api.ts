@@ -1,6 +1,8 @@
 import { API_ENDPOINTS } from "@/constants/api";
 import { assertOkResponse, getAuthHeaders } from "@/lib/api-client";
 import {
+  DashboardBroadcastFilters,
+  DashboardBroadcasts,
   DashboardOverview,
   DashboardPeriod,
   DashboardSales,
@@ -78,4 +80,11 @@ export function fetchDashboardSales(
   filters: DashboardSalesFilters,
 ): Promise<DashboardSales> {
   return fetchDeduped(tabUrl(API_ENDPOINTS.DASHBOARD.SALES, period, { ...filters }));
+}
+
+export function fetchDashboardBroadcasts(
+  period: DashboardPeriod,
+  filters: DashboardBroadcastFilters,
+): Promise<DashboardBroadcasts> {
+  return fetchDeduped(tabUrl(API_ENDPOINTS.DASHBOARD.BROADCASTS, period, { ...filters }));
 }
